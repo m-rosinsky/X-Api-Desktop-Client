@@ -265,7 +265,7 @@
    flex-direction: column;
    justify-content: flex-start; /* Start from top */
    align-items: center;
-   text-align: center;
+  text-align: center;
    /* padding-top: 10vh; - Removed, use padding on main-content */
    margin: 0; /* Reset margin */
 }
@@ -589,8 +589,8 @@ body {
 }
 
 .selector-button {
-  background-color: var(--card-background);
-  border: 1px solid var(--border-color);
+    background-color: var(--card-background);
+    border: 1px solid var(--border-color);
   border-radius: 6px;
   padding: 0.6em 1em;
   width: 100%;
@@ -610,13 +610,22 @@ body {
 }
 
 .selector-button-left {
-  display: flex;
-  align-items: center;
-  /* Allow shrinking if needed, prevent overflow */
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  margin-right: 1em; /* Space between name and package/arrow */
+  display: flex; /* Keep flex for icon alignment */
+  align-items: center; /* Keep vertical alignment */
+  /* Remove properties preventing wrap */
+  /* overflow: hidden; */
+  /* text-overflow: ellipsis; */
+  /* white-space: nowrap; */
+  margin-right: 1em; 
+  /* Allow flex item to wrap text if needed */
+  flex-shrink: 1; /* Allow shrinking */
+  min-width: 0; /* Important for flex shrinking */
+}
+
+/* Allow endpoint path within button to wrap */
+.selector-button-left .endpoint-path {
+    white-space: normal; 
+    word-break: break-all; /* Break long paths */
 }
 
 .selector-button-right {
@@ -639,11 +648,6 @@ body {
 
 .selector-button:hover {
   border-color: #666;
-}
-
-.selector-button.has-selection span {
-  /* Styles for when an app IS selected */
-  color: var(--text-color);
 }
 
 .selector-button:not(.has-selection) span {
@@ -748,7 +752,24 @@ body {
 
 /* Usage Preview Styles (API Screens) */
 .api-usage-preview {
-  padding: 0em 2em 0.5em 2em; /* Adjusted padding */
+  /* Initial hidden state */
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  padding: 0 2em; /* Remove vertical padding initially */
+  margin-bottom: 0; /* Remove margin initially */
+  transition: max-height 0.3s ease-in-out, 
+              opacity 0.3s ease-in-out, 
+              padding 0.3s ease-in-out, 
+              margin-bottom 0.3s ease-in-out;
+}
+
+/* Visible state */
+.api-usage-preview.visible {
+  max-height: 100px; /* Adjust as needed, large enough for content */
+  opacity: 1;
+  padding: 0.5em 2em 1em 2em; /* Restore vertical padding */
+  margin-bottom: 1.5em; /* Restore margin */
 }
 
 .api-usage-preview p {
@@ -758,7 +779,6 @@ body {
   text-align: center;
 }
 
-/* Reuse existing usage bar styles, but center the container */
 .api-usage-preview .usage-bar-container {
   max-width: 400px; /* Limit width */
   margin: 0 auto; /* Center the bar container */
@@ -864,4 +884,152 @@ body {
 /* REMOVE/REVERT Indent app items under env header */
 .dropdown-options li:not(.dropdown-project-header) {
    padding-left: 1.5em; /* Revert to a standard indent, or adjust as needed */
+}
+
+/* API View Layout Styles (similar to Dashboard) */
+.api-view-layout {
+  display: flex;
+  gap: 2em; /* Space between main content and sidebar */
+}
+
+.api-main-content {
+  flex-grow: 1; /* Allow main content to take available space */
+  min-width: 0; /* Prevent flex items from overflowing */
+}
+
+.api-docs-sidebar {
+  width: 280px; /* Match dashboard sidebar width */
+  flex-shrink: 0; 
+  border-left: 1px solid var(--border-color); 
+  padding-left: 2em; 
+}
+
+/* Reuse dashboard sidebar styles for h3 and info-list */
+.api-docs-sidebar h3 {
+  font-size: 1em;
+  font-weight: 600;
+  color: #c0c0c0;
+  margin-top: 0; 
+  margin-bottom: 1em;
+  padding-bottom: 0.5em;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.api-docs-sidebar h3:not(:first-child) {
+  margin-top: 2em; 
+}
+
+.api-docs-sidebar .info-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  font-size: 0.9em;
+}
+
+.api-docs-sidebar .info-list li {
+  margin-bottom: 0.8em;
+  color: #a0a0a0;
+}
+
+.api-docs-sidebar .info-list.links li a {
+  color: var(--accent-color); 
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.api-docs-sidebar .info-list.links li a:hover {
+  color: var(--accent-hover-color);
+  text-decoration: underline;
+}
+
+/* Endpoint Selector Container */
+.endpoint-selector-container {
+  display: flex;
+  justify-content: flex-start; /* Changed from center */
+  align-items: center;
+  padding: 1em 0; /* Keep vertical padding */
+  margin-bottom: 1.5em; 
+}
+
+.endpoint-selector-label {
+  margin-right: 0.8em;
+  font-size: 0.9em;
+  color: #a0a0a0;
+}
+
+.custom-endpoint-selector {
+  position: relative; 
+  min-width: 300px; /* Adjust width as needed */
+}
+
+/* Reuse selector-button styles, add specific class */
+.endpoint-selector-button {
+  /* Inherits most styles from .selector-button */
+}
+
+/* Reuse dropdown-options styles, add specific class */
+.endpoint-dropdown-options {
+  /* Inherits most styles from .dropdown-options */
+  /* Specific adjustments if needed */
+}
+
+/* Keep Endpoint Method/Path styles */
+.endpoint-method {
+  font-weight: 600;
+  margin-right: 0.6em;
+  min-width: 45px; 
+  text-align: right;
+}
+
+/* Method specific colors */
+.method-get { color: #61affe; } 
+.method-post { color: #49cc90; } 
+.method-delete { color: #f93e3e; } 
+.method-put { color: #fca130; } 
+
+.endpoint-path {
+  font-family: monospace;
+  color: var(--text-color);
+}
+
+/* Ensure dropdown list items use endpoint styles */
+.endpoint-dropdown-options li {
+  /* Inherit general li styles */
+  padding: 0.6em 1em;
+  display: flex; /* Use flex for alignment */
+  align-items: baseline; /* Align method and path text */
+}
+
+.endpoint-dropdown-options li span {
+    display: inline-block; 
+}
+
+/* Allow endpoint path in dropdown to wrap */
+.endpoint-dropdown-options li .endpoint-path {
+    white-space: normal;
+    word-break: break-all; /* Break long paths */
+    flex-shrink: 1; /* Allow path to shrink */
+    min-width: 0; /* Important for flex shrinking */
+}
+
+/* Adjust Docs Sidebar Styles */
+.api-docs-sidebar pre {
+  background-color: #1e1e1e; /* Darker background for code */
+  padding: 1em;
+  border-radius: 6px;
+  overflow-x: auto;
+  font-size: 0.85em;
+  margin: 1em 0;
+}
+
+.api-docs-sidebar code {
+  font-family: monospace;
+  color: #ccc;
+}
+
+/* Ensure API tools content is left-aligned */
+.api-tools-content {
+    text-align: left; 
+    /* Add padding/margin if needed */
+    padding: 0 1em; /* Match view-content padding */
 }

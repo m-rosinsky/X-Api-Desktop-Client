@@ -199,6 +199,89 @@ const AppSelector: React.FC<AppSelectorProps> = ({ projects, selectedAppId, onCh
   );
 };
 
+// --- Reusable Custom Endpoint Selector Component ---
+interface Endpoint {
+  id: string;
+  method: string;
+  path: string;
+  summary: string;
+}
+
+interface EndpointSelectorProps {
+  endpoints: Endpoint[];
+  selectedEndpointId: string | null;
+  onChange: (selectedId: string | null) => void;
+}
+
+const EndpointSelector: React.FC<EndpointSelectorProps> = ({ endpoints, selectedEndpointId, onChange }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const selectedEndpoint = useMemo(() => endpoints.find(ep => ep.id === selectedEndpointId), [endpoints, selectedEndpointId]);
+
+  const handleSelect = (endpointId: string | null) => {
+    onChange(endpointId);
+    setIsOpen(false);
+  };
+
+  // Basic click outside handler
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (isOpen && !target.closest('.custom-endpoint-selector')) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isOpen]);
+
+  return (
+    <div className="endpoint-selector-container">
+      <span className="endpoint-selector-label">Selected Endpoint:</span>
+      <div className="custom-endpoint-selector">
+        <button 
+          type="button"
+          className={`selector-button endpoint-selector-button ${selectedEndpoint ? 'has-selection' : ''}`}
+          onClick={() => setIsOpen(!isOpen)}
+        >
+          <div className="selector-button-content">
+            <div className="selector-button-left">
+              {selectedEndpoint ? (
+                <>
+                  <span className={`endpoint-method method-${selectedEndpoint.method.toLowerCase()}`}>{selectedEndpoint.method}</span>
+                  <span className="endpoint-path">{selectedEndpoint.path}</span>
+                </>
+              ) : (
+                <span>-- Select Endpoint --</span>
+              )}
+            </div>
+            <div className="selector-button-right">
+              <span className={`dropdown-arrow ${isOpen ? 'open' : ''}`}>▼</span>
+            </div>
+          </div>
+        </button>
+
+        {isOpen && (
+          <ul className="dropdown-options endpoint-dropdown-options">
+            <li onClick={() => handleSelect(null)}>
+              <span>-- Select Endpoint --</span>
+            </li>
+            {endpoints.map(ep => (
+              <li 
+                key={ep.id} 
+                onClick={() => handleSelect(ep.id)}
+                className={ep.id === selectedEndpointId ? 'selected' : ''}
+              >
+                <span className={`endpoint-method method-${ep.method.toLowerCase()}`}>{ep.method}</span>
+                <span className="endpoint-path">{ep.path}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </div>
+  );
+};
+
 // --- View Components ---
 interface ApiViewProps {
   projects: Project[];
@@ -283,7 +366,17 @@ const Dashboard: React.FC<DashboardProps> = ({ projects }) => {
   );
 };
 
+// --- Tweets View ---
+const tweetsEndpoints = [
+  { id: 'get-tweets', method: 'GET', path: '/2/tweets', summary: 'Retrieve recent Tweets' },
+  { id: 'get-tweet-by-id', method: 'GET', path: '/2/tweets/:id', summary: 'Retrieve a single Tweet' },
+  { id: 'post-tweet', method: 'POST', path: '/2/tweets', summary: 'Create a new Tweet' },
+  { id: 'delete-tweet', method: 'DELETE', path: '/2/tweets/:id', summary: 'Delete a Tweet' },
+];
+
 const TweetsView: React.FC<ApiViewProps> = ({ projects, activeAppId, setActiveAppId }) => {
+  const [selectedEndpoint, setSelectedEndpoint] = useState<string | null>(null);
+
   // Find the project containing the active app
   const activeProject = useMemo(() => {
     if (activeAppId === null) return null;
@@ -292,41 +385,93 @@ const TweetsView: React.FC<ApiViewProps> = ({ projects, activeAppId, setActiveAp
 
   const usagePercentage = activeProject ? Math.min((activeProject.usage / activeProject.cap) * 100, 100) : 0;
 
+  // Find the details for the selected endpoint
+  const endpointDetails = useMemo(() => {
+    return tweetsEndpoints.find(ep => ep.id === selectedEndpoint);
+  }, [selectedEndpoint]);
+
   return (
-    <div>
-      <div className="api-header-section">
-        <div className="selector-and-package">
-          <AppSelector projects={projects} selectedAppId={activeAppId} onChange={setActiveAppId} />
-          {/* Conditionally render package label outside selector */} 
-          {activeProject && (
-            <span className={`project-package package-${activeProject.package.toLowerCase()}`}>
-              {activeProject.package}
-            </span>
-          )}
-        </div>
-        {/* Usage preview remains below */} 
-        {activeProject && (
-          <div className="api-usage-preview">
-            <p>Project Usage ({activeProject.name}): {activeProject.usage.toLocaleString()} / {activeProject.cap.toLocaleString()}</p>
-            <div className="usage-bar-container">
-              <div
-                className={`usage-bar ${usagePercentage >= 100 ? 'at-cap' : ''}`}
-                style={{ width: `${usagePercentage}%` }}
-              ></div>
-            </div>
+    <div className="api-view-layout">
+      <div className="api-main-content">
+        <div className="api-header-section">
+          <div className="selector-and-package">
+            <AppSelector projects={projects} selectedAppId={activeAppId} onChange={setActiveAppId} />
+            {/* Conditionally render package label outside selector */} 
+            {activeProject && (
+              <span className={`project-package package-${activeProject.package.toLowerCase()}`}>
+                {activeProject.package}
+              </span>
+            )}
           </div>
+          {/* Always render usage preview container, toggle visibility with class */} 
+          <div className={`api-usage-preview ${activeProject ? 'visible' : ''}`}>
+            {/* Content inside is only relevant when visible, but rendering it doesn't hurt */} 
+             <p>Project Usage ({activeProject?.name || 'N/A'}): {activeProject?.usage.toLocaleString() || 0} / {activeProject?.cap.toLocaleString() || 0}</p>
+             <div className="usage-bar-container">
+                <div
+                  className={`usage-bar ${usagePercentage >= 100 ? 'at-cap' : ''}`}
+                  style={{ width: `${usagePercentage}%` }}
+                ></div>
+              </div>
+          </div>
+        </div>
+        <div className="view-content">
+          <EndpointSelector 
+              endpoints={tweetsEndpoints} 
+              selectedEndpointId={selectedEndpoint}
+              onChange={setSelectedEndpoint}
+           />
+           <div className="api-tools-content">
+             {selectedEndpoint ? (
+                <p>Tools/Logs for <strong>{endpointDetails?.path}</strong> on app <strong>{activeAppId || 'N/A'}</strong></p>
+             ) : (
+                <p>Select an endpoint above to see details and tools.</p>
+             )}
+          </div>
+        </div>
+      </div>
+
+      {/* Right Sidebar Docs Panel - Now conditional */}
+      <aside className="api-docs-sidebar">
+        {endpointDetails ? (
+          <> 
+            <h3><span className={`endpoint-method method-${endpointDetails.method.toLowerCase()}`}>{endpointDetails.method}</span> {endpointDetails.path}</h3>
+            <p>{endpointDetails.summary}</p>
+            <pre><code>{`// Sample Request for ${endpointDetails.path}
+curl ...`}</code></pre>
+            <pre><code>{`// Sample Response for ${endpointDetails.path}
+{
+  "data": [...]
+}`}</code></pre>
+            {/* Add more detailed docs here */} 
+          </> 
+        ) : (
+          <> 
+            <h3>API Documentation</h3>
+            <p>Select an endpoint from the list on the left to view its documentation.</p>
+             <h3>Guides</h3>
+             <ul className="info-list links">
+               <li><a href="#">Getting Started</a></li>
+               <li><a href="#">Authentication</a></li>
+               <li><a href="#">Rate Limits</a></li>
+             </ul>
+          </> 
         )}
-      </div>
-      <div className="view-content">
-        <h2>Tweets API</h2>
-        <p>Tweets API management for app: {activeAppId || 'None Selected'}</p>
-        {/* Add Tweets-specific content here */} 
-      </div>
+      </aside>
     </div>
   );
 };
 
+// --- Users View ---
+const usersEndpoints = [
+  { id: 'get-users', method: 'GET', path: '/2/users', summary: 'Look up multiple users' },
+  { id: 'get-user-by-id', method: 'GET', path: '/2/users/:id', summary: 'Look up a single user by ID' },
+  { id: 'get-user-by-username', method: 'GET', path: '/2/users/by/username/:username', summary: 'Look up a single user by username' },
+];
+
 const UsersView: React.FC<ApiViewProps> = ({ projects, activeAppId, setActiveAppId }) => {
+  const [selectedEndpoint, setSelectedEndpoint] = useState<string | null>(null);
+
   // Find the project containing the active app (duplicate logic, could be extracted)
   const activeProject = useMemo(() => {
     if (activeAppId === null) return null;
@@ -335,36 +480,78 @@ const UsersView: React.FC<ApiViewProps> = ({ projects, activeAppId, setActiveApp
 
   const usagePercentage = activeProject ? Math.min((activeProject.usage / activeProject.cap) * 100, 100) : 0;
 
+  // Find the details for the selected endpoint
+  const endpointDetails = useMemo(() => {
+    return usersEndpoints.find(ep => ep.id === selectedEndpoint);
+  }, [selectedEndpoint]);
+
   return (
-    <div>
-      <div className="api-header-section">
-        <div className="selector-and-package">
-          <AppSelector projects={projects} selectedAppId={activeAppId} onChange={setActiveAppId} />
-          {/* Conditionally render package label outside selector */} 
-          {activeProject && (
-            <span className={`project-package package-${activeProject.package.toLowerCase()}`}>
-              {activeProject.package}
-            </span>
-          )}
-        </div>
-         {/* Usage preview remains below */} 
-        {activeProject && (
-          <div className="api-usage-preview">
-            <p>Project Usage ({activeProject.name}): {activeProject.usage.toLocaleString()} / {activeProject.cap.toLocaleString()}</p>
-            <div className="usage-bar-container">
-              <div
-                className={`usage-bar ${usagePercentage >= 100 ? 'at-cap' : ''}`}
-                style={{ width: `${usagePercentage}%` }}
-              ></div>
-            </div>
+    <div className="api-view-layout">
+      <div className="api-main-content">
+        <div className="api-header-section">
+          <div className="selector-and-package">
+            <AppSelector projects={projects} selectedAppId={activeAppId} onChange={setActiveAppId} />
+            {/* Conditionally render package label outside selector */} 
+            {activeProject && (
+              <span className={`project-package package-${activeProject.package.toLowerCase()}`}>
+                {activeProject.package}
+              </span>
+            )}
           </div>
+           {/* Always render usage preview container, toggle visibility with class */} 
+          <div className={`api-usage-preview ${activeProject ? 'visible' : ''}`}>
+             {/* Content inside is only relevant when visible */}
+             <p>Project Usage ({activeProject?.name || 'N/A'}): {activeProject?.usage.toLocaleString() || 0} / {activeProject?.cap.toLocaleString() || 0}</p>
+             <div className="usage-bar-container">
+                <div
+                  className={`usage-bar ${usagePercentage >= 100 ? 'at-cap' : ''}`}
+                  style={{ width: `${usagePercentage}%` }}
+                ></div>
+              </div>
+          </div>
+        </div>
+        <div className="view-content">
+          <EndpointSelector 
+              endpoints={usersEndpoints} 
+              selectedEndpointId={selectedEndpoint}
+              onChange={setSelectedEndpoint}
+           />
+           <div className="api-tools-content">
+             {selectedEndpoint ? (
+                <p>Tools/Logs for <strong>{endpointDetails?.path}</strong> on app <strong>{activeAppId || 'N/A'}</strong></p>
+             ) : (
+                <p>Select an endpoint above to see details and tools.</p>
+             )}
+          </div>
+        </div>
+      </div>
+
+      {/* Right Sidebar Docs Panel - Now conditional */} 
+      <aside className="api-docs-sidebar">
+         {endpointDetails ? (
+          <> 
+            <h3><span className={`endpoint-method method-${endpointDetails.method.toLowerCase()}`}>{endpointDetails.method}</span> {endpointDetails.path}</h3>
+            <p>{endpointDetails.summary}</p>
+            <pre><code>{`// Sample Request for ${endpointDetails.path}
+curl ...`}</code></pre>
+            <pre><code>{`// Sample Response for ${endpointDetails.path}
+{
+  "data": [...]
+}`}</code></pre>
+            {/* Add more detailed docs here */} 
+          </> 
+        ) : (
+          <> 
+            <h3>API Documentation</h3>
+            <p>Select an endpoint from the list on the left to view its documentation.</p>
+             <h3>Guides</h3>
+             <ul className="info-list links">
+               <li><a href="#">Understanding User Objects</a></li>
+               <li><a href="#">Privacy Considerations</a></li>
+             </ul>
+          </> 
         )}
-      </div>
-      <div className="view-content">
-        <h2>Users API</h2>
-        <p>Users API management for app: {activeAppId || 'None Selected'}</p>
-        {/* Add Users-specific content here */} 
-      </div>
+      </aside>
     </div>
   );
 };
@@ -473,7 +660,7 @@ function App() {
         </nav>
         <main className="main-content">
           {renderCurrentView()}
-        </main>
+    </main>
       </div>
       {/* Add Footer Bar */}
       <footer className="app-footer">
