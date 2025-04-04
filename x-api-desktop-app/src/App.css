@@ -8,7 +8,7 @@
   --input-text-color: #e1e1e1;
   --border-color: #444; /* Subtle border for inputs/buttons */
 
-  font-family: Inter, Avenir, Helvetica, Arial, sans-serif;
+  font-family: TwitterChirp, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
   font-size: 16px;
   line-height: 24px;
   font-weight: 400;
@@ -78,23 +78,57 @@
 
 /* Adjust Sidebar */
 .sidebar {
-  width: 220px; /* Adjust width as needed */
-  background-color: var(--card-background); /* Use dark card background */
-  padding: 1.5em 0;
+  position: relative; /* Needed for absolute positioning of button */
+  width: 220px; 
+  background-color: var(--card-background);
+  padding: 1.5em 0; 
   display: flex;
   flex-direction: column;
   border-right: 1px solid var(--border-color);
-  flex-shrink: 0; /* Prevent sidebar from shrinking */
-  overflow-y: auto; /* Allow sidebar content to scroll if needed */
-  transition: width 0.3s ease-in-out, padding 0.3s ease-in-out, opacity 0.3s ease; /* Add transitions */
-  opacity: 1;
+  flex-shrink: 0;
+  overflow: visible; /* Allow button to potentially overflow */
+  transition: width 0.3s ease-in-out; /* Only transition width */
 }
 
+/* Sidebar Toggle Button - Positioned within Sidebar */
+.sidebar-toggle-btn {
+  position: absolute;
+  top: 10px; /* Adjust position as needed */
+  right: -15px; /* Position slightly outside the default bar */
+  z-index: 10; /* Ensure button is above other content */
+  background: var(--card-background); /* Give it a background */
+  border: 1px solid var(--border-color);
+  border-radius: 50%; /* Make it round */
+  color: var(--text-color);
+  font-size: 1em; /* Adjust size */
+  cursor: pointer;
+  width: 30px; /* Explicit width */
+  height: 30px; /* Explicit height */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0; 
+  line-height: 1; 
+  transition: color 0.2s ease, transform 0.3s ease-in-out; /* Add transform transition */
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.sidebar-toggle-btn:hover {
+  color: var(--accent-color);
+  background-color: #3a3a3a; /* Slightly lighter background on hover */
+}
+
+/* Nav List Styles */
 .nav-list {
   list-style: none;
   padding: 0;
-  margin: 0;
-  flex-grow: 1; /* Allow list to grow */
+  /* Add top padding/margin to account for button */
+  margin: 40px 0 0 0; 
+  flex-grow: 1;
+  overflow-y: auto; /* Allow nav list itself to scroll if needed */
+  overflow-x: hidden;
+  opacity: 1;
+  transition: opacity 0.2s ease-in-out;
 }
 
 .nav-item {
@@ -108,11 +142,25 @@
   padding: 0.5em 1em 0.5em 1.5em;
   border-radius: 6px;
   transition: background-color 0.2s ease-in-out;
+  cursor: pointer;
 }
 
 .nav-item a:hover {
   background-color: rgba(255, 255, 255, 0.1); /* Subtle hover */
   color: var(--accent-hover-color); /* Use existing hover color */
+}
+
+/* Navigation Header Styles */
+.nav-header {
+  padding: 1.5em 1.5em 0.5em 1.5em; /* More top padding, less bottom */
+  font-size: 0.75em; /* Smaller font */
+  font-weight: 600; /* Bolder */
+  color: #a0a0a0; /* Lighter color */
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  /* Ensure it doesn't look like a clickable item */
+  cursor: default;
+  margin-bottom: 0.2em; /* Space before next item */
 }
 
 /* Styles for Collapsible Categories */
@@ -271,34 +319,167 @@ body {
   box-sizing: inherit; /* Inherit box-sizing from body */
 }
 
-/* Sidebar Toggle Button */
-.sidebar-toggle-btn {
-  background: none;
-  border: none;
-  color: var(--text-color);
-  font-size: 1.4em; /* Adjust size */
+/* Styles when sidebar is collapsed */
+.app-layout.sidebar-collapsed .sidebar {
+  width: 40px; /* Collapse to a small width */
+  padding: 0; /* Remove padding */
+  overflow: visible; /* Ensure button remains visible */
+  border-right: 1px solid var(--border-color); /* Keep border */
+}
+
+/* Hide nav list when collapsed */
+.app-layout.sidebar-collapsed .sidebar .nav-list {
+  opacity: 0;
+  pointer-events: none; /* Prevent interaction when hidden */
+}
+
+/* Adjust button position/appearance when collapsed */
+.app-layout.sidebar-collapsed .sidebar .sidebar-toggle-btn {
+  right: -15px; /* Keep position relative to the edge */
+  /* Optional: Rotate icon or change it */
+  /* transform: rotate(180deg); */ 
+}
+
+/* Dashboard Styles */
+.dashboard h2 {
+  margin-bottom: 1.5em;
+  font-weight: 600;
+  text-align: left;
+}
+
+.project-list {
+  display: grid;
+  /* Adjust grid columns as needed, e.g., repeat(auto-fill, minmax(300px, 1fr)) */
+  grid-template-columns: 1fr; /* Start with single column */
+  gap: 1.5em;
+}
+
+.project-item {
+  background-color: var(--card-background);
+  padding: 1.5em;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  text-align: left;
+}
+
+.project-item h3 {
+  margin-top: 0;
+  margin-bottom: 0.5em;
+  font-size: 1.1em;
+  font-weight: 500;
+}
+
+.project-item p {
+  margin-top: 0;
+  margin-bottom: 1em;
+  font-size: 0.9em;
+  color: #a0a0a0; /* Lighter text for usage details */
+}
+
+.usage-bar-container {
+  height: 10px; /* Bar height */
+  background-color: #444; /* Dark background for the bar track */
+  border-radius: 5px;
+  overflow: hidden;
+  width: 100%;
+}
+
+.usage-bar {
+  height: 100%;
+  background-color: var(--accent-color); /* Use accent color for the bar */
+  border-radius: 5px;
+  transition: width 0.3s ease-in-out;
+}
+
+.usage-bar.at-cap {
+  background-color: #ff6b6b; /* Red color when at/over cap */
+}
+
+/* Style for Active Nav Item */
+.nav-item.active > a,
+.nav-item.active > .nav-category-header /* Style header if category itself is active link */
+{
+  background-color: rgba(255, 255, 255, 0.15); /* Highlight active item */
+  font-weight: 500;
+  color: var(--text-color); /* Ensure text is readable */
+}
+
+/* Ensure active style applies correctly to sub-items too */
+.sub-nav-list .nav-item.active a {
+    background-color: rgba(255, 255, 255, 0.15);
+    font-weight: 500;
+    color: var(--text-color);
+}
+
+/* App List Styles within Project Item */
+.app-list {
+  margin-top: 1.5em;
+  padding-top: 1em;
+  border-top: 1px solid var(--border-color); /* Separator */
+}
+
+.app-list h4 {
+  margin-top: 0;
+  margin-bottom: 0.8em;
+  font-size: 0.95em;
+  font-weight: 500;
+  color: #c0c0c0; /* Slightly lighter heading */
+}
+
+.app-list ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.app-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.9em;
+  padding: 0.4em 0; /* Vertical padding for spacing */
+}
+
+.app-item-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.8em; /* Space between icons */
+}
+
+.key-icon, .settings-icon {
   cursor: pointer;
-  padding: 0 0.5em; /* Adjust padding */
-  line-height: 1; /* Ensure icon aligns well */
+  opacity: 0.7;
+  transition: opacity 0.2s ease;
+  font-size: 1.1em; /* Slightly larger icons */
+}
+
+.key-icon:hover, .settings-icon:hover {
+  opacity: 1;
+}
+
+/* Old .key-icon and .key-icon:hover rules are removed */
+
+/* Footer Bar Styles */
+.app-footer {
+  flex-shrink: 0; /* Prevent footer from shrinking */
+  padding: 0.8em 1.5em; /* Vertical and horizontal padding */
+  background-color: var(--card-background); /* Match other bars */
+  border-top: 1px solid var(--border-color); /* Separator */
+  display: flex;
+  justify-content: flex-start; /* Align links to the left */
+  align-items: center;
+  gap: 1.5em; /* Spacing between links */
+}
+
+.app-footer a {
+  color: #a0a0a0; /* Lighter text color for footer links */
+  text-decoration: none;
+  font-size: 0.85em;
   transition: color 0.2s ease;
 }
 
-.sidebar-toggle-btn:hover {
-  color: var(--accent-color);
+.app-footer a:hover {
+  color: var(--text-color); /* Slightly brighter on hover */
+  text-decoration: underline;
 }
-
-/* Styles when sidebar is collapsed */
-.app-layout.sidebar-collapsed .sidebar {
-  width: 0;
-  padding: 1.5em 0; /* Keep vertical padding consistent, remove horizontal */
-  overflow: hidden; /* Hide content when collapsed */
-  border-right: none; /* Hide border when collapsed */
-  opacity: 0;
-}
-
-/* We don't need to adjust margin-left anymore if the sidebar just shrinks */
-/* Commenting out potential margin adjustment if needed 
-.app-layout.sidebar-collapsed .main-content {
-  margin-left: 0; 
-}
-*/
