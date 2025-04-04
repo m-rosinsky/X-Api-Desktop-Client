@@ -1,0 +1,304 @@
+:root {
+  /* Dark Mode Defaults */
+  --background-color: #1a1a1a; /* Darker background */
+  --text-color: #e1e1e1; /* Lighter text */
+  --accent-color: #3391ff; /* Brighter blue accent */
+  --accent-hover-color: #58a6ff;
+  --card-background: #2a2a2a; /* Darker card/input background */
+  --input-text-color: #e1e1e1;
+  --border-color: #444; /* Subtle border for inputs/buttons */
+
+  font-family: Inter, Avenir, Helvetica, Arial, sans-serif;
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: 400;
+
+  color: var(--text-color);
+  background-color: var(--background-color);
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-text-size-adjust: 100%;
+}
+
+/* Remove remaining redundant styles */
+/* .logo, .logo.tauri:hover, .row, a, a:hover, h1, input/button blocks, #greet-input */
+
+/* Top Level Layout */
+.root-layout {
+  display: flex;
+  flex-direction: column; /* Stack top-nav and app-layout vertically */
+  height: 100vh;
+  overflow: hidden; /* Prevent scrolling at the very top level */
+}
+
+/* Top Navigation Bar */
+.top-nav {
+  height: 50px; /* Adjust height as needed */
+  background-color: var(--card-background); /* Use dark card background */
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  padding: 0 1.5em; /* Horizontal padding */
+  flex-shrink: 0; /* Prevent top bar from shrinking */
+}
+
+.top-nav-content {
+  width: 100%;
+  display: flex;
+  justify-content: space-between; /* Space out left and right sections */
+  align-items: center;
+  color: var(--text-color);
+}
+
+.top-nav-left, .top-nav-right {
+  display: flex;
+  align-items: center;
+}
+
+.top-nav-left {
+  gap: 1em; /* Spacing between toggle button and logo */
+}
+
+/* Style for logo in top nav */
+.top-nav-logo img {
+  height: 30px; /* Adjust size for top bar */
+  display: block; /* Prevents extra space below image */
+}
+
+/* Adjust App Layout */
+.app-layout {
+  display: flex;
+  /* height: 100vh; Remove fixed height, let it fill remaining space */
+  flex-grow: 1; /* Allow app-layout to fill remaining vertical space */
+  overflow: hidden; /* Prevent app-layout from causing double scrollbars */
+}
+
+/* Adjust Sidebar */
+.sidebar {
+  width: 220px; /* Adjust width as needed */
+  background-color: var(--card-background); /* Use dark card background */
+  padding: 1.5em 0;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--border-color);
+  flex-shrink: 0; /* Prevent sidebar from shrinking */
+  overflow-y: auto; /* Allow sidebar content to scroll if needed */
+  transition: width 0.3s ease-in-out, padding 0.3s ease-in-out, opacity 0.3s ease; /* Add transitions */
+  opacity: 1;
+}
+
+.nav-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  flex-grow: 1; /* Allow list to grow */
+}
+
+.nav-item {
+  margin-bottom: 0.8em;
+}
+
+.nav-item a {
+  color: var(--text-color);
+  text-decoration: none;
+  display: block;
+  padding: 0.5em 1em 0.5em 1.5em;
+  border-radius: 6px;
+  transition: background-color 0.2s ease-in-out;
+}
+
+.nav-item a:hover {
+  background-color: rgba(255, 255, 255, 0.1); /* Subtle hover */
+  color: var(--accent-hover-color); /* Use existing hover color */
+}
+
+/* Styles for Collapsible Categories */
+.nav-category .nav-category-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5em 1em 0.5em 1.5em;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: background-color 0.2s ease-in-out;
+  color: var(--text-color);
+}
+
+.nav-category .nav-category-header:hover {
+  background-color: rgba(255, 255, 255, 0.1); /* Subtle hover like links */
+}
+
+.nav-category .expand-icon {
+  font-size: 0.8em;
+  margin-left: 0.5em;
+  transition: transform 0.2s ease-in-out;
+}
+
+.nav-category.expanded .expand-icon {
+  /* Optional: Rotate icon */
+  /* transform: rotate(90deg); */
+}
+
+.sub-nav-list {
+  list-style: none;
+  padding: 0 0 0 2.5em;
+  margin: 0.5em 0 0 0;
+  overflow: hidden; /* Needed for smooth transition */
+  max-height: 0; /* Collapsed by default */
+  transition: max-height 0.3s ease-in-out; /* Smooth expand/collapse */
+}
+
+.nav-category.expanded .sub-nav-list {
+  max-height: 500px; /* Set a large enough max-height for expanded state */
+}
+
+/* Style sub-items slightly differently if needed */
+.sub-nav-list .nav-item a {
+  padding: 0.4em 1em; /* Slightly less padding */
+  font-size: 0.95em; /* Slightly smaller font */
+}
+
+/* Adjust styles previously on .container to apply to .main-content */
+.main-content {
+  flex-grow: 1; /* Take remaining space */
+  padding: 2em; /* Add padding around main content */
+  overflow-y: auto; /* Allow scrolling if content overflows */
+  transition: margin-left 0.3s ease-in-out; /* Smooth transition */
+  /* Keep display flex and centering for the inner .content div if needed */
+}
+
+/* Styles previously on .container that affect alignment/padding might now belong inside .main-content or on .content */
+.main-content .content {
+  /* Re-apply centering/flex properties if needed for the content itself */
+  /* Example: If you want the content centered like before */
+   display: flex;
+   flex-direction: column;
+   justify-content: flex-start; /* Start from top */
+   align-items: center;
+   text-align: center;
+   /* padding-top: 10vh; - Removed, use padding on main-content */
+   margin: 0; /* Reset margin */
+}
+
+/* Keep existing .logo styles, but they are now inside .main-content .content */
+.main-content .logo {
+  height: 6em;
+  padding: 1.5em;
+  will-change: filter;
+  transition: 0.75s;
+}
+
+.main-content .logo.tauri:hover {
+  filter: drop-shadow(0 0 2em #24c8db);
+}
+
+/* Prefix other content-specific styles */
+.main-content .content .logo.vite:hover {
+  filter: drop-shadow(0 0 2em #747bff);
+}
+
+.main-content .content .logo.react:hover {
+  filter: drop-shadow(0 0 2em #61dafb);
+}
+
+.main-content .content .row {
+  display: flex;
+  justify-content: center;
+}
+
+/* General link style scoped to main content */
+.main-content .content a {
+  font-weight: 500;
+  color: var(--accent-color);
+  text-decoration: inherit;
+}
+
+.main-content .content a:hover {
+  color: var(--accent-hover-color);
+}
+
+.main-content .content h1 {
+  text-align: center;
+}
+
+.main-content .content input,
+.main-content .content button {
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  color: var(--input-text-color);
+  background-color: var(--card-background);
+  transition: border-color 0.25s, background-color 0.25s, color 0.25s;
+  box-shadow: 0 2px 2px rgba(0, 0, 0, 0.2);
+  outline: none; /* Combined outline style */
+}
+
+.main-content .content button {
+  cursor: pointer;
+}
+
+.main-content .content button:hover {
+  border-color: #396cd8;
+}
+
+.main-content .content button:active {
+  border-color: #396cd8;
+  background-color: #3a3a3a;
+}
+
+.main-content .content #greet-input {
+  margin-right: 5px;
+}
+
+/* Remove original global/container styles that have been prefixed */
+/* The original .logo styles, .row, a, a:hover, h1, input/button styles etc. can be removed */
+/* Or ensure they are deleted if the edit tool replaces sections */
+
+/* Basic CSS Reset */
+body {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box; /* Include padding and border in element's total width and height */
+}
+
+*, *::before, *::after {
+  box-sizing: inherit; /* Inherit box-sizing from body */
+}
+
+/* Sidebar Toggle Button */
+.sidebar-toggle-btn {
+  background: none;
+  border: none;
+  color: var(--text-color);
+  font-size: 1.4em; /* Adjust size */
+  cursor: pointer;
+  padding: 0 0.5em; /* Adjust padding */
+  line-height: 1; /* Ensure icon aligns well */
+  transition: color 0.2s ease;
+}
+
+.sidebar-toggle-btn:hover {
+  color: var(--accent-color);
+}
+
+/* Styles when sidebar is collapsed */
+.app-layout.sidebar-collapsed .sidebar {
+  width: 0;
+  padding: 1.5em 0; /* Keep vertical padding consistent, remove horizontal */
+  overflow: hidden; /* Hide content when collapsed */
+  border-right: none; /* Hide border when collapsed */
+  opacity: 0;
+}
+
+/* We don't need to adjust margin-left anymore if the sidebar just shrinks */
+/* Commenting out potential margin adjustment if needed 
+.app-layout.sidebar-collapsed .main-content {
+  margin-left: 0; 
+}
+*/
