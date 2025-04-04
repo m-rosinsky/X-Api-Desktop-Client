@@ -78,7 +78,7 @@
 
 /* Adjust Sidebar */
 .sidebar {
-  position: relative; /* Needed for absolute positioning of button */
+  position: relative;
   width: 220px; 
   background-color: var(--card-background);
   padding: 1.5em 0; 
@@ -86,53 +86,24 @@
   flex-direction: column;
   border-right: 1px solid var(--border-color);
   flex-shrink: 0;
-  overflow: visible; /* Allow button to potentially overflow */
-  transition: width 0.3s ease-in-out; /* Only transition width */
-}
-
-/* Sidebar Toggle Button - Positioned within Sidebar */
-.sidebar-toggle-btn {
-  position: absolute;
-  top: 10px; /* Adjust position as needed */
-  right: -15px; /* Position slightly outside the default bar */
-  z-index: 10; /* Ensure button is above other content */
-  background: var(--card-background); /* Give it a background */
-  border: 1px solid var(--border-color);
-  border-radius: 50%; /* Make it round */
-  color: var(--text-color);
-  font-size: 1em; /* Adjust size */
-  cursor: pointer;
-  width: 30px; /* Explicit width */
-  height: 30px; /* Explicit height */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0; 
-  line-height: 1; 
-  transition: color 0.2s ease, transform 0.3s ease-in-out; /* Add transform transition */
-  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-}
-
-.sidebar-toggle-btn:hover {
-  color: var(--accent-color);
-  background-color: #3a3a3a; /* Slightly lighter background on hover */
+  overflow-y: auto; /* Revert overflow if needed */
 }
 
 /* Nav List Styles */
 .nav-list {
   list-style: none;
   padding: 0;
-  /* Add top padding/margin to account for button */
-  margin: 40px 0 0 0; 
+  /* Revert top margin */
+  margin: 0; 
   flex-grow: 1;
-  overflow-y: auto; /* Allow nav list itself to scroll if needed */
+  overflow-y: auto; 
   overflow-x: hidden;
   opacity: 1;
-  transition: opacity 0.2s ease-in-out;
+  /* Remove opacity transition */
 }
 
 .nav-item {
-  margin-bottom: 0.8em;
+  /* Removed margin-bottom: 0.8em; */
 }
 
 .nav-item a {
@@ -141,26 +112,72 @@
   display: block;
   padding: 0.5em 1em 0.5em 1.5em;
   border-radius: 6px;
-  transition: background-color 0.2s ease-in-out;
+  transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
   cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Left highlight bar */
+.nav-item a::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 60%;
+  width: 3px;
+  background-color: var(--accent-color);
+  opacity: 0;
+  transition: opacity 0.2s ease-in-out;
+  border-radius: 0 2px 2px 0;
 }
 
 .nav-item a:hover {
-  background-color: rgba(255, 255, 255, 0.1); /* Subtle hover */
-  color: var(--accent-hover-color); /* Use existing hover color */
+  background-color: rgba(255, 255, 255, 0.08);
+  color: var(--text-color);
+}
+
+/* Show highlight bar on hover */
+.nav-item a:hover::before {
+  opacity: 1;
 }
 
 /* Navigation Header Styles */
 .nav-header {
-  padding: 1.5em 1.5em 0.5em 1.5em; /* More top padding, less bottom */
-  font-size: 0.75em; /* Smaller font */
-  font-weight: 600; /* Bolder */
-  color: #a0a0a0; /* Lighter color */
+  position: relative; /* Needed for pseudo-element */
+  padding: 1.5em 1.5em 0.5em 1.5em; /* Increased top padding for line */
+  font-size: 0.75em; 
+  font-weight: 600; 
+  color: #a0a0a0; 
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  /* Ensure it doesn't look like a clickable item */
   cursor: default;
-  margin-bottom: 0.2em; /* Space before next item */
+  margin-bottom: 0.2em; 
+  /* Remove direct border and margin */
+  /* border-top: 1px solid var(--border-color); */
+  /* margin-top: 1em; */
+}
+
+/* Add the separator line using ::before */
+.nav-header::before {
+  content: '';
+  position: absolute;
+  top: 0.5em; /* Position the line with spacing */
+  left: 1.5em; /* Match left padding */
+  right: 1.5em; /* Match right padding (creates width) */
+  height: 1px;
+  background-color: var(--border-color);
+}
+
+/* Remove top border/line and adjust padding for the very first header */
+.nav-list > .nav-header:first-child {
+  /* Remove the ::before pseudo-element */
+  padding-top: 1.5em; /* Restore original top padding */
+}
+
+.nav-list > .nav-header:first-child::before {
+    display: none; 
 }
 
 /* Styles for Collapsible Categories */
@@ -171,12 +188,35 @@
   padding: 0.5em 1em 0.5em 1.5em;
   cursor: pointer;
   border-radius: 6px;
-  transition: background-color 0.2s ease-in-out;
+  transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
   color: var(--text-color);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Left highlight bar for category header */
+.nav-category .nav-category-header::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 60%;
+  width: 3px;
+  background-color: var(--accent-color);
+  opacity: 0;
+  transition: opacity 0.2s ease-in-out;
+  border-radius: 0 2px 2px 0;
 }
 
 .nav-category .nav-category-header:hover {
-  background-color: rgba(255, 255, 255, 0.1); /* Subtle hover like links */
+  background-color: rgba(255, 255, 255, 0.08);
+  color: var(--text-color);
+}
+
+/* Show highlight bar on category hover */
+.nav-category .nav-category-header:hover::before {
+  opacity: 1;
 }
 
 .nav-category .expand-icon {
@@ -186,8 +226,7 @@
 }
 
 .nav-category.expanded .expand-icon {
-  /* Optional: Rotate icon */
-  /* transform: rotate(90deg); */
+  transform: rotate(90deg);
 }
 
 .sub-nav-list {
@@ -205,8 +244,8 @@
 
 /* Style sub-items slightly differently if needed */
 .sub-nav-list .nav-item a {
-  padding: 0.4em 1em; /* Slightly less padding */
-  font-size: 0.95em; /* Slightly smaller font */
+  padding: 0.4em 1em 0.4em 2.5em;
+  font-size: 0.95em;
 }
 
 /* Adjust styles previously on .container to apply to .main-content */
@@ -319,27 +358,6 @@ body {
   box-sizing: inherit; /* Inherit box-sizing from body */
 }
 
-/* Styles when sidebar is collapsed */
-.app-layout.sidebar-collapsed .sidebar {
-  width: 40px; /* Collapse to a small width */
-  padding: 0; /* Remove padding */
-  overflow: visible; /* Ensure button remains visible */
-  border-right: 1px solid var(--border-color); /* Keep border */
-}
-
-/* Hide nav list when collapsed */
-.app-layout.sidebar-collapsed .sidebar .nav-list {
-  opacity: 0;
-  pointer-events: none; /* Prevent interaction when hidden */
-}
-
-/* Adjust button position/appearance when collapsed */
-.app-layout.sidebar-collapsed .sidebar .sidebar-toggle-btn {
-  right: -15px; /* Keep position relative to the edge */
-  /* Optional: Rotate icon or change it */
-  /* transform: rotate(180deg); */ 
-}
-
 /* Dashboard Styles */
 .dashboard h2 {
   margin-bottom: 1.5em;
@@ -363,11 +381,49 @@ body {
   text-align: left;
 }
 
-.project-item h3 {
-  margin-top: 0;
-  margin-bottom: 0.5em;
+.project-header {
+  display: flex;
+  align-items: baseline; /* Align name and package text */
+  gap: 0.8em;
+  margin-bottom: 0.5em; /* Space below header */
+}
+
+.project-header h3 {
+  margin: 0; /* Remove default margin */
   font-size: 1.1em;
   font-weight: 500;
+}
+
+.project-package {
+  font-size: 0.75em;
+  font-weight: 600;
+  padding: 0.2em 0.6em;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background-color: #555; /* Default background */
+  color: #eee; /* Default text color */
+}
+
+/* Optional: Add specific styles for different packages */
+.package-free {
+  background-color: #6c757d; /* Grey */
+  color: #fff; /* Ensure contrast */
+}
+
+.package-basic {
+  background-color: #3b71ca; /* Darker Blue */
+  color: #fff; /* Ensure contrast */
+}
+
+.package-enterprise {
+  background-color: #b02a37; /* Darker Red */
+  color: #fff; /* Ensure contrast */
+}
+
+.package-partner {
+  background-color: #146c43; /* Darker Green */
+  color: #fff; /* Ensure contrast */
 }
 
 .project-item p {
@@ -398,11 +454,16 @@ body {
 
 /* Style for Active Nav Item */
 .nav-item.active > a,
-.nav-item.active > .nav-category-header /* Style header if category itself is active link */
-{
-  background-color: rgba(255, 255, 255, 0.15); /* Highlight active item */
+.nav-item.active > .nav-category-header {
+  background-color: rgba(255, 255, 255, 0.15);
   font-weight: 500;
-  color: var(--text-color); /* Ensure text is readable */
+  color: var(--text-color);
+}
+
+/* Optional: Keep highlight bar visible for active items */
+.nav-item.active > a::before,
+.nav-item.active > .nav-category-header::before {
+  opacity: 1;
 }
 
 /* Ensure active style applies correctly to sub-items too */
@@ -441,6 +502,18 @@ body {
   padding: 0.4em 0; /* Vertical padding for spacing */
 }
 
+.app-item-info {
+  display: flex;
+  align-items: center;
+  gap: 0.6em; /* Space between icon and name */
+}
+
+.app-icon {
+  font-size: 1.2em; /* Adjust icon size if needed */
+  display: inline-flex; /* Helps vertical alignment */
+  align-items: center;
+}
+
 .app-item-actions {
   display: flex;
   align-items: center;
@@ -467,7 +540,7 @@ body {
   background-color: var(--card-background); /* Match other bars */
   border-top: 1px solid var(--border-color); /* Separator */
   display: flex;
-  justify-content: flex-start; /* Align links to the left */
+  justify-content: center; /* Changed from flex-start */
   align-items: center;
   gap: 1.5em; /* Spacing between links */
 }
@@ -482,4 +555,313 @@ body {
 .app-footer a:hover {
   color: var(--text-color); /* Slightly brighter on hover */
   text-decoration: underline;
+}
+
+/* App Selector Styles (Custom Dropdown) */
+.api-header-section {
+  padding: 0 0 1.5em 0; /* Bottom padding for separation */
+  margin-bottom: 1.5em; /* Space below header section */
+  border-bottom: 1px solid var(--border-color); /* Separator line for the whole section */
+}
+
+/* Container for Selector and Package Label */
+.selector-and-package {
+  display: flex;
+  justify-content: center; /* Center the items */
+  align-items: center;
+  gap: 1em; /* Space between dropdown and package label */
+}
+
+.app-selector-container {
+  /* Remove justify-content: center; - Handled by parent */
+  display: flex;
+  align-items: center;
+  padding: 1em 0 1em 0; 
+  position: relative; 
+}
+
+/* Remove old label style */
+/* .app-selector-container label { ... } */
+
+.custom-app-selector {
+  position: relative; 
+  min-width: 250px; 
+}
+
+.selector-button {
+  background-color: var(--card-background);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 0.6em 1em;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  color: var(--text-color);
+  font-size: 0.9em;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.selector-button-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between; /* Space left and right sections */
+  width: 100%;
+}
+
+.selector-button-left {
+  display: flex;
+  align-items: center;
+  /* Allow shrinking if needed, prevent overflow */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-right: 1em; /* Space between name and package/arrow */
+}
+
+.selector-button-right {
+  display: flex;
+  align-items: center;
+  /* Remove gap if only arrow is present */
+  /* gap: 0.6em; */ 
+  flex-shrink: 0; 
+}
+
+/* Remove package label style from within the button */
+/* .selector-button-right .project-package { ... } */
+
+/* Adjust stand-alone package label style if needed */
+.selector-and-package > .project-package {
+  /* Keep general .project-package styles */
+  /* Add any specific adjustments here if needed */
+  white-space: nowrap; /* Prevent wrapping */
+}
+
+.selector-button:hover {
+  border-color: #666;
+}
+
+.selector-button.has-selection span {
+  /* Styles for when an app IS selected */
+  color: var(--text-color);
+}
+
+.selector-button:not(.has-selection) span {
+  /* Styles for placeholder text */
+  color: #888;
+}
+
+.selector-app-icon {
+  margin-right: 0.7em;
+  font-size: 1.1em;
+  display: inline-flex;
+  align-items: center;
+}
+
+.dropdown-arrow {
+  font-size: 0.7em;
+  transition: transform 0.2s ease-in-out;
+  margin-left: 0.5em;
+}
+
+.dropdown-arrow.open {
+  transform: rotate(180deg);
+}
+
+.dropdown-options {
+  position: absolute;
+  top: 105%; /* Position below the button */
+  left: 0;
+  right: 0;
+  background-color: #3a3a3a; /* Slightly darker dropdown background */
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  list-style: none;
+  padding: 0.5em 0;
+  margin: 0;
+  z-index: 20; /* Ensure dropdown is above other content */
+  max-height: 200px; /* Limit height and allow scroll */
+  overflow-y: auto;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+}
+
+.dropdown-options li {
+  padding: 0.6em 1em;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  transition: background-color 0.15s ease;
+}
+
+.dropdown-options li:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+/* Prevent hover effect on project headers */
+.dropdown-options li.dropdown-project-header:hover {
+  background-color: transparent; /* Override hover effect */
+  cursor: default;
+}
+
+.dropdown-options li.selected {
+  background-color: rgba(51, 145, 255, 0.2); /* Accent color background for selected */
+  font-weight: 500;
+}
+
+.dropdown-project-header {
+  padding: 0.6em 1em 0.2em 1em; /* Adjust padding */
+  font-size: 0.8em;
+  font-weight: 600;
+  color: #a0a0a0; /* Lighter color */
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  cursor: default; /* Not clickable */
+  margin-top: 0.5em; /* Space above header */
+  border-top: 1px solid #555; /* Separator line */
+}
+
+.dropdown-project-header:first-of-type {
+  margin-top: 0;
+  border-top: none;
+}
+
+.dropdown-project-header-content {
+  display: flex;
+  align-items: baseline; /* Align name and package text */
+  justify-content: space-between; /* Push package label to the right */
+  width: 100%; /* Ensure it takes full width */
+}
+
+/* Adjust package label size/padding slightly for dropdown */
+.dropdown-project-header-content .project-package {
+  font-size: 0.7em; 
+  padding: 0.15em 0.5em;
+}
+
+/* Remove old native select style */
+/* .app-selector { ... } */
+
+/* Style for the content area below the selector */
+.view-content {
+  padding: 0 1em; /* Add some padding to main view content */
+}
+
+/* Usage Preview Styles (API Screens) */
+.api-usage-preview {
+  padding: 0em 2em 0.5em 2em; /* Adjusted padding */
+}
+
+.api-usage-preview p {
+  margin: 0 0 0.6em 0;
+  font-size: 0.85em;
+  color: #a0a0a0;
+  text-align: center;
+}
+
+/* Reuse existing usage bar styles, but center the container */
+.api-usage-preview .usage-bar-container {
+  max-width: 400px; /* Limit width */
+  margin: 0 auto; /* Center the bar container */
+}
+
+/* Style for the label */
+.app-selector-label {
+  margin-right: 0.8em;
+  font-size: 0.9em;
+  color: #a0a0a0;
+}
+
+/* Dashboard Layout Styles */
+.dashboard-layout {
+  display: flex;
+  gap: 2em; /* Space between main content and sidebar */
+}
+
+.dashboard-main {
+  flex-grow: 1; /* Allow main content to take available space */
+  min-width: 0; /* Prevent flex items from overflowing */
+}
+
+.dashboard-main h2 {
+  margin-bottom: 1.5em;
+  font-weight: 600;
+  text-align: left;
+}
+
+.dashboard-sidebar {
+  width: 280px; /* Adjust width as needed */
+  flex-shrink: 0; /* Prevent sidebar from shrinking */
+  border-left: 1px solid var(--border-color); /* Separator */
+  padding-left: 2em; /* Space inside sidebar */
+}
+
+.dashboard-sidebar h3 {
+  font-size: 1em;
+  font-weight: 600;
+  color: #c0c0c0;
+  margin-top: 0; /* Remove top margin for first header */
+  margin-bottom: 1em;
+  padding-bottom: 0.5em;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.dashboard-sidebar h3:not(:first-child) {
+  margin-top: 2em; /* Space above subsequent headers */
+}
+
+.info-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  font-size: 0.9em;
+}
+
+.info-list li {
+  margin-bottom: 0.8em;
+  color: #a0a0a0;
+}
+
+.info-list.links li a {
+  color: var(--accent-color); /* Use accent for links */
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.info-list.links li a:hover {
+  color: var(--accent-hover-color);
+  text-decoration: underline;
+}
+
+.app-environment-group {
+  margin-top: 1em; /* Space between environment groups */
+}
+
+.app-environment-group:first-child {
+  margin-top: 0.5em; /* Less space for the first group */
+}
+
+.app-environment-group h5 {
+  font-size: 0.8em;
+  font-weight: 600;
+  color: #888; /* Subdued color for env header */
+  margin: 0 0 0.5em 0;
+  padding-left: 0.2em; /* Align slightly */
+  text-transform: capitalize;
+}
+
+.app-environment-group ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+/* REMOVE Environment header within dropdown */
+/* .dropdown-env-header { ... } */
+
+/* REMOVE Prevent hover effect on env headers */
+/* .dropdown-options li.dropdown-env-header:hover { ... } */
+
+/* REMOVE/REVERT Indent app items under env header */
+.dropdown-options li:not(.dropdown-project-header) {
+   padding-left: 1.5em; /* Revert to a standard indent, or adjust as needed */
 }
