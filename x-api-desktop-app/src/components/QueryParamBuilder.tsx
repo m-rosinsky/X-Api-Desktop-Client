@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { QueryParam } from '../types';
-import '../styles/query-param-builder.css'; // Create this CSS file next
+import { ChevronDown } from 'lucide-react'; // Import an icon for the dropdown
+import '../styles/query-param-builder.css';
 
 interface QueryParamBuilderProps {
   params: QueryParam[];
-  onChange: (activeParams: Record<string, string>) => void; // Callback with current param values
+  onChange: (activeParams: Record<string, string>) => void;
 }
 
 interface ActiveParamsState {
@@ -15,27 +16,31 @@ interface ActiveParamsState {
 }
 
 const QueryParamBuilder: React.FC<QueryParamBuilderProps> = ({ params, onChange }) => {
-  // Initialize state based on params, defaulting required params to active
-  const initialState = params.reduce<ActiveParamsState>((acc, param) => {
+  const initialState = useCallback(() => params.reduce<ActiveParamsState>((acc, param) => {
     acc[param.name] = { isActive: param.required ?? false, value: '' };
     return acc;
-  }, {});
+  }, {}), [params]);
 
-  const [activeParams, setActiveParams] = useState<ActiveParamsState>(initialState);
-  const [isOpen, setIsOpen] = useState(false); // Dropdown open state
-  const builderRef = useRef<HTMLDivElement>(null); // Ref for click outside
+  const [activeParams, setActiveParams] = useState<ActiveParamsState>(initialState());
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [hoveredParamName, setHoveredParamName] = useState<string | null>(null); // State for hovered param
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Handle checkbox change
+  // Handler for checkbox change
   const handleCheckboxChange = (paramName: string, isChecked: boolean) => {
+    // Required params cannot be unchecked
+    const paramDefinition = params.find(p => p.name === paramName);
+    if (paramDefinition?.required && !isChecked) {
+      return; 
+    }
+
     setActiveParams(prev => ({
       ...prev,
-      [paramName]: { ...prev[paramName], isActive: isChecked },
+      [paramName]: { ...prev[paramName], isActive: isChecked, value: isChecked ? prev[paramName].value : '' }, // Clear value on uncheck
     }));
-    // Keep dropdown open when checking/unchecking? Optional.
-    // setIsOpen(false); // Uncomment to close dropdown on selection
   };
 
-  // Handle input change
+  // Handler for input change
   const handleInputChange = (paramName: string, value: string) => {
     setActiveParams(prev => ({
       ...prev,
@@ -43,124 +48,147 @@ const QueryParamBuilder: React.FC<QueryParamBuilderProps> = ({ params, onChange 
     }));
   };
 
-  // Notify parent component of changes whenever activeParams state updates
+  // Notify parent component of changes
   useEffect(() => {
     const currentParamValues: Record<string, string> = {};
     for (const name in activeParams) {
-      if (activeParams[name].isActive) {
+      if (activeParams[name]?.isActive) {
         currentParamValues[name] = activeParams[name].value;
       }
     }
     onChange(currentParamValues);
   }, [activeParams, onChange]);
 
-  // Reset state if the params prop changes (e.g., different endpoint selected)
+  // Reset state if params prop changes
   useEffect(() => {
-    const newState = params.reduce<ActiveParamsState>((acc, param) => {
-        acc[param.name] = { isActive: param.required ?? false, value: '' };
-        return acc;
-      }, {});
-      setActiveParams(newState);
-      setIsOpen(false); // Close dropdown when params change
-  }, [params])
+    setActiveParams(initialState());
+    setIsDropdownOpen(false); // Close dropdown when params change
+  }, [params, initialState]);
 
-  // Click outside handler
+  // Click outside handler for the dropdown
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (builderRef.current && !builderRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
       }
     };
-    document.addEventListener('mousedown', handleClickOutside);
+    if (isDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    } else {
+      document.removeEventListener('mousedown', handleClickOutside);
+    }
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+  }, [isDropdownOpen]);
 
   if (!params || params.length === 0) {
     return <div className="query-param-builder-empty">No query parameters available for this endpoint.</div>;
   }
 
-  const activeCount = Object.values(activeParams).filter(p => p.isActive).length;
+  // Sort params: required first, then alphabetically
+  const sortedParams = [...params].sort((a, b) => {
+    if (a.required !== b.required) {
+      return a.required ? -1 : 1; // Required params first
+    }
+    return a.name.localeCompare(b.name); // Then alphabetical
+  });
+
+  const activeParamCount = Object.values(activeParams).filter(p => p.isActive).length;
+
+  // Find description for the currently hovered parameter
+  const hoveredParam = hoveredParamName ? params.find(p => p.name === hoveredParamName) : null;
 
   return (
-    <div className="query-param-builder" ref={builderRef}> {/* Add ref */}
-      {/* Dropdown Button */}
-      <div className="query-param-selector">
-        <button 
-          type="button"
-          className={`selector-button query-param-button ${activeCount > 0 ? 'has-selection' : ''}`}
-          onClick={() => setIsOpen(!isOpen)}
-        >
-           <div className="selector-button-content">
-             <div className="selector-button-left">
-                <span>Query Parameters {activeCount > 0 ? `(${activeCount} active)` : ''}</span>
-            </div>
-            <div className="selector-button-right">
-              <span className={`dropdown-arrow ${isOpen ? 'open' : ''}`}>▼</span>
-            </div>
-          </div>
-        </button>
+    <div className="query-param-builder">
+      {/* Moved label outside */}
+      <h3 className="query-param-label">Query Parameters</h3>
 
-        {/* Dropdown List */}
-        {isOpen && (
-          <ul className="dropdown-options query-param-dropdown">
-            {params.map((param) => {
-              const paramState = activeParams[param.name];
-              const inputId = `param-check-${param.name}`; // Unique ID for checkbox
-              return (
-                <li key={param.name} className="param-item-dropdown">
-                  <div className="param-header">
-                    <input 
-                      type="checkbox" 
-                      id={inputId} 
-                      checked={paramState.isActive}
-                      onChange={(e) => handleCheckboxChange(param.name, e.target.checked)}
-                      disabled={param.required}
-                      title={param.required ? "This parameter is required and cannot be unchecked." : undefined}
-                    />
-                    <label htmlFor={inputId} className={param.required ? 'required' : ''}>
-                      {param.name}
-                      {param.required && <span className="required-badge">Required</span>}
-                    </label>
-                  </div>
-                  {param.description && <p className="param-description">{param.description}</p>}
-                </li>
-              );
-            })}
-          </ul>
-        )}
-      </div>
+      {/* Wrapper for visual grouping */}
+      <div className="query-param-grouped-section">
+        {/* Dropdown Section */}
+        <div className="query-param-dropdown-section" ref={dropdownRef}>
+          <button 
+            type="button"
+            className="query-param-dropdown-button"
+            onClick={() => setIsDropdownOpen(prev => !prev)}
+          >
+            <span>{activeParamCount} Selected</span>
+            <ChevronDown size={16} className={`dropdown-chevron ${isDropdownOpen ? 'open' : ''}`} />
+          </button>
 
-      {/* Input Area - Rendered below dropdown based on state */}
-      <div className="param-inputs-container">
-        {params.map((param) => {
-          const paramState = activeParams[param.name];
-          const paramDefinition = params.find(p => p.name === param.name);
-
-          return (
-            paramState.isActive && (
-              <div key={`input-${param.name}`} className="param-input-item">
-                 <label htmlFor={`input-val-${param.name}`}>
-                   {/* Move badge before name if required */}
-                   {paramDefinition?.required && <span className="required-badge">Required</span>} 
-                   {param.name}:
-                 </label>
-                 <div className="param-input-area">
-                    <input 
-                      id={`input-val-${param.name}`}
-                      type="text" 
-                      placeholder={param.example ? param.example : `Enter value for ${param.name}...`}
-                      value={paramState.value}
-                      onChange={(e) => handleInputChange(param.name, e.target.value)}
-                      spellCheck="false"
-                      autoCorrect="off"
-                      autoCapitalize="off"
-                    />
-                 </div>
+          {isDropdownOpen && (
+            <div className="dropdown-layout-container"> {/* New wrapper for list + description */}
+              <div className="query-param-dropdown-list">
+                <ul>
+                  {sortedParams.map((param) => (
+                    <li 
+                      key={param.name} 
+                      className="dropdown-param-item"
+                      onMouseEnter={() => setHoveredParamName(param.name)} // Set hovered param on enter
+                      onMouseLeave={() => setHoveredParamName(null)}      // Clear on leave
+                    >
+                      <label> {/* Removed title attribute */}
+                        <input
+                          type="checkbox"
+                          checked={activeParams[param.name]?.isActive || false}
+                          onChange={(e) => handleCheckboxChange(param.name, e.target.checked)}
+                          disabled={param.required}
+                        />
+                        <span>{param.name}</span>
+                        {/* Description indicator removed from here */}
+                      </label>
+                    </li>
+                  ))}
+                </ul>
               </div>
-            )
-          );
-        })}
-      </div>
+              {/* Description Panel */}
+              <div className="dropdown-description-panel">
+                {hoveredParam ? (
+                  <>
+                    <h4>{hoveredParam.name}</h4>
+                    <p>{hoveredParam.description || 'No description available.'}</p>
+                  </>
+                ) : (
+                  null /* Render nothing if nothing is hovered */
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Input Area */}
+        {(activeParamCount > 0) && (
+            <div className="param-inputs-container">
+              {sortedParams.map((param) => { // Iterate sorted params to maintain order
+                const paramState = activeParams[param.name];
+                
+                return (
+                  paramState?.isActive && (
+                    <div key={`input-${param.name}`} className="param-input-item">
+                      <label htmlFor={`input-val-${param.name}`}>
+                        {/* Badge for required - Can be styled differently or removed if indicator in dropdown is enough */}
+                        {param.required && <span className="required-badge">Required</span>} 
+                        {param.name}:
+                      </label>
+                      <div className="param-input-area">
+                          <input 
+                            id={`input-val-${param.name}`}
+                            type="text" 
+                            placeholder={param.example ? param.example : `Enter value for ${param.name}...`}
+                            value={paramState.value}
+                            onChange={(e) => handleInputChange(param.name, e.target.value)}
+                            spellCheck="false"
+                            autoCorrect="off"
+                            autoCapitalize="off"
+                          />
+                          {/* No remove button needed as unchecking the box handles removal */}
+                      </div>
+                    </div>
+                  )
+                );
+              })}
+            </div>
+        )}
+      </div> {/* End of query-param-grouped-section */}
     </div>
   );
 };

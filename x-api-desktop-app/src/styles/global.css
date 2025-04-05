@@ -147,4 +147,18 @@ body {
   color: #fff; 
   margin-right: 0.6em; 
   vertical-align: middle; 
+}
+
+/* Add styles for input placeholders */
+::placeholder {
+  color: rgba(156, 156, 156, 0.4); /* Adjust opacity for dimness */
+  font-style: italic;
+  font-family: inherit; /* Inherit font family */
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: rgba(156, 156, 156, 0.4); /* Apply specifically to input and textarea */
+  font-style: italic;
+  font-family: inherit; /* Inherit font family */
 } 

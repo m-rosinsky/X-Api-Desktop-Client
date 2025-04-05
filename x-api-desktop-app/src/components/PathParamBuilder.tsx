@@ -26,45 +26,52 @@ const PathParamBuilder: React.FC<PathParamBuilderProps> = ({ params, values, onC
 
   return (
     <div className="path-param-builder">
-      <h4>Path Parameters</h4>
-      {params.map((param) => {
-        const inputId = `path-param-${param.name}`;
-        const isDescriptionVisible = visibleDescriptions[param.name] || false;
+      <h4 className="path-param-label">Path Parameters</h4>
+      
+      <div className="path-param-grouped-section">
+        {params.map((param) => {
+          const inputId = `path-param-${param.name}`;
+          const isDescriptionVisible = visibleDescriptions[param.name] || false;
 
-        return (
-          <div key={param.name} className="path-param-item">
-            <label htmlFor={inputId}>
-              <span className="required-badge">Required</span>
-              {param.name}:
-              {param.description && (
-                <span 
-                  className="info-icon"
-                  onClick={() => toggleDescription(param.name)}
-                >
-                  {' ⓘ'}
-                </span>
-              )}
-            </label>
-            <div className="path-param-input-area">
-              <input 
-                id={inputId}
-                type="text"
-                placeholder={param.example ? param.example : `Enter value for ${param.name}...`}
-                value={values[param.name] || ''}
-                onChange={(e) => onChange(param.name, e.target.value)}
-                spellCheck="false"
-                autoCorrect="off"
-                autoCapitalize="off"
-              />
-              {param.description && isDescriptionVisible && (
-                <div className="description-popup">
-                  {param.description}
-                </div>
-              )}
+          return (
+            <div key={param.name} className="path-param-item">
+              <label htmlFor={inputId}>
+                <span className="required-badge">Required</span>
+                {param.name}:
+                {param.description && (
+                  <span 
+                    className="info-icon-container"
+                  >
+                    <span 
+                      className="info-icon"
+                      onClick={() => toggleDescription(param.name)}
+                    >
+                      {' ⓘ'}
+                    </span>
+                    {isDescriptionVisible && (
+                      <div className="description-popup">
+                        {param.description}
+                      </div>
+                    )}
+                  </span>
+                )}
+              </label>
+              <div className="path-param-input-area">
+                <input 
+                  id={inputId}
+                  type="text"
+                  placeholder={param.example ? param.example : `Enter value for ${param.name}...`}
+                  value={values[param.name] || ''}
+                  onChange={(e) => onChange(param.name, e.target.value)}
+                  spellCheck="false"
+                  autoCorrect="off"
+                  autoCapitalize="off"
+                />
+              </div>
             </div>
-          </div>
-        );
-      })}
+          );
+        })}
+      </div>
     </div>
   );
 };

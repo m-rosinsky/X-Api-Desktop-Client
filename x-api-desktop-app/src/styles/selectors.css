@@ -191,7 +191,7 @@
   justify-content: flex-start; /* Changed from center */
   align-items: center;
   padding: 1em 0; /* Keep vertical padding */
-  margin-bottom: 1.5em; 
+  margin-bottom: 0.5em; /* Reduced from 1.5em */
 }
 
 .custom-endpoint-selector {

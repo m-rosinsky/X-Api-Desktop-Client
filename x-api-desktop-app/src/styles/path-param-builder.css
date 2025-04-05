@@ -1,25 +1,41 @@
 .path-param-builder {
-  margin-top: 1.5em;
-  padding: 1em;
+  /* Removed border/padding/bg from main container */
+  /* margin-top: 1.5em; - Apply to label */
+  /* padding: 1em; */
+  /* border: 1px solid var(--border-color); */
+  /* border-radius: 6px; */
+  /* background: var(--card-gradient); */
+}
+
+/* Styles for the label */
+.path-param-label {
+  margin-top: 1.5em; /* Space above label */
+  margin-bottom: 0.5em; /* Space below label */
+  font-size: 1.1em; /* Match query param label */
+  font-weight: 600;
+  color: var(--text-color); /* Match query param label */
+  /* Remove old styles */
+  /* border-bottom: 1px solid var(--border-color); */
+  /* padding-bottom: 0.5em; */
+}
+
+/* New styles for the grouped section */
+.path-param-grouped-section {
+  margin-top: 0; /* Bring box up to label */
+  padding: 1em; /* Padding inside the box */
   border: 1px solid var(--border-color);
   border-radius: 6px;
-  /* background-color: var(--card-background-solid); */
   background: var(--card-gradient);
+  display: flex; /* Use flexbox */
+  flex-direction: column; /* Stack items vertically */
+  gap: 0.8em; /* Use existing item margin as gap */
 }
 
-.path-param-builder h4 {
-  margin-top: 0;
-  margin-bottom: 1em;
-  font-size: 1em;
-  font-weight: 600;
-  border-bottom: 1px solid var(--border-color);
-  padding-bottom: 0.5em;
-}
-
+/* Update path-param-item margins */
 .path-param-item {
     display: flex;
     align-items: baseline;
-    margin-bottom: 0.8em;
+    margin-bottom: 0; /* Remove margin, gap handles spacing */
 }
 
 .path-param-item:last-child {
@@ -31,8 +47,14 @@
     font-size: 0.9em;
     color: #a0a0a0;
     min-width: 100px; /* Adjust alignment */
-    text-align: right;
+    text-align: left;
     white-space: nowrap;
+}
+
+/* New container for relative positioning */
+.info-icon-container {
+  position: relative; /* Make this the positioning context */
+  display: inline-block; /* Keep it inline but allow positioning */
 }
 
 .info-icon {
@@ -44,7 +66,7 @@
 
 .path-param-input-area {
   flex-grow: 1; /* Allow input to take remaining space */
-  position: relative; /* Needed for absolute positioning of popup */
+  /* position: relative; - No longer needed here */
 }
 
 .path-param-input-area input[type="text"] {
@@ -58,7 +80,7 @@
   box-sizing: border-box; /* Ensure padding doesn't add to width */
 }
 
-/* Description Popup Styles */
+/* Description Popup Styles - Adjusted for relative positioning */
 .description-popup {
   position: absolute;
   background-color: #4a4a4a; /* Slightly lighter dark background */
@@ -68,9 +90,28 @@
   font-size: 0.85em;
   color: var(--text-color);
   z-index: 10; /* Ensure it appears above other elements */
-  margin-top: 0.3em; /* Space below the input */
-  left: 0;
-  width: calc(100% - 1.8em); /* Adjust width relative to padding */
+  /* Position relative to the icon container */
+  bottom: 100%; /* Position above the icon */
+  left: 50%; /* Start at the center of the icon */
+  transform: translateX(-50%); /* Center horizontally */
+  margin-bottom: 5px; /* Add some space between icon and popup */
+  min-width: 200px; /* Ensure it has some width */
+  max-width: 350px; /* Prevent it from being too wide */
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
   box-sizing: border-box;
+  /* Remove fixed width/margin based on input */
+  /* margin-top: 0.3em; - Removed */
+  /* width: calc(100% - 1.8em); - Removed */
+}
+
+/* Optional: Add a small triangle/arrow pointing to the icon */
+.description-popup::after {
+  content: '';
+  position: absolute;
+  top: 100%; /* At the bottom of the popup */
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 5px;
+  border-style: solid;
+  border-color: #4a4a4a transparent transparent transparent; /* Arrow color */
 } 

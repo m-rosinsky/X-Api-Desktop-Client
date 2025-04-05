@@ -5,7 +5,7 @@ const Dashboard: React.FC<DashboardProps> = ({ projects }) => {
   return (
     <div className="dashboard-layout">
       <div className="dashboard-main">
-        <h2>Project Dashboard</h2>
+        <h2>Dashboard</h2>
         <div className="project-list">
           {projects.map((project: Project) => {
             const usagePercentage = Math.min((project.usage / project.cap) * 100, 100);

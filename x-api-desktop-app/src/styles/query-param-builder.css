@@ -1,84 +1,212 @@
+/* Styles for QueryParamBuilder Component */
+
 .query-param-builder {
-  margin-top: 1.5em;
-  /* Remove border/padding from main container */
-  /* padding: 1em; */
-  /* border: 1px solid var(--border-color); */
-  /* border-radius: 6px; */
-  /* background-color: var(--card-background); */
-  position: relative; /* Needed for dropdown positioning */
+  /* margin-top: 1.5em; - Removed */
 }
 
-/* Container for the button and dropdown list */
-.query-param-selector {
-  position: relative; /* Context for the dropdown */
-  margin-bottom: 1em; /* Space between dropdown button and inputs below */
-}
-
-/* Style the button - reuse selector styles */
-.query-param-button {
-  /* Inherits from .selector-button (defined in selectors.css) */
-  width: 100%; /* Make button full width */
-}
-
-/* Style the dropdown list - reuse dropdown styles */
-.query-param-dropdown {
-  /* Inherits from .dropdown-options (defined in selectors.css) */
-  /* Add specific overrides if needed */
-  width: 100%; /* Make dropdown full width */
-  box-sizing: border-box;
-  max-height: 300px; /* Allow more items */
-}
-
-/* Style list items in dropdown */
-.param-item-dropdown {
-  /* Inherits from .dropdown-options li (defined in selectors.css) */
-  /* Reset padding/cursor from default li */
-  padding: 0.5em 1em; 
-  cursor: default; /* Items aren't directly clickable */
-  display: block; /* Override flex if needed */
-}
-
-.param-item-dropdown:hover {
-  /* Override hover if needed, or allow default */
-  background-color: transparent; /* Don't highlight whole row on hover */
-}
-
-/* Header within dropdown item (checkbox + label) */
-.param-header {
-  display: flex;
-  align-items: center;
-  /* margin-bottom: 0.5em; - remove bottom margin */
-}
-
-.param-header input[type="checkbox"] {
-  margin-right: 0.6em;
-  cursor: pointer;
-}
-
-.param-header label {
-  font-weight: 500;
-  cursor: pointer;
-}
-
-.param-header label.required {
-  /* Optional: Style required labels differently */
-}
-
-/* Description within dropdown item */
-.param-description {
-  font-size: 0.85em;
-  color: #a0a0a0;
-  margin: 0.2em 0 0.2em 1.8em; /* Indent description */
-  padding-right: 1em; /* Prevent text running into edge */
-}
-
-/* Container for the inputs that appear below the dropdown */
-.param-inputs-container {
-  padding: 1em;
+/* New styles for the grouped section */
+.query-param-grouped-section {
+  margin-top: 0; /* Bring box up to label */
+  padding: 1em; /* Restore consistent padding */
   border: 1px solid var(--border-color);
   border-radius: 6px;
-  /* background-color: var(--card-background-solid); */
   background: var(--card-gradient);
+  display: flex; 
+  flex-direction: column; 
+  gap: 1em; /* Restore gap for spacing between dropdown and inputs */
+}
+
+.query-param-builder-empty {
+  font-style: italic;
+  color: var(--text-color-secondary);
+  margin-top: 1em;
+  padding: 1em;
+  border: 1px dashed var(--border-color);
+  border-radius: 6px;
+}
+
+.query-param-label {
+  margin-top: 1.5em; /* Add space above the label */
+  margin-bottom: 0.5em; /* Space between label and box */
+  font-size: 1.1em;
+  font-weight: 600;
+  color: var(--text-color);
+  padding-left: 0;
+}
+
+/* --- Dropdown Section --- */
+.query-param-dropdown-section {
+  position: relative; 
+  margin-bottom: 0;
+}
+
+.query-param-dropdown-button {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: 0.6em 1em;
+  font-size: 0.9em;
+  font-weight: 500;
+  text-align: left;
+  color: var(--text-color);
+  background-color: var(--button-secondary-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.query-param-dropdown-button:hover {
+  background-color: var(--button-secondary-hover-bg);
+  border-color: var(--accent-color);
+}
+
+.query-param-dropdown-button span {
+  /* Style for the "X Selected" text */
+}
+
+.dropdown-chevron {
+  transition: transform 0.2s ease-in-out;
+}
+
+.dropdown-chevron.open {
+  transform: rotate(180deg);
+}
+
+/* New container for dropdown list and description panel */
+.dropdown-layout-container {
+  display: flex;
+  position: absolute;
+  top: 100%; 
+  left: 0;
+  right: 0; 
+  background: var(--card-gradient); 
+  border: 1px solid var(--border-color-darker);
+  border-top: none; 
+  border-radius: 0 0 6px 6px; 
+  margin-top: -1px; 
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  z-index: 10;
+  max-height: 250px; /* Overall max height */
+}
+
+.query-param-dropdown-list {
+  /* Remove absolute positioning and other layout styles handled by container */
+  flex: 1 1 50%; /* Occupy roughly half, allow shrinking/growing */
+  max-height: 248px; /* Fit within container */
+  overflow-y: auto;
+  padding: 0.5em 0; /* Padding top/bottom */
+  border-right: 1px solid var(--border-color); /* Use defined variable */
+}
+
+.query-param-dropdown-list ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.dropdown-param-item {
+  /* Container for the label */
+}
+
+.dropdown-param-item label {
+  display: flex; /* Use flex for alignment */
+  align-items: center;
+  padding: 0.6em 1em;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.dropdown-param-item label:hover {
+  background-color: var(--list-hover-background);
+}
+
+.dropdown-param-item input[type="checkbox"] {
+  margin-right: 0.8em;
+  cursor: pointer;
+}
+
+/* Style disabled checkboxes and their labels */
+.dropdown-param-item input[type="checkbox"]:disabled {
+  cursor: default;
+}
+.dropdown-param-item input[type="checkbox"]:disabled + span {
+  color: var(--text-color-secondary); /* Dim the text */
+  cursor: default;
+}
+/* Removed disabled style for description indicator as it's gone */
+/* .dropdown-param-item input[type="checkbox"]:disabled ~ .param-description-indicator { ... } */
+
+/* Make the whole label area unhoverable when disabled */
+.dropdown-param-item input[type="checkbox"]:disabled + span { /* Simpler selector */
+    pointer-events: none; /* Prevent hover effects on label text */
+}
+
+.dropdown-param-item label:has(input[type="checkbox"]:disabled):hover {
+    background-color: transparent; /* Prevent background change on hover for disabled items */
+    cursor: default;
+}
+
+.dropdown-param-item span {
+  /* Style for parameter name */
+  margin-right: 0.7em; /* Add margin to separate name and description */
+}
+
+/* Remove old indicator style */
+/* 
+.param-description-indicator {
+  font-size: 0.8em;
+  color: var(--text-color-secondary);
+  margin-left: 0; 
+  font-style: italic; 
+  white-space: nowrap; 
+  overflow: hidden; 
+  text-overflow: ellipsis; 
+  max-width: 200px; 
+  display: inline-block; 
+  vertical-align: middle; 
+}
+*/
+
+/* New Description Panel Styles */
+.dropdown-description-panel {
+  flex: 1 1 50%; /* Occupy other half */
+  padding: 1em;
+  max-height: 248px; /* Match list height */
+  overflow-y: auto;
+  font-size: 0.9em;
+  background-color: var(--background-color); /* Slightly different bg */
+}
+
+.dropdown-description-panel h4 {
+  margin-top: 0;
+  margin-bottom: 0.5em;
+  font-size: 1em;
+  font-weight: 600;
+  color: var(--text-color);
+}
+
+.dropdown-description-panel p {
+  margin: 0;
+  color: var(--text-color-secondary);
+  line-height: 1.4;
+}
+
+.description-placeholder {
+  font-style: italic;
+  color: var(--text-color-secondary-lighter); /* Even dimmer */
+}
+
+/* --- Input Area Styling --- */
+.param-inputs-container {
+  padding: 0; /* Remove padding, parent provides it */
+  border: none; /* Remove border, parent provides it */
+  border-radius: 0; /* Remove border-radius */
+  background: none; /* Remove background, parent provides it */
+  /* display: flex; - Remove flex if not needed */
+  /* flex-direction: column; - Remove flex if not needed */
+  /* gap: 1.2em; - Remove gap if not needed */
 }
 
 /* Individual input item (label + input) */
@@ -95,53 +223,53 @@
 .param-input-item label {
     margin-right: 0.8em;
     font-size: 0.9em;
-    color: #a0a0a0;
-    min-width: 80px; /* Align labels */
-    text-align: right;
+    color: var(--text-color-secondary); /* Make label slightly dimmer */
+    min-width: 120px; /* Adjust alignment if needed */
+    text-align: left; /* Changed from right */
+    white-space: nowrap; /* Prevent wrapping */
 }
 
-/* Area containing the input element */
+.param-input-item .required-badge {
+    /* Optional: Style or hide this if the dropdown indicator is sufficient */
+    display: inline-block;
+    /* Use hardcoded colors from global.css */
+    background-color: #c84a4a; 
+    color: #fff;
+    padding: 0.1em 0.4em;
+    border-radius: 3px;
+    font-size: 0.75em;
+    margin-right: 0.4em;
+    vertical-align: baseline;
+}
+
 .param-input-area {
-  /* margin-left: 1.8em; No longer needed */
   flex-grow: 1; /* Allow input to take remaining space */
+  position: relative; /* If tooltips or other absolute elements are needed */
 }
 
-.param-input-area input[type="text"],
-.param-input-area textarea { 
+.param-input-area input[type="text"] {
   width: 100%;
   padding: 0.5em 0.8em;
   border-radius: 4px;
   border: 1px solid var(--border-color);
-  background-color: var(--background-color); 
+  background-color: var(--input-background); /* Use specific input background */
   color: var(--text-color);
   font-size: 0.9em;
   box-sizing: border-box; 
 }
 
-/* Style disabled checkbox label */
-.param-header input[type="checkbox"]:disabled + label {
-    cursor: default;
-    color: #888; 
+.param-input-area input[type="text"]:focus {
+  outline: none;
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 2px var(--accent-focus-ring);
 }
 
-/* Optional: Style disabled checkbox */
-.param-header input[type="checkbox"]:disabled {
-    cursor: default;
-}
-
-/* Remove old styles that are no longer needed */
-.query-param-builder h4 {
- display: none; /* Hide the old header */
-}
-
-.param-item {
-  /* margin-bottom: 1.2em; - Handled by dropdown li or input item */
-}
-
-.query-param-builder-empty {
-  /* Styles remain the same */
-  font-style: italic;
-  color: #888;
-  padding: 1em;
-  text-align: center;
-} 
+/* --- REMOVE OLD POPOVER STYLES --- */
+/* Remove .query-param-add-section */
+/* Remove .add-param-button */
+/* Remove .add-param-popover */
+/* Remove .popover-search-input */
+/* Remove .popover-param-list */
+/* Remove .popover-param-item */
+/* Remove .popover-no-results */
+/* Remove .remove-param-button */
