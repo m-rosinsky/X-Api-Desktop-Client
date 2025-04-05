@@ -1,0 +1,76 @@
+.path-param-builder {
+  margin-top: 1.5em;
+  padding: 1em;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  /* background-color: var(--card-background-solid); */
+  background: var(--card-gradient);
+}
+
+.path-param-builder h4 {
+  margin-top: 0;
+  margin-bottom: 1em;
+  font-size: 1em;
+  font-weight: 600;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 0.5em;
+}
+
+.path-param-item {
+    display: flex;
+    align-items: baseline;
+    margin-bottom: 0.8em;
+}
+
+.path-param-item:last-child {
+    margin-bottom: 0;
+}
+
+.path-param-item label {
+    margin-right: 0.8em;
+    font-size: 0.9em;
+    color: #a0a0a0;
+    min-width: 100px; /* Adjust alignment */
+    text-align: right;
+    white-space: nowrap;
+}
+
+.info-icon {
+  cursor: help; /* Indicate help is available */
+  margin-left: 0.3em;
+  font-style: normal; /* Prevent italics if label has it */
+  color: #888; /* Slightly dimmer */
+}
+
+.path-param-input-area {
+  flex-grow: 1; /* Allow input to take remaining space */
+  position: relative; /* Needed for absolute positioning of popup */
+}
+
+.path-param-input-area input[type="text"] {
+  width: 100%;
+  padding: 0.5em 0.8em;
+  border-radius: 4px;
+  border: 1px solid var(--border-color);
+  background-color: var(--background-color); /* Darker input background */
+  color: var(--text-color);
+  font-size: 0.9em;
+  box-sizing: border-box; /* Ensure padding doesn't add to width */
+}
+
+/* Description Popup Styles */
+.description-popup {
+  position: absolute;
+  background-color: #4a4a4a; /* Slightly lighter dark background */
+  border: 1px solid #666; 
+  border-radius: 4px;
+  padding: 0.6em 0.9em;
+  font-size: 0.85em;
+  color: var(--text-color);
+  z-index: 10; /* Ensure it appears above other elements */
+  margin-top: 0.3em; /* Space below the input */
+  left: 0;
+  width: calc(100% - 1.8em); /* Adjust width relative to padding */
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+  box-sizing: border-box;
+} 

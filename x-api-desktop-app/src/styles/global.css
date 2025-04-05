@@ -1,12 +1,24 @@
 :root {
   /* Dark Mode Defaults */
-  --background-color: #1a1a1a; /* Darker background */
-  --text-color: #e1e1e1; /* Lighter text */
-  --accent-color: #3391ff; /* Brighter blue accent */
+  --background-color-start: #202020; /* Slightly lighter top */
+  --background-color-end: #1a1a1a;   /* Original background */
+  --background-gradient: linear-gradient(to bottom, var(--background-color-start), var(--background-color-end));
+
+  --card-background-start: #303030; /* Slightly lighter card top */
+  --card-background-end: #2a2a2a;   /* Original card background */
+  --card-gradient: linear-gradient(to bottom, var(--card-background-start), var(--card-background-end));
+
+  --accent-gradient: linear-gradient(to bottom right, var(--accent-hover-color), var(--accent-color));
+
+  --text-color: #e1e1e1; 
+  --accent-color: #3391ff; 
   --accent-hover-color: #58a6ff;
-  --card-background: #2a2a2a; /* Darker card/input background */
   --input-text-color: #e1e1e1;
-  --border-color: #444; /* Subtle border for inputs/buttons */
+  --border-color: #444; 
+
+  /* Keep original solid colors for fallback or specific elements if needed */
+  --background-color-solid: #1a1a1a;
+  --card-background-solid: #2a2a2a; 
 
   font-family: TwitterChirp, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
   font-size: 16px;
@@ -14,7 +26,10 @@
   font-weight: 400;
 
   color: var(--text-color);
-  background-color: var(--background-color);
+  /* Apply main background gradient */
+  background: var(--background-gradient);
+  /* Ensure full height coverage */
+  min-height: 100vh; 
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -45,7 +60,8 @@ body {
 /* Top Navigation Bar */
 .top-nav {
   height: 50px; /* Adjust height as needed */
-  background-color: var(--card-background); /* Use dark card background */
+  /* background-color: var(--card-background-solid); */
+  background: var(--card-gradient);
   border-bottom: 1px solid var(--border-color);
   display: flex;
   align-items: center;
@@ -76,27 +92,29 @@ body {
   display: block; /* Prevents extra space below image */
 }
 
-/* Adjust App Layout */
+/* Updated App Layout */
 .app-layout {
   display: flex;
-  /* height: 100vh; Remove fixed height, let it fill remaining space */
   flex-grow: 1; /* Allow app-layout to fill remaining vertical space */
   overflow: hidden; /* Prevent app-layout from causing double scrollbars */
+  /* Padding is removed here, applied within children (.main-content or .api-main-content) */
 }
 
-/* Adjust styles previously on .container to apply to .main-content */
+/* Styles for .main-content (used for non-resizable views) */
 .main-content {
   flex-grow: 1; /* Take remaining space */
   padding: 2em; /* Add padding around main content */
   overflow-y: auto; /* Allow scrolling if content overflows */
-  transition: margin-left 0.3s ease-in-out; /* Smooth transition */
+  height: 100%; /* Ensure it fills height */
+  /* transition: margin-left 0.3s ease-in-out; - Remove if sidebar is gone/changed */
 }
 
 /* Footer Bar Styles */
 .app-footer {
   flex-shrink: 0; /* Prevent footer from shrinking */
   padding: 0.8em 1.5em; /* Vertical and horizontal padding */
-  background-color: var(--card-background); /* Match other bars */
+  /* background-color: var(--card-background-solid); */
+  background: var(--card-gradient);
   border-top: 1px solid var(--border-color); /* Separator */
   display: flex;
   justify-content: center; /* Changed from flex-start */
@@ -114,4 +132,19 @@ body {
 .app-footer a:hover {
   color: var(--text-color); /* Slightly brighter on hover */
   text-decoration: underline;
+}
+
+/* Required Badge Styles (based on project-package) */
+.required-badge {
+  display: inline-block; 
+  font-size: 0.6em; /* Make font even smaller */
+  font-weight: 600;
+  padding: 0em 0.4em; 
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background-color: #c84a4a; 
+  color: #fff; 
+  margin-right: 0.6em; 
+  vertical-align: middle; 
 } 

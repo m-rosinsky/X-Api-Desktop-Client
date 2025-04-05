@@ -1,17 +1,52 @@
-import React, { useState, useMemo } from 'react';
-import { ApiViewProps, Endpoint } from '../types';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import { ApiViewProps, Endpoint, PathParam } from '../types';
 import AppSelector from '../components/AppSelector';
 import EndpointSelector from '../components/EndpointSelector';
+import ApiViewLayout from '../components/ApiViewLayout';
+import PathParamBuilder from '../components/PathParamBuilder';
+import CodeSnippetDisplay from '../components/CodeSnippetDisplay';
 
 // Moved from App.tsx as it seems specific to this view
 const usersEndpoints: Endpoint[] = [
-  { id: 'get-users', method: 'GET', path: '/2/users', summary: 'Look up multiple users' },
-  { id: 'get-user-by-id', method: 'GET', path: '/2/users/:id', summary: 'Look up a single user by ID' },
-  { id: 'get-user-by-username', method: 'GET', path: '/2/users/by/username/:username', summary: 'Look up a single user by username' },
+  {
+    id: 'get-users',
+    method: 'GET',
+    path: '/2/users',
+    summary: 'Look up multiple users based on query parameters (e.g., ids, usernames)',
+    // TODO: Add query params for GET /2/users (e.g., ids, usernames)
+  },
+  {
+    id: 'get-user-by-id',
+    method: 'GET',
+    path: '/2/users/:id',
+    summary: 'Look up a single user by ID',
+    pathParams: [
+      {
+        name: 'id',
+        description: 'The unique identifier of the User to retrieve.',
+        example: '2244994945' // Example User ID (TwitterDev)
+      },
+    ],
+  },
+  {
+    id: 'get-user-by-username',
+    method: 'GET',
+    path: '/2/users/by/username/:username',
+    summary: 'Look up a single user by username',
+    pathParams: [
+      {
+        name: 'username',
+        description: 'The Twitter username (handle) of the User to retrieve.',
+        example: 'XDevelopers' // Changed Example Username
+      },
+    ],
+  },
 ];
 
 const UsersView: React.FC<ApiViewProps> = ({ projects, activeAppId, setActiveAppId }) => {
-  const [selectedEndpoint, setSelectedEndpoint] = useState<string | null>(null);
+  const [selectedEndpoint, setSelectedEndpoint] = useState<string | null>(usersEndpoints[0]?.id ?? null);
+  const [pathParamValues, setPathParamValues] = useState<Record<string, string>>({});
+  const [queryParamValues, setQueryParamValues] = useState<Record<string, string>>({});
 
   // Find the project containing the active app (duplicate logic, could be extracted)
   const activeProject = useMemo(() => {
@@ -21,79 +56,150 @@ const UsersView: React.FC<ApiViewProps> = ({ projects, activeAppId, setActiveApp
 
   const usagePercentage = activeProject ? Math.min((activeProject.usage / activeProject.cap) * 100, 100) : 0;
 
-  // Find the details for the selected endpoint
   const endpointDetails = useMemo(() => {
     return usersEndpoints.find(ep => ep.id === selectedEndpoint);
   }, [selectedEndpoint]);
 
-  return (
-    <div className="api-view-layout">
-      <div className="api-main-content">
-        <div className="api-header-section">
-          <div className="selector-and-package">
-            <AppSelector projects={projects} selectedAppId={activeAppId} onChange={setActiveAppId} />
-            {/* Conditionally render package label outside selector */}
-            {activeProject && (
-              <span className={`project-package package-${activeProject.package.toLowerCase()}`}>
-                {activeProject.package}
-              </span>
-            )}
-          </div>
-           {/* Always render usage preview container, toggle visibility with class */}
-          <div className={`api-usage-preview ${activeProject ? 'visible' : ''}`}>
-             {/* Content inside is only relevant when visible */}
-             <p>Project Usage ({activeProject?.name || 'N/A'}): {activeProject?.usage.toLocaleString() || 0} / {activeProject?.cap.toLocaleString() || 0}</p>
-             <div className="usage-bar-container">
-                <div
-                  className={`usage-bar ${usagePercentage >= 100 ? 'at-cap' : ''}`}
-                  style={{ width: `${usagePercentage}%` }}
-                ></div>
-              </div>
-          </div>
-        </div>
-        <div className="view-content">
-          <EndpointSelector 
-              endpoints={usersEndpoints} 
-              selectedEndpointId={selectedEndpoint}
-              onChange={setSelectedEndpoint}
-           />
-           <div className="api-tools-content">
-             {selectedEndpoint ? (
-                <p>Tools/Logs for <strong>{endpointDetails?.path}</strong> on app <strong>{activeAppId || 'N/A'}</strong></p>
-             ) : (
-                <p>Select an endpoint above to see details and tools.</p>
-             )}
-          </div>
-        </div>
-      </div>
+  useEffect(() => {
+    setPathParamValues({});
+    setQueryParamValues({});
+  }, [selectedEndpoint]);
 
-      {/* Right Sidebar Docs Panel - Now conditional */} 
-      <aside className="api-docs-sidebar">
-         {endpointDetails ? (
-          <> 
-            <h3><span className={`endpoint-method method-${endpointDetails.method.toLowerCase()}`}>{endpointDetails.method}</span> {endpointDetails.path}</h3>
-            <p>{endpointDetails.summary}</p>
-            <pre><code>{`// Sample Request for ${endpointDetails.path}
+  const currentPathParams = useMemo(() => {
+    return endpointDetails?.pathParams ?? [];
+  }, [endpointDetails]);
+
+  // Placeholder for query params if added later
+  const currentQueryParams = useMemo(() => {
+    return endpointDetails?.queryParams ?? [];
+  }, [endpointDetails]);
+
+  const handlePathParamChange = useCallback((paramName: string, value: string) => {
+    setPathParamValues(prev => ({ ...prev, [paramName]: value }));
+  }, []);
+
+  // Placeholder for query param handler
+  const handleQueryParamChange = useCallback((newValues: Record<string, string>) => {
+    setQueryParamValues(newValues);
+  }, []);
+
+   // --- Button Logic ---
+  const isRunDisabled = useMemo(() => {
+    if (activeAppId === null) return true;
+    for (const param of currentPathParams) {
+      if (!pathParamValues[param.name]) return true;
+    }
+    // Add check for required query params if QueryParamBuilder is added
+    // for (const param of currentQueryParams) { ... }
+    return false;
+  }, [activeAppId, currentPathParams, pathParamValues/*, currentQueryParams, queryParamValues*/]);
+
+  const usageEstimateText = useMemo(() => {
+    // Basic estimate for users view
+     if (endpointDetails?.method === 'GET') {
+        return `Usage estimate: 1 Request`; 
+    }
+    return "";
+  }, [endpointDetails]);
+
+  // Sidebar content as a fragment
+  const sidebarContent = (
+    <>
+      {endpointDetails ? (
+        <> 
+          <h3><span className={`endpoint-method method-${endpointDetails.method.toLowerCase()}`}>{endpointDetails.method}</span> {endpointDetails.path}</h3>
+          <p>{endpointDetails.summary}</p>
+          <pre><code>{`// Sample Request for ${endpointDetails.path}
 curl ...`}</code></pre>
-            <pre><code>{`// Sample Response for ${endpointDetails.path}
+          <pre><code>{`// Sample Response for ${endpointDetails.path}
 {
   "data": [...]
 }`}</code></pre>
-            {/* Add more detailed docs here */} 
-          </> 
-        ) : (
-          <> 
-            <h3>API Documentation</h3>
-            <p>Select an endpoint from the list on the left to view its documentation.</p>
-             <h3>Guides</h3>
-             <ul className="info-list links">
-               <li><a href="#">Understanding User Objects</a></li>
-               <li><a href="#">Privacy Considerations</a></li>
-             </ul>
-          </> 
+          {/* Add more detailed docs here */} 
+        </> 
+      ) : (
+        <> 
+          <h3>API Documentation</h3>
+          <p>Select an endpoint from the list on the left to view its documentation.</p>
+            <h3>Guides</h3>
+            <ul className="info-list links">
+              <li><a href="#">Understanding User Objects</a></li>
+              <li><a href="#">Privacy Considerations</a></li>
+            </ul>
+        </> 
+      )}
+    </>
+  );
+
+  return (
+    // Use the ApiViewLayout
+    <ApiViewLayout sidebarContent={sidebarContent}>
+       {/* Main Content */}
+      <div className="api-header-section">
+        <div className="selector-and-package">
+          <AppSelector projects={projects} selectedAppId={activeAppId} onChange={setActiveAppId} />
+          {/* Conditionally render package label outside selector */}
+          {activeProject && (
+            <span className={`project-package package-${activeProject.package.toLowerCase()}`}>
+              {activeProject.package}
+            </span>
+          )}
+        </div>
+          {/* Always render usage preview container, toggle visibility with class */}
+        <div className={`api-usage-preview ${activeProject ? 'visible' : ''}`}>
+            {/* Content inside is only relevant when visible */}
+            <p>Project Usage ({activeProject?.name || 'N/A'}): {activeProject?.usage.toLocaleString() || 0} / {activeProject?.cap.toLocaleString() || 0}</p>
+            <div className="usage-bar-container">
+              <div
+                className={`usage-bar ${usagePercentage >= 100 ? 'at-cap' : ''}`}
+                style={{ width: `${usagePercentage}%` }}
+              ></div>
+            </div>
+        </div>
+      </div>
+      <div className="view-content">
+        <EndpointSelector 
+            endpoints={usersEndpoints} 
+            selectedEndpointId={selectedEndpoint}
+            onChange={setSelectedEndpoint}
+          />
+        {/* Add endpoint summary below selector */}
+        {endpointDetails?.summary && (
+          <p className="endpoint-summary">{endpointDetails.summary}</p>
         )}
-      </aside>
-    </div>
+
+        {currentPathParams.length > 0 && (
+          <PathParamBuilder 
+            params={currentPathParams}
+            values={pathParamValues}
+            onChange={handlePathParamChange}
+          />
+        )}
+
+        {/* TODO: Add QueryParamBuilder if needed for GET /2/users */}
+
+         {/* Add Run Request Button */}
+        <div className="run-request-section">
+           {/* Display usage estimate */}
+           <span className="usage-estimate">{usageEstimateText}</span>
+           <button 
+             className="run-button" 
+             onClick={() => { /* TODO: Implement request logic */ console.log('Run Request Clicked!'); }}
+             disabled={isRunDisabled} // Apply disabled state
+             title={isRunDisabled ? "Select an active app and fill all required parameters (*)" : "Run the API request"} // Add helpful title
+           >
+             Run Request
+           </button>
+        </div>
+
+        {/* Use CodeSnippetDisplay component */} 
+        <CodeSnippetDisplay 
+          endpoint={endpointDetails} 
+          pathParams={pathParamValues} 
+          queryParams={queryParamValues} 
+        />
+      </div>
+    </ApiViewLayout>
   );
 };
 

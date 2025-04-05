@@ -10,6 +10,7 @@ import {
 import AppSelector from "./components/AppSelector"; // Import AppSelector
 import EndpointSelector from "./components/EndpointSelector"; // Import EndpointSelector
 import { mockProjects, navigation } from "./data/mockData"; // Import mock data
+import SplashScreen from "./components/SplashScreen"; // Import SplashScreen
 
 // Import View Components
 import Dashboard from "./views/Dashboard";
@@ -18,11 +19,21 @@ import UsersView from "./views/UsersView";
 
 // --- Main App Component ---
 function App() {
+  const [isLoading, setIsLoading] = useState(true); // Add loading state
   // State to track expanded categories (using label as key)
   const [expandedCategories, setExpandedCategories] = useState<{ [key: string]: boolean }>({});
   // State to track the currently active view
   const [activeView, setActiveView] = useState<string>("dashboard"); // Default to dashboard
   const [activeAppId, setActiveAppId] = useState<number | null>(null); // State for selected app
+
+  // Simulate loading completion
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 2000); // Adjust delay as needed (e.g., 2000ms = 2 seconds)
+
+    return () => clearTimeout(timer); // Cleanup timer on unmount
+  }, []);
 
   // Function to toggle category expansion
   const toggleCategory = (label: string) => {
@@ -79,25 +90,47 @@ function App() {
     });
   };
 
-  // Updated renderCurrentView to use components and pass props
+  // Updated renderCurrentView to handle layout differences
   const renderCurrentView = () => {
-    // Pass ApiViewProps correctly to relevant views
     const apiViewProps: Omit<ApiViewProps, 'projects'> = { activeAppId, setActiveAppId }; 
+
     switch (activeView) {
-      case 'dashboard':
-        return <Dashboard projects={mockProjects} />;
       case 'tweets': 
         return <TweetsView projects={mockProjects} {...apiViewProps} />;
       case 'users': 
         return <UsersView projects={mockProjects} {...apiViewProps} />;
+      
+      // For other views, wrap them in the standard main-content padding
+      case 'dashboard':
+        return (
+          <main className="main-content">
+            <Dashboard projects={mockProjects} />
+          </main>
+        );
       case 'subscription':
-        return <div><h2>Subscription</h2><p>Subscription details go here.</p></div>; 
+        return (
+          <main className="main-content">
+             <div><h2>Subscription</h2><p>Subscription details go here.</p></div>
+          </main>
+         );
       case 'invoices':
-        return <div><h2>Invoices</h2><p>Invoice list goes here.</p></div>; 
+        return (
+          <main className="main-content">
+            <div><h2>Invoices</h2><p>Invoice list goes here.</p></div>
+          </main>
+        );
       default:
-        return <div><h2>Select a section</h2></div>; 
+        return (
+          <main className="main-content">
+             <div><h2>Select a section</h2></div>
+          </main>
+        );
     }
   };
+
+  if (isLoading) {
+    return <SplashScreen />;
+  }
 
   return (
     <div className="root-layout">
@@ -119,9 +152,8 @@ function App() {
             {renderNavItems(navigation)}
           </ul>
         </nav>
-        <main className="main-content">
+        {/* Render the view directly - it will handle its own layout/padding */}
           {renderCurrentView()}
-    </main>
       </div>
       {/* Add Footer Bar */}
       <footer className="app-footer">

@@ -1,0 +1,72 @@
+.code-snippet-area {
+  margin-top: 2em;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  /* background-color: var(--card-background-solid); */
+  background: var(--card-gradient);
+  overflow: hidden; /* Ensure rounded corners contain children */
+}
+
+.language-selector {
+  display: flex;
+  background-color: #3a3a3a; /* Slightly different background for toolbar */
+  padding: 0.5em 0.8em;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.lang-button {
+  background: none;
+  border: none;
+  padding: 0.4em 0.8em;
+  margin-right: 0.5em;
+  color: #a0a0a0;
+  cursor: pointer;
+  border-radius: 4px;
+  font-size: 0.85em;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.lang-button:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+  color: var(--text-color);
+}
+
+.lang-button.active {
+  background-color: var(--accent-color);
+  color: #fff;
+  font-weight: 500;
+}
+
+.copy-button {
+  margin-left: auto; /* Push copy button to the right */
+  background: none;
+  border: none;
+  color: #a0a0a0;
+  cursor: pointer;
+  padding: 0.4em 0.6em;
+  font-size: 1.1em; /* Make icon slightly larger */
+  border-radius: 4px;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.copy-button:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+  color: var(--text-color);
+}
+
+
+/* Inherit pre/code styles from api-views.css or define here */
+.code-snippet-area pre {
+  background-color: var(--background-color); /* Match curl output area */
+  padding: 1em;
+  border-radius: 0; /* Remove radius since parent clips */
+  overflow-x: auto; 
+  margin: 0; 
+}
+
+.code-snippet-area code {
+  font-family: monospace;
+  color: #ccc;
+  white-space: pre; 
+  font-size: 0.9em;
+} 

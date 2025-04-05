@@ -1,0 +1,147 @@
+.query-param-builder {
+  margin-top: 1.5em;
+  /* Remove border/padding from main container */
+  /* padding: 1em; */
+  /* border: 1px solid var(--border-color); */
+  /* border-radius: 6px; */
+  /* background-color: var(--card-background); */
+  position: relative; /* Needed for dropdown positioning */
+}
+
+/* Container for the button and dropdown list */
+.query-param-selector {
+  position: relative; /* Context for the dropdown */
+  margin-bottom: 1em; /* Space between dropdown button and inputs below */
+}
+
+/* Style the button - reuse selector styles */
+.query-param-button {
+  /* Inherits from .selector-button (defined in selectors.css) */
+  width: 100%; /* Make button full width */
+}
+
+/* Style the dropdown list - reuse dropdown styles */
+.query-param-dropdown {
+  /* Inherits from .dropdown-options (defined in selectors.css) */
+  /* Add specific overrides if needed */
+  width: 100%; /* Make dropdown full width */
+  box-sizing: border-box;
+  max-height: 300px; /* Allow more items */
+}
+
+/* Style list items in dropdown */
+.param-item-dropdown {
+  /* Inherits from .dropdown-options li (defined in selectors.css) */
+  /* Reset padding/cursor from default li */
+  padding: 0.5em 1em; 
+  cursor: default; /* Items aren't directly clickable */
+  display: block; /* Override flex if needed */
+}
+
+.param-item-dropdown:hover {
+  /* Override hover if needed, or allow default */
+  background-color: transparent; /* Don't highlight whole row on hover */
+}
+
+/* Header within dropdown item (checkbox + label) */
+.param-header {
+  display: flex;
+  align-items: center;
+  /* margin-bottom: 0.5em; - remove bottom margin */
+}
+
+.param-header input[type="checkbox"] {
+  margin-right: 0.6em;
+  cursor: pointer;
+}
+
+.param-header label {
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.param-header label.required {
+  /* Optional: Style required labels differently */
+}
+
+/* Description within dropdown item */
+.param-description {
+  font-size: 0.85em;
+  color: #a0a0a0;
+  margin: 0.2em 0 0.2em 1.8em; /* Indent description */
+  padding-right: 1em; /* Prevent text running into edge */
+}
+
+/* Container for the inputs that appear below the dropdown */
+.param-inputs-container {
+  padding: 1em;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  /* background-color: var(--card-background-solid); */
+  background: var(--card-gradient);
+}
+
+/* Individual input item (label + input) */
+.param-input-item {
+    display: flex;
+    align-items: baseline;
+    margin-bottom: 0.8em;
+}
+
+.param-input-item:last-child {
+    margin-bottom: 0;
+}
+
+.param-input-item label {
+    margin-right: 0.8em;
+    font-size: 0.9em;
+    color: #a0a0a0;
+    min-width: 80px; /* Align labels */
+    text-align: right;
+}
+
+/* Area containing the input element */
+.param-input-area {
+  /* margin-left: 1.8em; No longer needed */
+  flex-grow: 1; /* Allow input to take remaining space */
+}
+
+.param-input-area input[type="text"],
+.param-input-area textarea { 
+  width: 100%;
+  padding: 0.5em 0.8em;
+  border-radius: 4px;
+  border: 1px solid var(--border-color);
+  background-color: var(--background-color); 
+  color: var(--text-color);
+  font-size: 0.9em;
+  box-sizing: border-box; 
+}
+
+/* Style disabled checkbox label */
+.param-header input[type="checkbox"]:disabled + label {
+    cursor: default;
+    color: #888; 
+}
+
+/* Optional: Style disabled checkbox */
+.param-header input[type="checkbox"]:disabled {
+    cursor: default;
+}
+
+/* Remove old styles that are no longer needed */
+.query-param-builder h4 {
+ display: none; /* Hide the old header */
+}
+
+.param-item {
+  /* margin-bottom: 1.2em; - Handled by dropdown li or input item */
+}
+
+.query-param-builder-empty {
+  /* Styles remain the same */
+  font-style: italic;
+  color: #888;
+  padding: 1em;
+  text-align: center;
+} 

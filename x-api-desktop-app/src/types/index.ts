@@ -37,6 +37,8 @@ export interface Endpoint {
   method: string;
   path: string;
   summary: string;
+  queryParams?: QueryParam[]; // Add query parameters array
+  pathParams?: PathParam[]; // Add path parameters array
 }
 
 export interface EndpointSelectorProps {
@@ -49,4 +51,21 @@ export interface ApiViewProps {
   projects: Project[];
   activeAppId: number | null;
   setActiveAppId: (id: number | null) => void;
+}
+
+// New type for Query Parameters
+export interface QueryParam {
+  name: string;
+  type: 'string' | 'number' | 'boolean' | 'array'; // Add more types as needed
+  description?: string;
+  required?: boolean;
+  example?: string; // Add example field
+}
+
+// New type for Path Parameters
+export interface PathParam {
+  name: string; // The name used in the path string (e.g., 'id')
+  description?: string;
+  example?: string; // Add example field
+  // Type could be added later if needed for validation (e.g., number)
 } 

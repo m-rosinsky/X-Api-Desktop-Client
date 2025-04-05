@@ -13,7 +13,8 @@
 }
 
 .project-item {
-  background-color: var(--card-background);
+  /* background-color: var(--card-background-solid); */
+  background: var(--card-gradient);
   padding: 1.5em;
   border-radius: 8px;
   border: 1px solid var(--border-color);

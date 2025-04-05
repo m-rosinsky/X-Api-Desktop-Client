@@ -1,23 +1,85 @@
-/* API View Layout Styles (similar to Dashboard) */
+/* API View Layout Styles */
 .api-view-layout {
   display: flex;
-  gap: 2em; /* Space between main content and sidebar */
+  gap: 0; /* Remove gap, handle spacing with sidebar width/padding */
+  height: 100%; /* Ensure layout takes full height of parent */
+  overflow: hidden; /* Prevent parent scrolling */
+  flex-grow: 1; /* Allow this layout to fill space in its parent (.app-layout) */
 }
 
 .api-main-content {
   flex-grow: 1; /* Allow main content to take available space */
   min-width: 0; /* Prevent flex items from overflowing */
+  height: 100%; /* Take full height */
+  overflow-y: auto; /* Allow main content to scroll */
+  padding: 2em; /* Keep existing padding */
+  /* transition: margin-right 0.3s ease-in-out; Removed */
 }
 
 .api-docs-sidebar {
-  width: 280px; /* Match dashboard sidebar width */
+  /* width: 280px; Width now controlled by inline style */
   flex-shrink: 0; 
-  border-left: 1px solid var(--border-color); 
-  padding-left: 2em; 
+  /* border-left: 1px solid var(--border-color); Removed border */
+  padding: 0; /* Reset padding */
+  position: relative; /* For positioning the handle */
+  display: flex; /* Use flex for handle + content area */
+  flex-direction: column; 
+  height: 100%; /* Take full height */
+  overflow: hidden; /* Hide overflow */
+  /* transition: width 0.3s ease-in-out; Removed transition, width changes instantly */ 
+  background-color: transparent; /* Make background same as main content area */
 }
 
-/* Reuse dashboard sidebar styles for h3 and info-list */
-.api-docs-sidebar h3 {
+.sidebar-content-area {
+  padding: 2em; /* Add padding inside the scrollable area */
+  overflow-y: auto; /* Enable independent scrolling */
+  height: 100%; /* Fill available space */
+}
+
+/* Collapsed State Styles Removed */
+/* .api-view-layout.sidebar-collapsed ... */
+
+/* Sidebar Toggle Button Styles Removed */
+/* .sidebar-toggle-button ... */
+
+/* Resize Handle Styles */
+.resize-handle {
+  position: absolute;
+  top: 0;
+  left: -5px; /* Adjust left position to center the 10px handle over the seam */
+  width: 10px; /* Make the invisible handle area wider for easier grabbing */
+  height: 100%;
+  cursor: col-resize; /* Indicate horizontal resize */
+  background-color: transparent; /* Keep handle background transparent */
+  z-index: 10;
+}
+
+/* Visible line using pseudo-element */
+.resize-handle::before {
+  content: '';
+  position: absolute;
+  top: 1em; /* Add vertical margin */
+  bottom: 1em; /* Add vertical margin */
+  left: 50%; /* Center the line horizontally */
+  transform: translateX(-50%);
+  width: 1px; /* Width of the visible line */
+  background-color: var(--border-color); /* Use border color for the line */
+  transition: background-color 0.2s ease, width 0.2s ease; 
+}
+
+.resize-handle:hover::before {
+   background-color: var(--accent-color); /* Highlight with accent color on hover */
+   width: 3px; /* Make slightly wider on hover */
+}
+
+/* Styles for when dragging is active (add class via JS) */
+.resize-handle.dragging::before {
+    background-color: var(--accent-hover-color); /* Use brighter accent while dragging */
+    width: 3px; /* Keep wider while dragging */
+}
+
+/* Reuse dashboard sidebar styles for h3 and info-list within .sidebar-content-area */
+.sidebar-content-area h3 {
   font-size: 1em;
   font-weight: 600;
   color: #c0c0c0;
@@ -27,31 +89,46 @@
   border-bottom: 1px solid var(--border-color);
 }
 
-.api-docs-sidebar h3:not(:first-child) {
+.sidebar-content-area h3:not(:first-child) {
   margin-top: 2em; 
 }
 
-.api-docs-sidebar .info-list {
+.sidebar-content-area .info-list {
   list-style: none;
   padding: 0;
   margin: 0;
   font-size: 0.9em;
 }
 
-.api-docs-sidebar .info-list li {
+.sidebar-content-area .info-list li {
   margin-bottom: 0.8em;
   color: #a0a0a0;
 }
 
-.api-docs-sidebar .info-list.links li a {
+.sidebar-content-area .info-list.links li a {
   color: var(--accent-color); 
   text-decoration: none;
   transition: color 0.2s ease;
 }
 
-.api-docs-sidebar .info-list.links li a:hover {
+.sidebar-content-area .info-list.links li a:hover {
   color: var(--accent-hover-color);
   text-decoration: underline;
+}
+
+/* Adjust Docs Sidebar Styles within .sidebar-content-area */
+.sidebar-content-area pre {
+  background-color: #1e1e1e; /* Darker background for code */
+  padding: 1em;
+  border-radius: 6px;
+  overflow-x: auto;
+  font-size: 0.85em;
+  margin: 1em 0;
+}
+
+.sidebar-content-area code {
+  font-family: monospace;
+  color: #ccc;
 }
 
 /* API Header Section */
@@ -95,21 +172,6 @@
   margin: 0 auto; /* Center the bar container */
 }
 
-/* Adjust Docs Sidebar Styles */
-.api-docs-sidebar pre {
-  background-color: #1e1e1e; /* Darker background for code */
-  padding: 1em;
-  border-radius: 6px;
-  overflow-x: auto;
-  font-size: 0.85em;
-  margin: 1em 0;
-}
-
-.api-docs-sidebar code {
-  font-family: monospace;
-  color: #ccc;
-}
-
 /* Ensure API tools content is left-aligned */
 .api-tools-content {
     text-align: left; 
@@ -120,4 +182,96 @@
 /* Style for the content area below the selector */
 .view-content {
   padding: 0 1em; /* Add some padding to main view content */
+}
+
+/* Style for the endpoint summary paragraph */
+.endpoint-summary {
+  font-size: 0.9em;
+  color: #a0a0a0; /* Lighter text color */
+  margin-top: 0.5em; /* Space below the selector */
+  margin-bottom: 1.5em; /* Space above the parameter builders */
+  max-width: 600px; /* Limit width for readability */
+}
+
+/* Styles for the Generated Curl Command Output Area */
+.curl-output-area {
+  margin-top: 2em; /* Space above the output */
+  padding: 1em;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background-color: var(--card-background);
+}
+
+.curl-output-area h4 {
+  margin-top: 0;
+  margin-bottom: 0.8em;
+  font-size: 1em;
+  font-weight: 600;
+  /* Optional: Add border bottom if desired */
+  /* border-bottom: 1px solid var(--border-color); */
+  /* padding-bottom: 0.5em; */
+}
+
+.curl-output-area pre {
+  background-color: var(--background-color); /* Slightly darker background for code block */
+  padding: 1em;
+  border-radius: 4px;
+  overflow-x: auto; /* Allow horizontal scrolling for long commands */
+  margin: 0; /* Remove default pre margin */
+}
+
+.curl-output-area code {
+  font-family: monospace;
+  color: #ccc;
+  white-space: pre; /* Preserve whitespace */
+  font-size: 0.9em;
+}
+
+/* Styles for Run Request Button */
+.run-request-section {
+  margin-top: 1.5em; 
+  display: flex; 
+  justify-content: flex-end; 
+  align-items: center; /* Vertically align text and button */
+  gap: 1em; /* Space between estimate text and button */
+}
+
+/* Style for the usage estimate text */
+.usage-estimate {
+  font-size: 0.85em;
+  color: #888; /* Dim color */
+  font-style: italic;
+}
+
+.run-button {
+  padding: 0.6em 1.5em;
+  font-size: 0.95em;
+  font-weight: 500;
+  color: #fff;
+  /* background-color: var(--accent-color); */
+  background: var(--accent-gradient);
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: opacity 0.2s ease; /* Remove background transition if using gradient */
+}
+
+.run-button:hover {
+  /* Gradient doesn't change on hover, maybe adjust opacity slightly? */
+  opacity: 0.9;
+  /* background-color: var(--accent-hover-color); */
+}
+
+/* Styles for disabled button */
+.run-button:disabled {
+  /* background-color: #555; */
+  background: #555; /* Use solid color when disabled */
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.run-button:disabled:hover {
+  /* background-color: #555;  */
+  background: #555;
+  opacity: 0.6; /* Keep opacity same */
 } 

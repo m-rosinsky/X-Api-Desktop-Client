@@ -6,7 +6,9 @@ const EndpointSelector: React.FC<EndpointSelectorProps> = ({ endpoints, selected
   const selectedEndpoint = useMemo(() => endpoints.find(ep => ep.id === selectedEndpointId), [endpoints, selectedEndpointId]);
 
   const handleSelect = (endpointId: string | null) => {
-    onChange(endpointId);
+    if (endpointId !== null) {
+      onChange(endpointId);
+    }
     setIsOpen(false);
   };
 
@@ -39,7 +41,7 @@ const EndpointSelector: React.FC<EndpointSelectorProps> = ({ endpoints, selected
                   <span className="endpoint-path">{selectedEndpoint.path}</span>
                 </>
               ) : (
-                <span>-- Select Endpoint --</span>
+                <span>-- Loading... --</span>
               )}
             </div>
             <div className="selector-button-right">
@@ -50,9 +52,6 @@ const EndpointSelector: React.FC<EndpointSelectorProps> = ({ endpoints, selected
 
         {isOpen && (
           <ul className="dropdown-options endpoint-dropdown-options">
-            <li onClick={() => handleSelect(null)}>
-              <span>-- Select Endpoint --</span>
-            </li>
             {endpoints.map(ep => (
               <li 
                 key={ep.id} 

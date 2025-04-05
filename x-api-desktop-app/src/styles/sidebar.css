@@ -2,7 +2,8 @@
 .sidebar {
   position: relative;
   width: 220px; 
-  background-color: var(--card-background);
+  /* background-color: var(--card-background-solid); */
+  background: var(--card-gradient);
   padding: 1.5em 0; 
   display: flex;
   flex-direction: column;
