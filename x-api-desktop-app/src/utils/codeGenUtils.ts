@@ -6,7 +6,8 @@ const BASE_URL = "https://api.twitter.com";
 function buildUrl(
     endpoint: Endpoint,
     pathParams: Record<string, string>,
-    queryParams: Record<string, string>
+    queryParams: Record<string, string>,
+    expansions?: string
 ): string {
     let path = endpoint.path;
     if (endpoint.pathParams) {
@@ -20,7 +21,13 @@ function buildUrl(
         }
     }
 
-    const queryString = Object.entries(queryParams)
+    // Combine queryParams and expansions
+    const allQueryParams = { ...queryParams };
+    if (expansions) {
+        allQueryParams['expansions'] = expansions;
+    }
+
+    const queryString = Object.entries(allQueryParams)
         .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
         .join("&");
 
@@ -31,11 +38,12 @@ function buildUrl(
 export function generateCurlCommand(
   endpoint: Endpoint | undefined | null,
   pathParams: Record<string, string>,
-  queryParams: Record<string, string>
+  queryParams: Record<string, string>,
+  expansions?: string
 ): string {
   if (!endpoint) return "";
 
-  const fullUrl = buildUrl(endpoint, pathParams, queryParams);
+  const fullUrl = buildUrl(endpoint, pathParams, queryParams, expansions);
   let curlCommand = `curl "${fullUrl}"`;
   
   if (endpoint.method !== 'GET') {
@@ -56,11 +64,20 @@ export function generateCurlCommand(
 export function generatePythonRequestsCode(
     endpoint: Endpoint | undefined | null,
     pathParams: Record<string, string>,
-    queryParams: Record<string, string>
+    queryParams: Record<string, string>,
+    expansions?: string
 ): string {
     if (!endpoint) return "";
     
-    const fullUrl = buildUrl(endpoint, pathParams, {}); // Query params handled separately by requests lib
+    // Build URL without query params initially, requests library handles them
+    const baseUrl = buildUrl(endpoint, pathParams, {}, undefined); // URL path only
+
+    // Combine queryParams and expansions for requests' `params`
+    const allQueryParams = { ...queryParams };
+    if (expansions) {
+        allQueryParams['expansions'] = expansions;
+    }
+
     const headers: Record<string, string> = {
         "Authorization": "Bearer YOUR_BEARER_TOKEN"
     };
@@ -71,22 +88,28 @@ export function generatePythonRequestsCode(
         body = { your_key: "your_value" }; // Example body
     }
 
-    const paramsDict = Object.keys(queryParams).length > 0 ? `params=${JSON.stringify(queryParams)}` : "";
-    const headersDict = `headers=${JSON.stringify(headers)}`;
-    const bodyJson = body ? `json=${JSON.stringify(body)}` : "";
+    const paramsDictString = Object.keys(allQueryParams).length > 0 
+        ? `params = ${JSON.stringify(allQueryParams, null, 4)}\n` 
+        : "";
+    const headersDictString = `headers = ${JSON.stringify(headers, null, 4)}\n`;
+    const bodyJsonString = body ? `payload = ${JSON.stringify(body, null, 4)}\n` : "";
 
-    const args = [paramsDict, headersDict, bodyJson].filter(Boolean).join(", ");
+    const requestArgs = [
+        Object.keys(allQueryParams).length > 0 ? "params=params" : null,
+        "headers=headers",
+        body ? "json=payload" : null
+    ].filter(Boolean).join(", ");
 
     return (
 `import requests
 import json
 
-url = "${fullUrl}"
-${paramsDict ? `params = ${JSON.stringify(queryParams)}\n` : ''}headers = ${JSON.stringify(headers, null, 4)}
-${body ? `payload = ${JSON.stringify(body, null, 4)}\n` : ''}response = requests.request(
+url = "${baseUrl}"
+${paramsDictString}${headersDictString}${bodyJsonString}
+response = requests.request(
     "${endpoint.method}", 
     url, 
-    ${args.replace(/\\{/g, '{').replace(/\\}/g, '}') /* Basic formatting adjustment */}
+    ${requestArgs}
 )
 
 print(response.status_code)
@@ -98,11 +121,12 @@ print(response.text)`
 export function generateJavascriptFetchCode(
     endpoint: Endpoint | undefined | null,
     pathParams: Record<string, string>,
-    queryParams: Record<string, string>
+    queryParams: Record<string, string>,
+    expansions?: string
 ): string {
     if (!endpoint) return "";
 
-    const fullUrl = buildUrl(endpoint, pathParams, queryParams); // Fetch needs full URL with query string
+    const fullUrl = buildUrl(endpoint, pathParams, queryParams, expansions); // Pass expansions
     
     const options: RequestInit = {
         method: endpoint.method,

@@ -12,6 +12,7 @@ import "./styles/splashscreen.css";
 import "./styles/query-param-builder.css";
 import "./styles/path-param-builder.css";
 import "./styles/code-snippet-display.css";
+import "./styles/expansions-selector.css";
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>

@@ -6,6 +6,7 @@ import ApiViewLayout from '../components/ApiViewLayout';
 import QueryParamBuilder from '../components/QueryParamBuilder';
 import PathParamBuilder from '../components/PathParamBuilder';
 import CodeSnippetDisplay from '../components/CodeSnippetDisplay';
+import ExpansionsSelector from '../components/ExpansionsSelector';
 
 // Update endpoint data with queryParams and pathParams
 const tweetsEndpoints: Endpoint[] = [
@@ -25,6 +26,12 @@ const tweetsEndpoints: Endpoint[] = [
       // Add other query parameters for GET /2/tweets here as needed
       // Example: { name: 'expansions', type: 'array', description: '...' },
     ],
+    expansionOptions: [ // Added expansion options
+      { name: 'author_id', description: 'Expand the author user object.' },
+      { name: 'referenced_tweets.id', description: 'Expand referenced tweet objects.' },
+      { name: 'attachments.media_keys', description: 'Expand media objects.' },
+      { name: 'geo.place_id', description: 'Expand location data.' }, // Dummy
+    ],
   },
   {
     id: 'get-tweet-by-id',
@@ -39,6 +46,15 @@ const tweetsEndpoints: Endpoint[] = [
       },
     ],
     // Note: Path parameters like :id are handled differently, not via QueryParamBuilder
+    queryParams: [ // Add queryParams here
+      // Add other potential query params for single tweet lookup if needed
+    ],
+    expansionOptions: [ // Added expansion options
+      { name: 'author_id', description: 'Expand the author user object.' },
+      { name: 'referenced_tweets.id', description: 'Expand referenced tweet objects.' },
+      { name: 'attachments.media_keys', description: 'Expand media objects.' },
+      // Add other dummy expansions if needed
+    ],
   },
   {
     id: 'post-tweet',
@@ -66,6 +82,7 @@ const TweetsView: React.FC<ApiViewProps> = ({ projects, activeAppId, setActiveAp
   const [selectedEndpoint, setSelectedEndpoint] = useState<string | null>(tweetsEndpoints[0]?.id ?? null);
   const [queryParamValues, setQueryParamValues] = useState<Record<string, string>>({});
   const [pathParamValues, setPathParamValues] = useState<Record<string, string>>({});
+  const [selectedExpansions, setSelectedExpansions] = useState<string>('');
 
   // Find the project containing the active app
   const activeProject = useMemo(() => {
@@ -85,6 +102,7 @@ const TweetsView: React.FC<ApiViewProps> = ({ projects, activeAppId, setActiveAp
     setPathParamValues({}); 
     // Also reset query params when endpoint changes
     setQueryParamValues({}); 
+    setSelectedExpansions('');
   }, [selectedEndpoint]);
 
   // Memoize the query params for the selected endpoint
@@ -96,6 +114,11 @@ const TweetsView: React.FC<ApiViewProps> = ({ projects, activeAppId, setActiveAp
     return endpointDetails?.pathParams ?? [];
   }, [endpointDetails]);
 
+  // Memoize the expansion options for the selected endpoint
+  const currentExpansionOptions = useMemo(() => {
+    return endpointDetails?.expansionOptions ?? [];
+  }, [endpointDetails]);
+
   // Callback for the QueryParamBuilder
   const handleQueryParamChange = useCallback((newValues: Record<string, string>) => {
     setQueryParamValues(newValues);
@@ -104,6 +127,11 @@ const TweetsView: React.FC<ApiViewProps> = ({ projects, activeAppId, setActiveAp
   // Callback for the PathParamBuilder
   const handlePathParamChange = useCallback((paramName: string, value: string) => {
     setPathParamValues(prev => ({ ...prev, [paramName]: value }));
+  }, []);
+
+  // Callback for the ExpansionsSelector
+  const handleExpansionChange = useCallback((newExpansions: string) => {
+    setSelectedExpansions(newExpansions);
   }, []);
 
   // --- Button Logic ---
@@ -226,6 +254,14 @@ curl ...`}</code></pre>
             />
          )}
 
+         {/* Expansions Selector */} 
+         {endpointDetails?.method === 'GET' && currentExpansionOptions.length > 0 && (
+           <ExpansionsSelector 
+             options={currentExpansionOptions} 
+             onChange={handleExpansionChange} 
+           />
+         )}
+
         {/* Add Run Request Button */}
         <div className="run-request-section">
            {/* Display usage estimate */}
@@ -245,6 +281,7 @@ curl ...`}</code></pre>
           endpoint={endpointDetails} 
           pathParams={pathParamValues} 
           queryParams={queryParamValues} 
+          expansions={selectedExpansions}
         />
       </div>
     </ApiViewLayout>

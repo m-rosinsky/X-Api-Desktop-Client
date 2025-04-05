@@ -5,6 +5,8 @@ import EndpointSelector from '../components/EndpointSelector';
 import ApiViewLayout from '../components/ApiViewLayout';
 import PathParamBuilder from '../components/PathParamBuilder';
 import CodeSnippetDisplay from '../components/CodeSnippetDisplay';
+import QueryParamBuilder from '../components/QueryParamBuilder';
+import ExpansionsSelector from '../components/ExpansionsSelector';
 
 // Moved from App.tsx as it seems specific to this view
 const usersEndpoints: Endpoint[] = [
@@ -14,6 +16,13 @@ const usersEndpoints: Endpoint[] = [
     path: '/2/users',
     summary: 'Look up multiple users based on query parameters (e.g., ids, usernames)',
     // TODO: Add query params for GET /2/users (e.g., ids, usernames)
+    queryParams: [
+      // Add necessary params like ids or usernames here later
+    ],
+    expansionOptions: [
+      { name: 'pinned_tweet_id', description: 'Expand the pinned tweet object.' },
+      { name: 'profile_image_url', description: 'Include profile image URL (dummy).' },
+    ],
   },
   {
     id: 'get-user-by-id',
@@ -26,6 +35,13 @@ const usersEndpoints: Endpoint[] = [
         description: 'The unique identifier of the User to retrieve.',
         example: '2244994945' // Example User ID (TwitterDev)
       },
+    ],
+    queryParams: [
+      // Add other potential query params for single user lookup if needed
+    ],
+    expansionOptions: [
+      { name: 'pinned_tweet_id', description: 'Expand the pinned tweet object.' },
+      { name: 'description', description: 'Include user description (dummy).' },
     ],
   },
   {
@@ -40,6 +56,13 @@ const usersEndpoints: Endpoint[] = [
         example: 'XDevelopers' // Changed Example Username
       },
     ],
+    queryParams: [
+      // Add other potential query params for single user lookup if needed
+    ],
+    expansionOptions: [
+      { name: 'pinned_tweet_id', description: 'Expand the pinned tweet object.' },
+      { name: 'location', description: 'Include user location (dummy).' },
+    ],
   },
 ];
 
@@ -47,6 +70,7 @@ const UsersView: React.FC<ApiViewProps> = ({ projects, activeAppId, setActiveApp
   const [selectedEndpoint, setSelectedEndpoint] = useState<string | null>(usersEndpoints[0]?.id ?? null);
   const [pathParamValues, setPathParamValues] = useState<Record<string, string>>({});
   const [queryParamValues, setQueryParamValues] = useState<Record<string, string>>({});
+  const [selectedExpansions, setSelectedExpansions] = useState<string>('');
 
   // Find the project containing the active app (duplicate logic, could be extracted)
   const activeProject = useMemo(() => {
@@ -63,6 +87,7 @@ const UsersView: React.FC<ApiViewProps> = ({ projects, activeAppId, setActiveApp
   useEffect(() => {
     setPathParamValues({});
     setQueryParamValues({});
+    setSelectedExpansions('');
   }, [selectedEndpoint]);
 
   const currentPathParams = useMemo(() => {
@@ -74,6 +99,11 @@ const UsersView: React.FC<ApiViewProps> = ({ projects, activeAppId, setActiveApp
     return endpointDetails?.queryParams ?? [];
   }, [endpointDetails]);
 
+  // Memoize the expansion options for the selected endpoint
+  const currentExpansionOptions = useMemo(() => {
+    return endpointDetails?.expansionOptions ?? [];
+  }, [endpointDetails]);
+
   const handlePathParamChange = useCallback((paramName: string, value: string) => {
     setPathParamValues(prev => ({ ...prev, [paramName]: value }));
   }, []);
@@ -81,6 +111,11 @@ const UsersView: React.FC<ApiViewProps> = ({ projects, activeAppId, setActiveApp
   // Placeholder for query param handler
   const handleQueryParamChange = useCallback((newValues: Record<string, string>) => {
     setQueryParamValues(newValues);
+  }, []);
+
+  // Callback for the ExpansionsSelector
+  const handleExpansionChange = useCallback((newExpansions: string) => {
+    setSelectedExpansions(newExpansions);
   }, []);
 
    // --- Button Logic ---
@@ -177,6 +212,21 @@ curl ...`}</code></pre>
         )}
 
         {/* TODO: Add QueryParamBuilder if needed for GET /2/users */}
+        {/* Query Parameters - Render if GET request and params exist */}
+        {endpointDetails?.method === 'GET' && currentQueryParams.length > 0 && (
+          <QueryParamBuilder 
+             params={currentQueryParams} 
+             onChange={handleQueryParamChange} 
+           />
+        )}
+
+        {/* Expansions Selector */}
+        {endpointDetails?.method === 'GET' && currentExpansionOptions.length > 0 && (
+          <ExpansionsSelector 
+            options={currentExpansionOptions} 
+            onChange={handleExpansionChange} 
+          />
+        )}
 
          {/* Add Run Request Button */}
         <div className="run-request-section">
@@ -197,6 +247,7 @@ curl ...`}</code></pre>
           endpoint={endpointDetails} 
           pathParams={pathParamValues} 
           queryParams={queryParamValues} 
+          expansions={selectedExpansions}
         />
       </div>
     </ApiViewLayout>

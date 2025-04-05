@@ -39,6 +39,7 @@ export interface Endpoint {
   summary: string;
   queryParams?: QueryParam[]; // Add query parameters array
   pathParams?: PathParam[]; // Add path parameters array
+  expansionOptions?: ExpansionOption[]; // Add expansion options array
 }
 
 export interface EndpointSelectorProps {
@@ -68,4 +69,10 @@ export interface PathParam {
   description?: string;
   example?: string; // Add example field
   // Type could be added later if needed for validation (e.g., number)
+}
+
+// New type for Expansion Options
+export interface ExpansionOption {
+  name: string;
+  description?: string;
 } 

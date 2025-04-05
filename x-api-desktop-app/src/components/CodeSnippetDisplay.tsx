@@ -10,17 +10,18 @@ interface CodeSnippetDisplayProps {
   endpoint: Endpoint | undefined | null;
   pathParams: Record<string, string>;
   queryParams: Record<string, string>;
+  expansions?: string; // Add optional expansions prop
 }
 
-const CodeSnippetDisplay: React.FC<CodeSnippetDisplayProps> = ({ endpoint, pathParams, queryParams }) => {
+const CodeSnippetDisplay: React.FC<CodeSnippetDisplayProps> = ({ endpoint, pathParams, queryParams, expansions }) => {
   const [selectedLanguage, setSelectedLanguage] = useState<Language>('curl');
 
   // Generate code snippets only when needed
   const codeSnippets = useMemo(() => ({
-    curl: generateCurlCommand(endpoint, pathParams, queryParams),
-    python: generatePythonRequestsCode(endpoint, pathParams, queryParams),
-    javascript: generateJavascriptFetchCode(endpoint, pathParams, queryParams),
-  }), [endpoint, pathParams, queryParams]);
+    curl: generateCurlCommand(endpoint, pathParams, queryParams, expansions),
+    python: generatePythonRequestsCode(endpoint, pathParams, queryParams, expansions),
+    javascript: generateJavascriptFetchCode(endpoint, pathParams, queryParams, expansions),
+  }), [endpoint, pathParams, queryParams, expansions]); // Include expansions in dependency array
 
   // TODO: Add copy to clipboard functionality
   const handleCopy = () => {
