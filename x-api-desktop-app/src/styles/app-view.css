@@ -1,0 +1,89 @@
+/* Styles for AppView - Copied/adapted from project-view.css */
+
+.app-view h1 {
+    margin-bottom: 0.2em;
+}
+
+.app-view > p {
+    margin-top: 0;
+    margin-bottom: 1.5em;
+    color: var(--text-color-secondary);
+    font-size: 0.9em;
+}
+
+/* Tab Styles */
+.app-details-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border-color);
+  background-color: var(--background-color-secondary); /* Tab bar background */
+  margin-bottom: 1em; /* Space below tabs */
+}
+
+.tab-button {
+  padding: 0.8em 1.2em;
+  border: none;
+  background: none;
+  color: var(--text-color-secondary);
+  cursor: pointer;
+  font-size: 0.9em;
+  font-weight: 500;
+  border-bottom: 3px solid transparent; /* Space for active indicator */
+  margin-bottom: -1px; /* Overlap border-bottom of container */
+  transition: color 0.2s ease, border-color 0.2s ease;
+}
+
+.tab-button:hover {
+  color: var(--text-color);
+}
+
+.tab-button.active {
+  color: var(--accent-color);
+  border-bottom-color: var(--accent-color);
+}
+
+/* Tab Content Styles */
+.app-details-content {
+  padding: 0.5em; /* Padding within the content area */
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background-color: var(--background-color);
+}
+
+.overview-section p,
+.keys-section p {
+  margin: 0.4em 0;
+  font-size: 0.9em;
+  color: var(--text-color-secondary);
+}
+
+.overview-section p strong,
+.keys-section p strong {
+  color: var(--text-color);
+  min-width: 100px; /* Align keys */
+  display: inline-block;
+}
+
+.keys-section code {
+  background-color: var(--background-color-secondary);
+  padding: 0.2em 0.4em;
+  border-radius: 3px;
+  font-family: monospace;
+}
+
+/* Basic Action Button Style */
+.action-button {
+  background-color: var(--button-secondary-bg);
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
+  padding: 0.5em 1em;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9em;
+  margin-top: 1em;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.action-button:hover {
+  background-color: var(--button-secondary-hover-bg);
+  border-color: var(--accent-color);
+} 

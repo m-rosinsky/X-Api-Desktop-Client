@@ -3,13 +3,14 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 interface ApiViewLayoutProps {
   children: React.ReactNode; // Main content goes here
   sidebarContent: React.ReactNode; // Content for the right sidebar
+  initialWidth: number; // Accept initial width from parent
+  onResize: (newWidth: number) => void; // Callback when resized
 }
 
 const MIN_SIDEBAR_WIDTH = 150; // Minimum width for the sidebar
 const MAX_SIDEBAR_WIDTH_PERCENT = 60; // Max width as a percentage of window width
 
-const ApiViewLayout: React.FC<ApiViewLayoutProps> = ({ children, sidebarContent }) => {
-  const [sidebarWidth, setSidebarWidth] = useState(280); 
+const ApiViewLayout: React.FC<ApiViewLayoutProps> = ({ children, sidebarContent, initialWidth, onResize }) => {
   const [isDragging, setIsDragging] = useState(false);
   const sidebarRef = useRef<HTMLElement>(null); // Ref for the sidebar element
   const layoutRef = useRef<HTMLDivElement>(null); // Ref for the layout container
@@ -38,8 +39,9 @@ const ApiViewLayout: React.FC<ApiViewLayoutProps> = ({ children, sidebarContent 
     const maxAllowedWidth = layoutRect.width * (MAX_SIDEBAR_WIDTH_PERCENT / 100);
     const finalWidth = Math.min(clampedMinWidth, maxAllowedWidth);
 
-    setSidebarWidth(finalWidth);
-  }, [isDragging]);
+    // Call the parent's resize handler instead of setting local state
+    onResize(finalWidth);
+  }, [isDragging, onResize]);
 
   // Add global event listeners for mousemove and mouseup
   useEffect(() => {
@@ -62,7 +64,7 @@ const ApiViewLayout: React.FC<ApiViewLayoutProps> = ({ children, sidebarContent 
       </div>
       <aside 
         className="api-docs-sidebar" 
-        style={{ width: `${sidebarWidth}px` }} 
+        style={{ width: `${initialWidth}px` }}
         ref={sidebarRef}
       >
         {/* Resize Handle */}

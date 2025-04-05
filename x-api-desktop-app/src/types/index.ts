@@ -11,19 +11,21 @@ export interface Project {
   usage: number;
   cap: number;
   package: string; // Add package field
+  description?: string; // Add optional description
   apps: AppInfo[]; // Add apps array
 }
 
 export interface NavItem {
   label: string;
-  type: 'link' | 'category' | 'header'; // Add type property
-  viewId?: string; // ID to identify the view to render
-  href?: string; // Keep href for potential future use or external links
-  subItems?: NavItem[]; // Optional sub-items for categories
+  type: 'header' | 'link' | 'category';
+  viewId?: string; // Only for type: link
+  subItems?: NavItem[]; // Only for type: category
+  id?: string; // Optional unique identifier
 }
 
 export interface DashboardProps {
   projects: Project[];
+  onNavigate?: (viewId: string | undefined) => void; // Add optional navigation handler
 }
 
 export interface AppSelectorProps {

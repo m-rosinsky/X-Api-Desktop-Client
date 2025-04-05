@@ -154,22 +154,32 @@
 
 .sub-nav-list {
   list-style: none;
-  padding: 0 0 0 2.5em;
-  margin: 0.5em 0 0 0;
-  overflow: hidden; /* Needed for smooth transition */
-  max-height: 0; /* Collapsed by default */
-  transition: max-height 0.3s ease-in-out; /* Smooth expand/collapse */
+  padding-left: 1.2em; /* Default indentation for sub-lists */
+  margin: 0.5em 0 0.5em 0;
 }
 
-.nav-category.expanded .sub-nav-list {
-  max-height: 500px; /* Set a large enough max-height for expanded state */
+/* Reduce indentation for the second level (apps under projects) */
+.sub-nav-list .sub-nav-list {
+  padding-left: 1.0em; /* Slightly less padding */
 }
 
-/* Style sub-items slightly differently if needed */
 .sub-nav-list .nav-item a {
-  padding: 0.4em 1em 0.4em 2.5em;
-  font-size: 0.95em;
+  padding: 0.5em 1em; /* Adjust padding for nested items if needed */
+  font-size: 0.9em;
+  color: var(--text-color-secondary); /* Dimmer color for nested items */
 }
+
+.sub-nav-list .nav-item.active a {
+  color: var(--accent-color); 
+  font-weight: 500;
+}
+
+/* Further reduce padding for deeper levels if necessary */
+/* 
+.sub-nav-list .sub-nav-list .sub-nav-list {
+  padding-left: 0.8em; 
+}
+*/
 
 /* Style for Active Nav Item */
 .nav-item.active > a,

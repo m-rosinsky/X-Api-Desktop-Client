@@ -161,4 +161,45 @@ textarea::placeholder {
   color: rgba(156, 156, 156, 0.4); /* Apply specifically to input and textarea */
   font-style: italic;
   font-family: inherit; /* Inherit font family */
+}
+
+/* --- Breadcrumb Header Styles --- */
+.breadcrumb-header {
+  font-size: 1.4em; /* Adjust size as needed */
+  font-weight: 600;
+  color: var(--text-color);
+  margin-bottom: 1em; /* Space below header */
+  display: flex; /* Use flex to align items */
+  align-items: baseline; /* Align text baselines */
+}
+
+.breadcrumb-header span {
+  /* Styles for individual parts if needed */
+}
+
+/* Style for clickable breadcrumb parts */
+.breadcrumb-link {
+  cursor: pointer;
+  color: var(--accent-color); /* Use accent color by default */
+  transition: color 0.2s ease;
+}
+
+.breadcrumb-link:hover {
+  color: var(--accent-hover-color); /* Use hover accent color */
+  text-decoration: underline;
+}
+
+.breadcrumb-separator {
+  margin: 0 0.5em; /* Space around separators */
+  color: var(--text-color-secondary); /* Dimmer color for separator */
+  font-weight: normal; /* Normal weight for separator */
+}
+
+/* Adjust app environment tag within breadcrumbs */
+.breadcrumb-header .app-environment {
+    font-size: 0.6em; /* Smaller relative to breadcrumb header */
+    font-weight: normal;
+    color: var(--text-color-secondary);
+    margin-left: 0.8em; /* Space before environment tag */
+    vertical-align: baseline; /* Align with breadcrumb text */
 } 

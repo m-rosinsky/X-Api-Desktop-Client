@@ -8,6 +8,12 @@ import PathParamBuilder from '../components/PathParamBuilder';
 import CodeSnippetDisplay from '../components/CodeSnippetDisplay';
 import ExpansionsSelector from '../components/ExpansionsSelector';
 
+// Define the additional props passed down from App.tsx
+interface TweetsViewProps extends ApiViewProps {
+  initialWidth: number;
+  onResize: (newWidth: number) => void;
+}
+
 // Update endpoint data with queryParams and pathParams
 const tweetsEndpoints: Endpoint[] = [
   {
@@ -78,7 +84,13 @@ const tweetsEndpoints: Endpoint[] = [
   },
 ];
 
-const TweetsView: React.FC<ApiViewProps> = ({ projects, activeAppId, setActiveAppId }) => {
+const TweetsView: React.FC<TweetsViewProps> = ({ 
+  projects, 
+  activeAppId, 
+  setActiveAppId, 
+  initialWidth, // Receive prop
+  onResize      // Receive prop
+}) => {
   const [selectedEndpoint, setSelectedEndpoint] = useState<string | null>(tweetsEndpoints[0]?.id ?? null);
   const [queryParamValues, setQueryParamValues] = useState<Record<string, string>>({});
   const [pathParamValues, setPathParamValues] = useState<Record<string, string>>({});
@@ -201,9 +213,12 @@ curl ...`}</code></pre>
   );
 
   return (
-    // Use the ApiViewLayout
-    <ApiViewLayout sidebarContent={sidebarContent}>
-      {/* Main Content */}
+    <ApiViewLayout 
+      sidebarContent={sidebarContent} 
+      initialWidth={initialWidth} // Pass down
+      onResize={onResize}           // Pass down
+    >
+       {/* Main Content */}
       <div className="api-header-section">
         <div className="selector-and-package">
           <AppSelector projects={projects} selectedAppId={activeAppId} onChange={setActiveAppId} />

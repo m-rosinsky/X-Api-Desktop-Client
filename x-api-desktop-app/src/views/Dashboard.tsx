@@ -1,7 +1,14 @@
 import React from 'react';
 import { Project, AppInfo, DashboardProps } from '../types';
 
-const Dashboard: React.FC<DashboardProps> = ({ projects }) => {
+const Dashboard: React.FC<DashboardProps> = ({ projects, onNavigate }) => {
+  const handleAppClick = (appId: number, targetTab: 'overview' | 'keys') => {
+    if (onNavigate) {
+      const viewId = `app-${appId}/${targetTab}`;
+      onNavigate(viewId);
+    }
+  };
+
   return (
     <div className="dashboard-layout">
       <div className="dashboard-main">
@@ -41,8 +48,16 @@ const Dashboard: React.FC<DashboardProps> = ({ projects }) => {
                                   <span>{app.name}</span>
                                 </div>
                                 <div className="app-item-actions">
-                                  <span className="key-icon" title="View Keys">🔑</span>
-                                  <span className="settings-icon" title="App Settings">⚙️</span>
+                                  <span 
+                                    className="settings-icon" 
+                                    title="App Settings"
+                                    onClick={() => handleAppClick(app.id, 'overview')}
+                                  >⚙️</span>
+                                  <span 
+                                    className="key-icon" 
+                                    title="View Keys"
+                                    onClick={() => handleAppClick(app.id, 'keys')}
+                                  >🔑</span>
                                 </div>
                               </li>
                             ))}

@@ -8,6 +8,12 @@ import CodeSnippetDisplay from '../components/CodeSnippetDisplay';
 import QueryParamBuilder from '../components/QueryParamBuilder';
 import ExpansionsSelector from '../components/ExpansionsSelector';
 
+// Define the additional props passed down from App.tsx
+interface UsersViewProps extends ApiViewProps {
+  initialWidth: number;
+  onResize: (newWidth: number) => void;
+}
+
 // Moved from App.tsx as it seems specific to this view
 const usersEndpoints: Endpoint[] = [
   {
@@ -18,6 +24,13 @@ const usersEndpoints: Endpoint[] = [
     // TODO: Add query params for GET /2/users (e.g., ids, usernames)
     queryParams: [
       // Add necessary params like ids or usernames here later
+      {
+        name: 'ids',
+        type: 'array',
+        description: 'A comma-separated list of User IDs. Up to 100 are allowed in a single request.',
+        required: true,
+        example: '2244994945,6253282' // Example User IDs
+      },
     ],
     expansionOptions: [
       { name: 'pinned_tweet_id', description: 'Expand the pinned tweet object.' },
@@ -66,7 +79,13 @@ const usersEndpoints: Endpoint[] = [
   },
 ];
 
-const UsersView: React.FC<ApiViewProps> = ({ projects, activeAppId, setActiveAppId }) => {
+const UsersView: React.FC<UsersViewProps> = ({ 
+  projects, 
+  activeAppId, 
+  setActiveAppId, 
+  initialWidth, // Receive prop
+  onResize      // Receive prop
+}) => {
   const [selectedEndpoint, setSelectedEndpoint] = useState<string | null>(usersEndpoints[0]?.id ?? null);
   const [pathParamValues, setPathParamValues] = useState<Record<string, string>>({});
   const [queryParamValues, setQueryParamValues] = useState<Record<string, string>>({});
@@ -125,9 +144,13 @@ const UsersView: React.FC<ApiViewProps> = ({ projects, activeAppId, setActiveApp
       if (!pathParamValues[param.name]) return true;
     }
     // Add check for required query params if QueryParamBuilder is added
-    // for (const param of currentQueryParams) { ... }
+    for (const param of currentQueryParams) {
+       if (param.required && !queryParamValues[param.name]) { // Check if required and value is empty/falsy
+         return true;
+      }
+    }
     return false;
-  }, [activeAppId, currentPathParams, pathParamValues/*, currentQueryParams, queryParamValues*/]);
+  }, [activeAppId, currentPathParams, pathParamValues, currentQueryParams, queryParamValues]);
 
   const usageEstimateText = useMemo(() => {
     // Basic estimate for users view
@@ -167,8 +190,11 @@ curl ...`}</code></pre>
   );
 
   return (
-    // Use the ApiViewLayout
-    <ApiViewLayout sidebarContent={sidebarContent}>
+    <ApiViewLayout 
+      sidebarContent={sidebarContent} 
+      initialWidth={initialWidth} // Pass down
+      onResize={onResize}           // Pass down
+    >
        {/* Main Content */}
       <div className="api-header-section">
         <div className="selector-and-package">

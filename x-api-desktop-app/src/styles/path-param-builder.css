@@ -51,6 +51,19 @@
     white-space: nowrap;
 }
 
+/* Add Required Badge styles (copied from query-param-builder.css) */
+.path-param-item .required-badge {
+    display: inline-block;
+    /* Use hardcoded colors from global.css */
+    background-color: #c84a4a; 
+    color: #fff;
+    padding: 0.1em 0.4em;
+    border-radius: 3px;
+    font-size: 0.75em;
+    margin-right: 0.4em;
+    vertical-align: baseline;
+}
+
 /* New container for relative positioning */
 .info-icon-container {
   position: relative; /* Make this the positioning context */
