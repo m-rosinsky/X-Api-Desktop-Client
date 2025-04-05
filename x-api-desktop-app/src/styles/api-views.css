@@ -1,0 +1,123 @@
+/* API View Layout Styles (similar to Dashboard) */
+.api-view-layout {
+  display: flex;
+  gap: 2em; /* Space between main content and sidebar */
+}
+
+.api-main-content {
+  flex-grow: 1; /* Allow main content to take available space */
+  min-width: 0; /* Prevent flex items from overflowing */
+}
+
+.api-docs-sidebar {
+  width: 280px; /* Match dashboard sidebar width */
+  flex-shrink: 0; 
+  border-left: 1px solid var(--border-color); 
+  padding-left: 2em; 
+}
+
+/* Reuse dashboard sidebar styles for h3 and info-list */
+.api-docs-sidebar h3 {
+  font-size: 1em;
+  font-weight: 600;
+  color: #c0c0c0;
+  margin-top: 0; 
+  margin-bottom: 1em;
+  padding-bottom: 0.5em;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.api-docs-sidebar h3:not(:first-child) {
+  margin-top: 2em; 
+}
+
+.api-docs-sidebar .info-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  font-size: 0.9em;
+}
+
+.api-docs-sidebar .info-list li {
+  margin-bottom: 0.8em;
+  color: #a0a0a0;
+}
+
+.api-docs-sidebar .info-list.links li a {
+  color: var(--accent-color); 
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.api-docs-sidebar .info-list.links li a:hover {
+  color: var(--accent-hover-color);
+  text-decoration: underline;
+}
+
+/* API Header Section */
+.api-header-section {
+  padding: 0 0 1.5em 0; /* Bottom padding for separation */
+  margin-bottom: 1.5em; /* Space below header section */
+  border-bottom: 1px solid var(--border-color); /* Separator line for the whole section */
+}
+
+/* Usage Preview Styles (API Screens) */
+.api-usage-preview {
+  /* Initial hidden state */
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  padding: 0 2em; /* Remove vertical padding initially */
+  margin-bottom: 0; /* Remove margin initially */
+  transition: max-height 0.3s ease-in-out, 
+              opacity 0.3s ease-in-out, 
+              padding 0.3s ease-in-out, 
+              margin-bottom 0.3s ease-in-out;
+}
+
+/* Visible state */
+.api-usage-preview.visible {
+  max-height: 100px; /* Adjust as needed, large enough for content */
+  opacity: 1;
+  padding: 0.5em 2em 1em 2em; /* Restore vertical padding */
+  margin-bottom: 1.5em; /* Restore margin */
+}
+
+.api-usage-preview p {
+  margin: 0 0 0.6em 0;
+  font-size: 0.85em;
+  color: #a0a0a0;
+  text-align: center;
+}
+
+.api-usage-preview .usage-bar-container {
+  max-width: 400px; /* Limit width */
+  margin: 0 auto; /* Center the bar container */
+}
+
+/* Adjust Docs Sidebar Styles */
+.api-docs-sidebar pre {
+  background-color: #1e1e1e; /* Darker background for code */
+  padding: 1em;
+  border-radius: 6px;
+  overflow-x: auto;
+  font-size: 0.85em;
+  margin: 1em 0;
+}
+
+.api-docs-sidebar code {
+  font-family: monospace;
+  color: #ccc;
+}
+
+/* Ensure API tools content is left-aligned */
+.api-tools-content {
+    text-align: left; 
+    /* Add padding/margin if needed */
+    padding: 0 1em; /* Match view-content padding */
+}
+
+/* Style for the content area below the selector */
+.view-content {
+  padding: 0 1em; /* Add some padding to main view content */
+} 

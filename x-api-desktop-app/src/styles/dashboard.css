@@ -1,0 +1,235 @@
+/* Dashboard Styles */
+.dashboard h2 {
+  margin-bottom: 1.5em;
+  font-weight: 600;
+  text-align: left;
+}
+
+.project-list {
+  display: grid;
+  /* Adjust grid columns as needed, e.g., repeat(auto-fill, minmax(300px, 1fr)) */
+  grid-template-columns: 1fr; /* Start with single column */
+  gap: 1.5em;
+}
+
+.project-item {
+  background-color: var(--card-background);
+  padding: 1.5em;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  text-align: left;
+}
+
+.project-header {
+  display: flex;
+  align-items: baseline; /* Align name and package text */
+  gap: 0.8em;
+  margin-bottom: 0.5em; /* Space below header */
+}
+
+.project-header h3 {
+  margin: 0; /* Remove default margin */
+  font-size: 1.1em;
+  font-weight: 500;
+}
+
+.project-package {
+  font-size: 0.75em;
+  font-weight: 600;
+  padding: 0.2em 0.6em;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background-color: #555; /* Default background */
+  color: #eee; /* Default text color */
+}
+
+/* Optional: Add specific styles for different packages */
+.package-free {
+  background-color: #6c757d; /* Grey */
+  color: #fff; /* Ensure contrast */
+}
+
+.package-basic {
+  background-color: #3b71ca; /* Darker Blue */
+  color: #fff; /* Ensure contrast */
+}
+
+.package-enterprise {
+  background-color: #b02a37; /* Darker Red */
+  color: #fff; /* Ensure contrast */
+}
+
+.package-partner {
+  background-color: #146c43; /* Darker Green */
+  color: #fff; /* Ensure contrast */
+}
+
+.project-item p {
+  margin-top: 0;
+  margin-bottom: 1em;
+  font-size: 0.9em;
+  color: #a0a0a0; /* Lighter text for usage details */
+}
+
+.usage-bar-container {
+  height: 10px; /* Bar height */
+  background-color: #444; /* Dark background for the bar track */
+  border-radius: 5px;
+  overflow: hidden;
+  width: 100%;
+}
+
+.usage-bar {
+  height: 100%;
+  background-color: var(--accent-color); /* Use accent color for the bar */
+  border-radius: 5px;
+  transition: width 0.3s ease-in-out;
+}
+
+.usage-bar.at-cap {
+  background-color: #ff6b6b; /* Red color when at/over cap */
+}
+
+/* App List Styles within Project Item */
+.app-list {
+  margin-top: 1.5em;
+  padding-top: 1em;
+  border-top: 1px solid var(--border-color); /* Separator */
+}
+
+.app-list h4 {
+  margin-top: 0;
+  margin-bottom: 0.8em;
+  font-size: 0.95em;
+  font-weight: 500;
+  color: #c0c0c0; /* Slightly lighter heading */
+}
+
+.app-list ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.app-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.9em;
+  padding: 0.4em 0; /* Vertical padding for spacing */
+}
+
+.app-item-info {
+  display: flex;
+  align-items: center;
+  gap: 0.6em; /* Space between icon and name */
+}
+
+.app-icon {
+  font-size: 1.2em; /* Adjust icon size if needed */
+  display: inline-flex; /* Helps vertical alignment */
+  align-items: center;
+}
+
+.app-item-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.8em; /* Space between icons */
+}
+
+.key-icon, .settings-icon {
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity 0.2s ease;
+  font-size: 1.1em; /* Slightly larger icons */
+}
+
+.key-icon:hover, .settings-icon:hover {
+  opacity: 1;
+}
+
+/* Dashboard Layout Styles */
+.dashboard-layout {
+  display: flex;
+  gap: 2em; /* Space between main content and sidebar */
+}
+
+.dashboard-main {
+  flex-grow: 1; /* Allow main content to take available space */
+  min-width: 0; /* Prevent flex items from overflowing */
+}
+
+.dashboard-main h2 {
+  margin-bottom: 1.5em;
+  font-weight: 600;
+  text-align: left;
+}
+
+.dashboard-sidebar {
+  width: 280px; /* Adjust width as needed */
+  flex-shrink: 0; /* Prevent sidebar from shrinking */
+  border-left: 1px solid var(--border-color); /* Separator */
+  padding-left: 2em; /* Space inside sidebar */
+}
+
+.dashboard-sidebar h3 {
+  font-size: 1em;
+  font-weight: 600;
+  color: #c0c0c0;
+  margin-top: 0; /* Remove top margin for first header */
+  margin-bottom: 1em;
+  padding-bottom: 0.5em;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.dashboard-sidebar h3:not(:first-child) {
+  margin-top: 2em; /* Space above subsequent headers */
+}
+
+.info-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  font-size: 0.9em;
+}
+
+.info-list li {
+  margin-bottom: 0.8em;
+  color: #a0a0a0;
+}
+
+.info-list.links li a {
+  color: var(--accent-color); /* Use accent for links */
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.info-list.links li a:hover {
+  color: var(--accent-hover-color);
+  text-decoration: underline;
+}
+
+.app-environment-group {
+  margin-top: 1em; /* Space between environment groups */
+}
+
+.app-environment-group:first-child {
+  margin-top: 0.5em; /* Less space for the first group */
+}
+
+.app-environment-group h5 {
+  font-size: 0.8em;
+  font-weight: 600;
+  color: #888; /* Subdued color for env header */
+  margin: 0 0 0.5em 0;
+  padding-left: 0.2em; /* Align slightly */
+  text-transform: capitalize;
+}
+
+.app-environment-group ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+} 

@@ -1,0 +1,117 @@
+:root {
+  /* Dark Mode Defaults */
+  --background-color: #1a1a1a; /* Darker background */
+  --text-color: #e1e1e1; /* Lighter text */
+  --accent-color: #3391ff; /* Brighter blue accent */
+  --accent-hover-color: #58a6ff;
+  --card-background: #2a2a2a; /* Darker card/input background */
+  --input-text-color: #e1e1e1;
+  --border-color: #444; /* Subtle border for inputs/buttons */
+
+  font-family: TwitterChirp, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: 400;
+
+  color: var(--text-color);
+  background-color: var(--background-color);
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-text-size-adjust: 100%;
+}
+
+/* Basic CSS Reset */
+body {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box; /* Include padding and border in element's total width and height */
+}
+
+*, *::before, *::after {
+  box-sizing: inherit; /* Inherit box-sizing from body */
+}
+
+/* Top Level Layout */
+.root-layout {
+  display: flex;
+  flex-direction: column; /* Stack top-nav and app-layout vertically */
+  height: 100vh;
+  overflow: hidden; /* Prevent scrolling at the very top level */
+}
+
+/* Top Navigation Bar */
+.top-nav {
+  height: 50px; /* Adjust height as needed */
+  background-color: var(--card-background); /* Use dark card background */
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  padding: 0 1.5em; /* Horizontal padding */
+  flex-shrink: 0; /* Prevent top bar from shrinking */
+}
+
+.top-nav-content {
+  width: 100%;
+  display: flex;
+  justify-content: space-between; /* Space out left and right sections */
+  align-items: center;
+  color: var(--text-color);
+}
+
+.top-nav-left, .top-nav-right {
+  display: flex;
+  align-items: center;
+}
+
+.top-nav-left {
+  gap: 1em; /* Spacing between toggle button and logo */
+}
+
+/* Style for logo in top nav */
+.top-nav-logo img {
+  height: 30px; /* Adjust size for top bar */
+  display: block; /* Prevents extra space below image */
+}
+
+/* Adjust App Layout */
+.app-layout {
+  display: flex;
+  /* height: 100vh; Remove fixed height, let it fill remaining space */
+  flex-grow: 1; /* Allow app-layout to fill remaining vertical space */
+  overflow: hidden; /* Prevent app-layout from causing double scrollbars */
+}
+
+/* Adjust styles previously on .container to apply to .main-content */
+.main-content {
+  flex-grow: 1; /* Take remaining space */
+  padding: 2em; /* Add padding around main content */
+  overflow-y: auto; /* Allow scrolling if content overflows */
+  transition: margin-left 0.3s ease-in-out; /* Smooth transition */
+}
+
+/* Footer Bar Styles */
+.app-footer {
+  flex-shrink: 0; /* Prevent footer from shrinking */
+  padding: 0.8em 1.5em; /* Vertical and horizontal padding */
+  background-color: var(--card-background); /* Match other bars */
+  border-top: 1px solid var(--border-color); /* Separator */
+  display: flex;
+  justify-content: center; /* Changed from flex-start */
+  align-items: center;
+  gap: 1.5em; /* Spacing between links */
+}
+
+.app-footer a {
+  color: #a0a0a0; /* Lighter text color for footer links */
+  text-decoration: none;
+  font-size: 0.85em;
+  transition: color 0.2s ease;
+}
+
+.app-footer a:hover {
+  color: var(--text-color); /* Slightly brighter on hover */
+  text-decoration: underline;
+} 

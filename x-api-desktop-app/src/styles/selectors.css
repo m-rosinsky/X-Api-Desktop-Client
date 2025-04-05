@@ -1,0 +1,250 @@
+/* App Selector Styles (Custom Dropdown) */
+
+/* Container for Selector and Package Label */
+.selector-and-package {
+  display: flex;
+  justify-content: center; /* Center the items */
+  align-items: center;
+  gap: 1em; /* Space between dropdown and package label */
+}
+
+.app-selector-container {
+  /* Remove justify-content: center; - Handled by parent */
+  display: flex;
+  align-items: center;
+  padding: 1em 0 1em 0; 
+  position: relative; 
+}
+
+.custom-app-selector {
+  position: relative; 
+  min-width: 250px; 
+}
+
+.selector-button {
+    background-color: var(--card-background);
+    border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 0.6em 1em;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  color: var(--text-color);
+  font-size: 0.9em;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.selector-button-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between; /* Space left and right sections */
+  width: 100%;
+}
+
+.selector-button-left {
+  display: flex; /* Keep flex for icon alignment */
+  align-items: center; /* Keep vertical alignment */
+  /* Remove properties preventing wrap */
+  /* overflow: hidden; */
+  /* text-overflow: ellipsis; */
+  /* white-space: nowrap; */
+  margin-right: 1em; 
+  /* Allow flex item to wrap text if needed */
+  flex-shrink: 1; /* Allow shrinking */
+  min-width: 0; /* Important for flex shrinking */
+}
+
+/* Allow endpoint path within button to wrap */
+.selector-button-left .endpoint-path {
+    white-space: normal; 
+    word-break: break-all; /* Break long paths */
+}
+
+.selector-button-right {
+  display: flex;
+  align-items: center;
+  /* Remove gap if only arrow is present */
+  /* gap: 0.6em; */ 
+  flex-shrink: 0; 
+}
+
+/* Adjust stand-alone package label style if needed */
+.selector-and-package > .project-package {
+  /* Keep general .project-package styles */
+  /* Add any specific adjustments here if needed */
+  white-space: nowrap; /* Prevent wrapping */
+}
+
+.selector-button:hover {
+  border-color: #666;
+}
+
+.selector-button:not(.has-selection) span {
+  /* Styles for placeholder text */
+  color: #888;
+}
+
+.selector-app-icon {
+  margin-right: 0.7em;
+  font-size: 1.1em;
+  display: inline-flex;
+  align-items: center;
+}
+
+.dropdown-arrow {
+  font-size: 0.7em;
+  transition: transform 0.2s ease-in-out;
+  margin-left: 0.5em;
+}
+
+.dropdown-arrow.open {
+  transform: rotate(180deg);
+}
+
+.dropdown-options {
+  position: absolute;
+  top: 105%; /* Position below the button */
+  left: 0;
+  right: 0;
+  background-color: #3a3a3a; /* Slightly darker dropdown background */
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  list-style: none;
+  padding: 0.5em 0;
+  margin: 0;
+  z-index: 20; /* Ensure dropdown is above other content */
+  max-height: 200px; /* Limit height and allow scroll */
+  overflow-y: auto;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+}
+
+.dropdown-options li {
+  padding: 0.6em 1em;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  transition: background-color 0.15s ease;
+}
+
+.dropdown-options li:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+/* Prevent hover effect on project headers */
+.dropdown-options li.dropdown-project-header:hover {
+  background-color: transparent; /* Override hover effect */
+  cursor: default;
+}
+
+.dropdown-options li.selected {
+  background-color: rgba(51, 145, 255, 0.2); /* Accent color background for selected */
+  font-weight: 500;
+}
+
+.dropdown-project-header {
+  padding: 0.6em 1em 0.2em 1em; /* Adjust padding */
+  font-size: 0.8em;
+  font-weight: 600;
+  color: #a0a0a0; /* Lighter color */
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  cursor: default; /* Not clickable */
+  margin-top: 0.5em; /* Space above header */
+  border-top: 1px solid #555; /* Separator line */
+}
+
+.dropdown-project-header:first-of-type {
+  margin-top: 0;
+  border-top: none;
+}
+
+.dropdown-project-header-content {
+  display: flex;
+  align-items: baseline; /* Align name and package text */
+  justify-content: space-between; /* Push package label to the right */
+  width: 100%; /* Ensure it takes full width */
+}
+
+/* Adjust package label size/padding slightly for dropdown */
+.dropdown-project-header-content .project-package {
+  font-size: 0.7em; 
+  padding: 0.15em 0.5em;
+}
+
+/* REMOVE/REVERT Indent app items under env header */
+.dropdown-options li:not(.dropdown-project-header) {
+   padding-left: 1.5em; /* Revert to a standard indent, or adjust as needed */
+}
+
+/* Style for the label */
+.app-selector-label,
+.endpoint-selector-label {
+  margin-right: 0.8em;
+  font-size: 0.9em;
+  color: #a0a0a0;
+}
+
+/* Endpoint Selector Container */
+.endpoint-selector-container {
+  display: flex;
+  justify-content: flex-start; /* Changed from center */
+  align-items: center;
+  padding: 1em 0; /* Keep vertical padding */
+  margin-bottom: 1.5em; 
+}
+
+.custom-endpoint-selector {
+  position: relative; 
+  min-width: 300px; /* Adjust width as needed */
+}
+
+/* Reuse selector-button styles, add specific class */
+.endpoint-selector-button {
+  /* Inherits most styles from .selector-button */
+}
+
+/* Reuse dropdown-options styles, add specific class */
+.endpoint-dropdown-options {
+  /* Inherits most styles from .dropdown-options */
+  /* Specific adjustments if needed */
+}
+
+/* Keep Endpoint Method/Path styles */
+.endpoint-method {
+  font-weight: 600;
+  margin-right: 0.6em;
+  min-width: 45px; 
+  text-align: right;
+}
+
+/* Method specific colors */
+.method-get { color: #61affe; } 
+.method-post { color: #49cc90; } 
+.method-delete { color: #f93e3e; } 
+.method-put { color: #fca130; } 
+
+.endpoint-path {
+  font-family: monospace;
+  color: var(--text-color);
+}
+
+/* Ensure dropdown list items use endpoint styles */
+.endpoint-dropdown-options li {
+  /* Inherit general li styles */
+  padding: 0.6em 1em;
+  display: flex; /* Use flex for alignment */
+  align-items: baseline; /* Align method and path text */
+}
+
+.endpoint-dropdown-options li span {
+    display: inline-block; 
+}
+
+/* Allow endpoint path in dropdown to wrap */
+.endpoint-dropdown-options li .endpoint-path {
+    white-space: normal;
+    word-break: break-all; /* Break long paths */
+    flex-shrink: 1; /* Allow path to shrink */
+    min-width: 0; /* Important for flex shrinking */
+} 

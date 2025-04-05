@@ -1,0 +1,192 @@
+/* Adjust Sidebar */
+.sidebar {
+  position: relative;
+  width: 220px; 
+  background-color: var(--card-background);
+  padding: 1.5em 0; 
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--border-color);
+  flex-shrink: 0;
+  overflow-y: auto; /* Revert overflow if needed */
+}
+
+/* Nav List Styles */
+.nav-list {
+  list-style: none;
+  padding: 0;
+  /* Revert top margin */
+  margin: 0; 
+  flex-grow: 1;
+  overflow-y: auto; 
+  overflow-x: hidden;
+  opacity: 1;
+  /* Remove opacity transition */
+}
+
+.nav-item {
+  /* Removed margin-bottom: 0.8em; */
+}
+
+.nav-item a {
+  color: var(--text-color);
+  text-decoration: none;
+  display: block;
+  padding: 0.5em 1em 0.5em 1.5em;
+  border-radius: 6px;
+  transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Left highlight bar */
+.nav-item a::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 60%;
+  width: 3px;
+  background-color: var(--accent-color);
+  opacity: 0;
+  transition: opacity 0.2s ease-in-out;
+  border-radius: 0 2px 2px 0;
+}
+
+.nav-item a:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+  color: var(--text-color);
+}
+
+/* Show highlight bar on hover */
+.nav-item a:hover::before {
+  opacity: 1;
+}
+
+/* Navigation Header Styles */
+.nav-header {
+  position: relative; /* Needed for pseudo-element */
+  padding: 1.5em 1.5em 0.5em 1.5em; /* Increased top padding for line */
+  font-size: 0.75em; 
+  font-weight: 600; 
+  color: #a0a0a0; 
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  cursor: default;
+  margin-bottom: 0.2em; 
+  /* Remove direct border and margin */
+  /* border-top: 1px solid var(--border-color); */
+  /* margin-top: 1em; */
+}
+
+/* Add the separator line using ::before */
+.nav-header::before {
+  content: '';
+  position: absolute;
+  top: 0.5em; /* Position the line with spacing */
+  left: 1.5em; /* Match left padding */
+  right: 1.5em; /* Match right padding (creates width) */
+  height: 1px;
+  background-color: var(--border-color);
+}
+
+/* Remove top border/line and adjust padding for the very first header */
+.nav-list > .nav-header:first-child {
+  /* Remove the ::before pseudo-element */
+  padding-top: 1.5em; /* Restore original top padding */
+}
+
+.nav-list > .nav-header:first-child::before {
+    display: none; 
+}
+
+/* Styles for Collapsible Categories */
+.nav-category .nav-category-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5em 1em 0.5em 1.5em;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+  color: var(--text-color);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Left highlight bar for category header */
+.nav-category .nav-category-header::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 60%;
+  width: 3px;
+  background-color: var(--accent-color);
+  opacity: 0;
+  transition: opacity 0.2s ease-in-out;
+  border-radius: 0 2px 2px 0;
+}
+
+.nav-category .nav-category-header:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+  color: var(--text-color);
+}
+
+/* Show highlight bar on category hover */
+.nav-category .nav-category-header:hover::before {
+  opacity: 1;
+}
+
+.nav-category .expand-icon {
+  font-size: 0.8em;
+  margin-left: 0.5em;
+  transition: transform 0.2s ease-in-out;
+}
+
+.nav-category.expanded .expand-icon {
+  transform: rotate(90deg);
+}
+
+.sub-nav-list {
+  list-style: none;
+  padding: 0 0 0 2.5em;
+  margin: 0.5em 0 0 0;
+  overflow: hidden; /* Needed for smooth transition */
+  max-height: 0; /* Collapsed by default */
+  transition: max-height 0.3s ease-in-out; /* Smooth expand/collapse */
+}
+
+.nav-category.expanded .sub-nav-list {
+  max-height: 500px; /* Set a large enough max-height for expanded state */
+}
+
+/* Style sub-items slightly differently if needed */
+.sub-nav-list .nav-item a {
+  padding: 0.4em 1em 0.4em 2.5em;
+  font-size: 0.95em;
+}
+
+/* Style for Active Nav Item */
+.nav-item.active > a,
+.nav-item.active > .nav-category-header {
+  background-color: rgba(255, 255, 255, 0.15);
+  font-weight: 500;
+  color: var(--text-color);
+}
+
+/* Optional: Keep highlight bar visible for active items */
+.nav-item.active > a::before,
+.nav-item.active > .nav-category-header::before {
+  opacity: 1;
+}
+
+/* Ensure active style applies correctly to sub-items too */
+.sub-nav-list .nav-item.active a {
+    background-color: rgba(255, 255, 255, 0.15);
+    font-weight: 500;
+    color: var(--text-color);
+} 
