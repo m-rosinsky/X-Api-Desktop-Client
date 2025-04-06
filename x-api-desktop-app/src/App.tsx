@@ -333,7 +333,10 @@ function App() {
                 </>
               ) : (
                 // Logged Out State
-                <button className="sign-in-button" onClick={handleLogin}>
+                <button 
+                  className="sign-in-button" 
+                  onClick={() => handleNavClick('dashboard')}
+                >
                   Sign In
                 </button>
               )}

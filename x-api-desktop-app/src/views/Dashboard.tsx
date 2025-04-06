@@ -1,12 +1,29 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Project, AppInfo, DashboardProps } from '../types';
 import '../styles/dashboard.css';
 
 const Dashboard: React.FC<DashboardProps> = ({ projects, currentUser, onNavigate, onLogin }) => {
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+
+  useEffect(() => {
+    if (currentUser === null) {
+      setIsLoggingIn(false);
+    }
+  }, [currentUser]);
+
   const handleAppClick = (appId: number, targetTab: 'overview' | 'keys') => {
     if (onNavigate) {
       const viewId = `app-${appId}/${targetTab}`;
       onNavigate(viewId);
+    }
+  };
+
+  const handleDashboardLoginClick = () => {
+    if (onLogin) {
+      setIsLoggingIn(true);
+      setTimeout(() => {
+        onLogin();
+      }, 1500);
     }
   };
 
@@ -86,9 +103,13 @@ const Dashboard: React.FC<DashboardProps> = ({ projects, currentUser, onNavigate
           <div className="logged-out-message centered">
             <p>Please sign in to view your projects.</p>
             {onLogin && (
-              <button className="action-button sign-in-prompt-button" onClick={onLogin}>
+              <button 
+                className="action-button sign-in-prompt-button" 
+                onClick={handleDashboardLoginClick}
+                disabled={isLoggingIn}
+              >
                 <span className="x-logo">𝕏</span> 
-                Sign in with X
+                {isLoggingIn ? 'Signing in...' : 'Sign in with X'}
               </button>
             )}
           </div>

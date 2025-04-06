@@ -17,7 +17,7 @@
   justify-content: center; /* Center the tab buttons */
   border-bottom: 1px solid var(--border-color);
   background-color: var(--background-color-secondary); /* Tab bar background */
-  margin-bottom: 1em; /* Space below tabs */
+  margin: 1.5em 0; /* Space below tabs */
   position: relative; /* Needed for absolute positioning of the indicator */
 }
 
