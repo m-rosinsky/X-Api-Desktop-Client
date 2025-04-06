@@ -57,6 +57,16 @@ const AppView: React.FC<AppViewProps> = ({ app, project, initialTab, onNavigate 
     };
   }, [activeTab]); // Re-run when activeTab changes
 
+  // Helper function or logic to conceal token
+  const concealToken = (token: string | undefined) => {
+    if (!token || token.length <= 4) {
+      return token || '**********'; // Return original if too short or undefined
+    }
+    const visiblePart = token.slice(-4);
+    const concealedPart = '•'.repeat(12); // Adjust number of dots as desired
+    return `${concealedPart}${visiblePart}`;
+  };
+
   return (
     <div className="app-view">
       {/* Update H1 to breadcrumb style */}
@@ -113,7 +123,8 @@ const AppView: React.FC<AppViewProps> = ({ app, project, initialTab, onNavigate 
             {/* Placeholder for Keys & Tokens content */}
             <p>API Key: <code>**********</code></p>
             <p>API Secret: <code>**********</code></p>
-            <p>Bearer Token: <code>**********</code></p>
+            {/* Display concealed Bearer Token */}
+            <p>Bearer Token: <code>{concealToken(app.keys?.bearerToken)}</code></p>
             <button className="action-button">Regenerate Keys</button>
           </div>
         )}

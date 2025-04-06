@@ -3,6 +3,10 @@ export interface AppInfo {
   name: string;
   icon?: string; // Add optional icon field
   environment: 'production' | 'staging' | 'development'; // Add environment field
+  keys: { // Add keys object
+    bearerToken: string;
+    // Add apiKey, apiSecret later if needed
+  };
 }
 
 export interface Project {

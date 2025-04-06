@@ -10,9 +10,9 @@ export const mockProjects: Project[] = [
     package: "basic", // Example package
     description: "Web and mobile clients for Alpha service.",
     apps: [
-      { id: 101, name: "Alpha Web App", icon: "📱", environment: "production" },
-      { id: 102, name: "Alpha Mobile App", icon: "📱", environment: "production" },
-      { id: 103, name: "Alpha Web Staging", icon: "🧪", environment: "staging" }, // Added staging app
+      { id: 101, name: "Alpha Web App", icon: "📱", environment: "production", keys: { bearerToken: 'AAAAAAAAAAAAAbchdjk27736210028Ad821' } },
+      { id: 102, name: "Alpha Mobile App", icon: "📱", environment: "production", keys: { bearerToken: 'AAAAAAAAAAAAAbchdjk18ddhc1981726' } },
+      { id: 103, name: "Alpha Web Staging", icon: "🧪", environment: "staging", keys: { bearerToken: 'AAAAAAAAAAAAAbchj1GGjs82Anckd098s' } }, // Added staging app
     ],
   },
   {
@@ -23,8 +23,8 @@ export const mockProjects: Project[] = [
     package: "free", // Example package
     description: "Core services and development instances for Beta.",
     apps: [
-      { id: 201, name: "Beta Main Service", icon: "📱", environment: "production" },
-      { id: 202, name: "Beta Dev Instance", icon: "🛠️", environment: "development" }, // Added dev app
+      { id: 201, name: "Beta Main Service", icon: "📱", environment: "production", keys: { bearerToken: 'AAAAAAAAAAAAAAA8120fncnai190128w' } },
+      { id: 202, name: "Beta Dev Instance", icon: "🛠️", environment: "development", keys: { bearerToken: 'AAAAAAAAAAAAA19010ASDNVH27hdsajh' } }, // Added dev app
     ],
   },
   {
@@ -35,9 +35,9 @@ export const mockProjects: Project[] = [
     package: "enterprise", // Example package
     description: "Data processing and reporting suite.",
     apps: [
-      { id: 301, name: "Gamma Analytics", icon: "📱", environment: "production" },
-      { id: 302, name: "Gamma Data Pipeline", icon: "📱", environment: "production" },
-      { id: 303, name: "Gamma Reporting UI", icon: "📱", environment: "production" },
+      { id: 301, name: "Gamma Analytics", icon: "📱", environment: "production", keys: { bearerToken: 'AAAAAAAAAAAAAASB18237abjskso9' } },
+      { id: 302, name: "Gamma Data Pipeline", icon: "📱", environment: "production", keys: { bearerToken: 'AAAAAAAAAAAAAcx1923jksnj92ss' } },
+      { id: 303, name: "Gamma Reporting UI", icon: "📱", environment: "production", keys: { bearerToken: 'AAAAAAAAAAAAAdj18273A12023adxa' } },
     ],
   },
   {

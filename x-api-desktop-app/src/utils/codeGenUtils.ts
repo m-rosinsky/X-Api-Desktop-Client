@@ -39,7 +39,8 @@ export function generateCurlCommand(
   endpoint: Endpoint | undefined | null,
   pathParams: Record<string, string>,
   queryParams: Record<string, string>,
-  expansions?: string
+  expansions?: string,
+  bearerToken?: string | null
 ): string {
   if (!endpoint) return "";
 
@@ -50,8 +51,9 @@ export function generateCurlCommand(
       curlCommand += ` -X ${endpoint.method}`;
   }
 
-  // Add common headers
-  curlCommand += ` \\\n  -H "Authorization: Bearer YOUR_BEARER_TOKEN"`; 
+  // Use provided token or placeholder
+  const token = bearerToken || 'YOUR_BEARER_TOKEN';
+  curlCommand += ` \\\n  -H "Authorization: Bearer ${token}"`; 
 
   if (['POST', 'PUT', 'PATCH'].includes(endpoint.method)) {
        curlCommand += ` \\\n  -H "Content-Type: application/json" \\\n  -d '{"your_key":"your_value"}'`; 
@@ -65,27 +67,28 @@ export function generatePythonRequestsCode(
     endpoint: Endpoint | undefined | null,
     pathParams: Record<string, string>,
     queryParams: Record<string, string>,
-    expansions?: string
+    expansions?: string,
+    bearerToken?: string | null
 ): string {
     if (!endpoint) return "";
     
-    // Build URL without query params initially, requests library handles them
-    const baseUrl = buildUrl(endpoint, pathParams, {}, undefined); // URL path only
+    const baseUrl = buildUrl(endpoint, pathParams, {}, undefined);
 
-    // Combine queryParams and expansions for requests' `params`
     const allQueryParams = { ...queryParams };
     if (expansions) {
         allQueryParams['expansions'] = expansions;
     }
 
+    // Use provided token or placeholder
+    const token = bearerToken || 'YOUR_BEARER_TOKEN';
     const headers: Record<string, string> = {
-        "Authorization": "Bearer YOUR_BEARER_TOKEN"
+        "Authorization": `Bearer ${token}`
     };
     let body = null;
     
     if (['POST', 'PUT', 'PATCH'].includes(endpoint.method)) {
         headers["Content-Type"] = "application/json";
-        body = { your_key: "your_value" }; // Example body
+        body = { your_key: "your_value" };
     }
 
     const paramsDictString = Object.keys(allQueryParams).length > 0 
@@ -122,26 +125,28 @@ export function generateJavascriptFetchCode(
     endpoint: Endpoint | undefined | null,
     pathParams: Record<string, string>,
     queryParams: Record<string, string>,
-    expansions?: string
+    expansions?: string,
+    bearerToken?: string | null
 ): string {
     if (!endpoint) return "";
 
-    const fullUrl = buildUrl(endpoint, pathParams, queryParams, expansions); // Pass expansions
+    const fullUrl = buildUrl(endpoint, pathParams, queryParams, expansions);
     
+    // Use provided token or placeholder
+    const token = bearerToken || 'YOUR_BEARER_TOKEN';
     const options: RequestInit = {
         method: endpoint.method,
         headers: {
-            "Authorization": "Bearer YOUR_BEARER_TOKEN",
+            "Authorization": `Bearer ${token}`,
         }
     };
 
     if (['POST', 'PUT', 'PATCH'].includes(endpoint.method)) {
         (options.headers as Record<string, string>)["Content-Type"] = "application/json";
-        options.body = JSON.stringify({ your_key: "your_value" }); // Example body
+        options.body = JSON.stringify({ your_key: "your_value" }); 
     }
 
-    // Indent options for readability
-    const optionsString = JSON.stringify(options, null, 2).replace(/\\n/g, '\\n  ');
+    const optionsString = JSON.stringify(options, null, 2).replace(/\n/g, '\n  ');
 
     return (
 `const url = "${fullUrl}";
@@ -152,7 +157,7 @@ fetch(url, options)
     if (!res.ok) {
       throw new Error(\`HTTP error! status: \${res.status}\`);
     }
-    return res.json(); // or res.text()
+    return res.json();
   })
   .then(data => {
     console.log(data);

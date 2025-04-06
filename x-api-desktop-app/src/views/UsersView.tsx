@@ -96,16 +96,23 @@ const UsersView: React.FC<UsersViewProps> = ({
   const [queryParamValues, setQueryParamValues] = useState<Record<string, string>>({});
   const [selectedExpansions, setSelectedExpansions] = useState<string>('');
 
-  // Find the project containing the active app
-  const activeProject = useMemo(() => {
-    if (activeAppId === null) return null;
-    return projects.find(p => p.apps.some(app => app.id === activeAppId));
-  }, [projects, activeAppId]);
-
-  // Filter projects based on currentUser
   const projectsForSelector = useMemo(() => {
     return currentUser ? projects : [];
   }, [currentUser, projects]);
+  
+  // Find the active project
+  const activeProject = useMemo(() => {
+    if (activeAppId === null) return null;
+    return projectsForSelector.find(p => p.apps.some(app => app.id === activeAppId));
+  }, [projectsForSelector, activeAppId]);
+
+  // *** Find the active app and its token ***
+  const activeApp = useMemo(() => {
+    if (!activeProject || activeAppId === null) return null;
+    return activeProject.apps.find(app => app.id === activeAppId);
+  }, [activeProject, activeAppId]);
+
+  const bearerToken = activeApp?.keys.bearerToken; // Get token or undefined
 
   const usagePercentage = activeProject ? Math.min((activeProject.usage / activeProject.cap) * 100, 100) : 0;
 
@@ -296,6 +303,7 @@ const UsersView: React.FC<UsersViewProps> = ({
           pathParams={pathParamValues} 
           queryParams={queryParamValues} 
           expansions={selectedExpansions}
+          bearerToken={bearerToken}
         />
       </div>
     </ApiViewLayout>

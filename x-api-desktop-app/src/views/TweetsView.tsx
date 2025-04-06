@@ -113,6 +113,14 @@ const TweetsView: React.FC<TweetsViewProps> = ({
     return currentUser ? projects : []; // Pass empty array if logged out
   }, [currentUser, projects]);
 
+  // *** Find the active app and its token ***
+  const activeApp = useMemo(() => {
+    if (!activeProject || activeAppId === null) return null;
+    return activeProject.apps.find(app => app.id === activeAppId);
+  }, [activeProject, activeAppId]);
+
+  const bearerToken = activeApp?.keys.bearerToken; // Get token or undefined
+
   const usagePercentage = activeProject ? Math.min((activeProject.usage / activeProject.cap) * 100, 100) : 0;
 
   // Find the details *and params* for the selected endpoint
@@ -322,6 +330,7 @@ const TweetsView: React.FC<TweetsViewProps> = ({
           pathParams={pathParamValues} 
           queryParams={queryParamValues} 
           expansions={selectedExpansions}
+          bearerToken={bearerToken}
         />
       </div>
     </ApiViewLayout>

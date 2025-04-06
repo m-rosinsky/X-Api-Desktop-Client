@@ -23,11 +23,6 @@
   align-items: center;
 }
 
-.top-nav-logo img {
-  /* height: 28px; */ /* Style for old image logo, can be removed */
-  /* display: block; */
-}
-
 /* New style for the text logo */
 .top-nav-logo-text {
   display: inline-block; /* Or block if needed */
