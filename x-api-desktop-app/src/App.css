@@ -24,8 +24,19 @@
 }
 
 .top-nav-logo img {
-  height: 28px; /* Adjust logo size */
-  display: block; /* Prevent extra space below image */
+  /* height: 28px; */ /* Style for old image logo, can be removed */
+  /* display: block; */
+}
+
+/* New style for the text logo */
+.top-nav-logo-text {
+  display: inline-block; /* Or block if needed */
+  font-size: 2.2em; /* Increased size */
+  font-weight: bold;
+  color: #ffffff; /* White color */
+  line-height: 1; /* Adjust line height for better vertical alignment */
+  /* Add some padding if needed */
+  /* padding: 0 0.2em; */
 }
 
 .top-nav-right {

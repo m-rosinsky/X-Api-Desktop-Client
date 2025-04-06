@@ -27,6 +27,7 @@ export interface DashboardProps {
   projects: Project[];
   currentUser: User | null;
   onNavigate?: (viewId: string | undefined) => void; // Add optional navigation handler
+  onLogin?: () => void; // Add the login handler prop
 }
 
 export interface AppSelectorProps {

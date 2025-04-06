@@ -48,7 +48,7 @@ const AppSelector: React.FC<AppSelectorProps> = ({ projects, selectedAppId, onCh
                 <span>{selectedApp.name}</span>
               </>
             ) : (
-                 <span>-- Select App --</span>
+                 <span>No app selected</span>
             )}
             </div>
             <div className="selector-button-right">
@@ -60,7 +60,7 @@ const AppSelector: React.FC<AppSelectorProps> = ({ projects, selectedAppId, onCh
         {isOpen && (
           <ul className="dropdown-options">
             <li onClick={() => handleSelect(null)}>
-              <span>-- Select App --</span>
+              <span>No app selected</span>
             </li>
             {projects.map(project => (
               <React.Fragment key={`project-group-${project.id}`}>

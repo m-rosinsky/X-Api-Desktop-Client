@@ -1,7 +1,11 @@
 import React, { useState, useMemo } from 'react';
 import { Endpoint } from '../types';
 import { generateCurlCommand, generatePythonRequestsCode, generateJavascriptFetchCode } from '../utils/codeGenUtils';
-import '../styles/code-snippet-display.css'; // Create this next
+import '../styles/code-snippet-display.css';
+// Import syntax highlighter - Revert to named import
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+// Import style using default export from specific path
+import vscDarkPlus from 'react-syntax-highlighter/dist/esm/styles/prism/vsc-dark-plus';
 
 // Define available languages
 type Language = 'curl' | 'python' | 'javascript';
@@ -13,6 +17,9 @@ interface CodeSnippetDisplayProps {
   expansions?: string; // Add optional expansions prop
 }
 
+// --- Try casting the component type to 'any' as a workaround ---
+const Highlighter: any = SyntaxHighlighter; 
+
 const CodeSnippetDisplay: React.FC<CodeSnippetDisplayProps> = ({ endpoint, pathParams, queryParams, expansions }) => {
   const [selectedLanguage, setSelectedLanguage] = useState<Language>('curl');
 
@@ -21,18 +28,24 @@ const CodeSnippetDisplay: React.FC<CodeSnippetDisplayProps> = ({ endpoint, pathP
     curl: generateCurlCommand(endpoint, pathParams, queryParams, expansions),
     python: generatePythonRequestsCode(endpoint, pathParams, queryParams, expansions),
     javascript: generateJavascriptFetchCode(endpoint, pathParams, queryParams, expansions),
-  }), [endpoint, pathParams, queryParams, expansions]); // Include expansions in dependency array
+  }), [endpoint, pathParams, queryParams, expansions]);
 
-  // TODO: Add copy to clipboard functionality
   const handleCopy = () => {
     const codeToCopy = codeSnippets[selectedLanguage];
     navigator.clipboard.writeText(codeToCopy).then(() => {
       console.log('Code copied to clipboard!');
-      // Optional: Show a temporary success message
     }).catch(err => {
       console.error('Failed to copy code: ', err);
     });
   };
+
+  // Map display language to highlighter language (curl uses 'bash')
+  const highlighterLanguage = useMemo(() => {
+    if (selectedLanguage === 'curl') return 'bash';
+    if (selectedLanguage === 'javascript') return 'javascript';
+    if (selectedLanguage === 'python') return 'python';
+    return 'text'; // Fallback
+  }, [selectedLanguage]);
 
   return (
     <div className="code-snippet-area">
@@ -47,10 +60,20 @@ const CodeSnippetDisplay: React.FC<CodeSnippetDisplayProps> = ({ endpoint, pathP
           </button>
         ))}
         <button className="copy-button" onClick={handleCopy} title="Copy to Clipboard">
-           📋 {/* Simple clipboard icon */}
+           📋 
         </button>
       </div>
-      <pre><code>{codeSnippets[selectedLanguage]}</code></pre>
+      <Highlighter 
+        language={highlighterLanguage} 
+        style={vscDarkPlus}
+        customStyle={{
+          margin: 0, 
+          borderRadius: '0 0 6px 6px', 
+          padding: '1em' 
+        }} 
+      >
+        {codeSnippets[selectedLanguage]}
+      </Highlighter>
     </div>
   );
 };

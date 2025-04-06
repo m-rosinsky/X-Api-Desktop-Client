@@ -17,8 +17,8 @@ import AppView from "./views/AppView"; // Import the new AppView
 
 // Define a dummy user for simulation
 const dummyUser: User = {
-  id: 'usr_123',
-  name: 'Demo User',
+  id: '1234567890',
+  name: 'demouser1234',
   email: 'demo@example.com',
   initials: 'DU'
 };
@@ -106,6 +106,8 @@ function App() {
     setActiveView("dashboard"); // Go back to dashboard on logout
     setActiveAppId(null); // Reset active app
     setIsUserMenuOpen(false); // Close menu after action
+    // Collapse the Projects category
+    setExpandedCategories(prev => ({ ...prev, ["Projects"]: false })); 
   };
 
   // Toggle user menu dropdown
@@ -210,11 +212,12 @@ function App() {
       case 'dashboard':
         return (
           <main className="main-content">
-            {/* Pass currentUser to Dashboard */}
+            {/* Pass currentUser and handleLogin to Dashboard */}
             <Dashboard 
               projects={mockProjects} 
               currentUser={currentUser} 
               onNavigate={handleNavClick} 
+              onLogin={handleLogin} // Pass the login handler
             />
           </main>
         );
@@ -304,7 +307,7 @@ function App() {
         <div className="top-nav-content">
           <div className="top-nav-left">
             <div className="top-nav-logo">
-              <img src="/tauri.svg" alt="App Logo" />
+              <span className="top-nav-logo-text">𝕏</span>
             </div>
             {/* Maybe add global search or other controls here */}
           </div>

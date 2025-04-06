@@ -1,8 +1,8 @@
 import React from 'react';
-import { Project, AppInfo, DashboardProps, User } from '../types';
+import { Project, AppInfo, DashboardProps } from '../types';
 import '../styles/dashboard.css';
 
-const Dashboard: React.FC<DashboardProps> = ({ projects, currentUser, onNavigate }) => {
+const Dashboard: React.FC<DashboardProps> = ({ projects, currentUser, onNavigate, onLogin }) => {
   const handleAppClick = (appId: number, targetTab: 'overview' | 'keys') => {
     if (onNavigate) {
       const viewId = `app-${appId}/${targetTab}`;
@@ -13,7 +13,12 @@ const Dashboard: React.FC<DashboardProps> = ({ projects, currentUser, onNavigate
   return (
     <div className="dashboard-layout">
       <div className="dashboard-main">
-        <h2>Dashboard</h2>
+        <div className="dashboard-header">
+          <h2>Dashboard</h2>
+          {currentUser && (
+            <span className="logged-in-user-name">{currentUser.name}</span>
+          )}
+        </div>
         
         {currentUser ? (
           <div className="project-list">
@@ -78,8 +83,14 @@ const Dashboard: React.FC<DashboardProps> = ({ projects, currentUser, onNavigate
             )}
           </div>
         ) : (
-          <div className="logged-out-message">
+          <div className="logged-out-message centered">
             <p>Please sign in to view your projects.</p>
+            {onLogin && (
+              <button className="action-button sign-in-prompt-button" onClick={onLogin}>
+                <span className="x-logo">𝕏</span> 
+                Sign in with X
+              </button>
+            )}
           </div>
         )}
       </div>

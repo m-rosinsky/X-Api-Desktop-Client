@@ -233,4 +233,75 @@
   list-style: none;
   padding: 0;
   margin: 0;
+}
+
+/* Logged Out Message Styling */
+.logged-out-message {
+  padding: 2em 0; /* Add some vertical padding */
+  color: var(--text-color-secondary);
+}
+
+/* Centering styles for logged out message */
+.logged-out-message.centered {
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* Center horizontally */
+  text-align: center; /* Center text within paragraphs */
+}
+
+.logged-out-message p {
+  font-size: 1.1em;
+  margin-bottom: 1.5em; /* Space between message and button */
+}
+
+/* Style for the prompt button if needed (uses .action-button base) */
+.sign-in-prompt-button {
+  /* Inherits styles from .action-button defined in global/other CSS */
+  /* Add specific overrides if needed, e.g., make it larger */
+  padding: 0.8em 1.8em;
+  font-size: 1em;
+  background-color: var(--accent-color); /* Make it primary action color */
+  border-color: var(--accent-color);
+  color: var(--button-text-color, #fff); /* Use button text color var or default */
+}
+
+/* Style for the X logo inside the button */
+.sign-in-prompt-button .x-logo {
+  display: inline-flex; /* Use inline-flex for alignment */
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 1.1em; /* Slightly larger */
+  margin-right: 0.5em; /* Space between logo and text */
+  /* Optional: Add specific font if available */
+  /* font-family: 'Your X Logo Font', sans-serif; */
+  /* Optional: Adjust vertical alignment if needed */
+  /* vertical-align: middle; */ 
+}
+
+.sign-in-prompt-button:hover {
+  background-color: var(--accent-hover-color); /* Use primary action hover color */
+  border-color: var(--accent-hover-color);
+}
+
+/* Header section containing title and username */
+.dashboard-header {
+  display: flex;
+  justify-content: space-between; /* Pushes title and username apart */
+  align-items: baseline; /* Align text baselines */
+  margin-bottom: 1.5em; /* Existing margin from h2 */
+}
+
+/* Keep original h2 margin if needed, or adjust header margin */
+.dashboard-header h2 {
+  margin: 0; /* Remove default h2 margin if handled by container */
+}
+
+/* Style for the logged-in username display */
+.logged-in-user-name {
+  font-size: 0.85em;
+  font-style: italic;
+  color: var(--text-color-secondary); /* Use a secondary/dimmer text color */
+  opacity: 0.7; /* Further fade it out */
+  /* No need for text-align: right as flexbox handles positioning */
 } 
