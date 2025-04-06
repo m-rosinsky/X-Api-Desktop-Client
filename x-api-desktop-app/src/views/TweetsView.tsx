@@ -7,6 +7,11 @@ import QueryParamBuilder from '../components/QueryParamBuilder';
 import PathParamBuilder from '../components/PathParamBuilder';
 import CodeSnippetDisplay from '../components/CodeSnippetDisplay';
 import ExpansionsSelector from '../components/ExpansionsSelector';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import vscDarkPlus from 'react-syntax-highlighter/dist/esm/styles/prism/vsc-dark-plus';
+
+// Type workaround
+const Highlighter: any = SyntaxHighlighter;
 
 // Define the additional props passed down from App.tsx
 interface TweetsViewProps extends ApiViewProps {
@@ -195,24 +200,44 @@ const TweetsView: React.FC<TweetsViewProps> = ({
         <> 
           <h3><span className={`endpoint-method method-${endpointDetails.method.toLowerCase()}`}>{endpointDetails.method}</span> {endpointDetails.path}</h3>
           <p>{endpointDetails.summary}</p>
-          <pre><code>{`// Sample Request for ${endpointDetails.path}
-curl ...`}</code></pre>
-          <pre><code>{`// Sample Response for ${endpointDetails.path}
-{
-  "data": [...]
-}`}</code></pre>
-          {/* Add more detailed docs here */} 
+          <p className="sidebar-code-label">Example Request Body (if applicable):</p>
+          <Highlighter
+            language="json"
+            style={vscDarkPlus}
+            customStyle={{ margin: 0, padding: '0.5em', fontSize: '0.85em', borderRadius: '4px', marginBottom: '1em' }}
+          >
+            {/* Placeholder - Actual body depends on POST/PUT etc. */}
+            {`{
+  "text": "Hello world!"
+}`}
+          </Highlighter>
+          <p className="sidebar-code-label">Example Response:</p>
+          <Highlighter
+            language="json"
+            style={vscDarkPlus}
+            customStyle={{ margin: 0, padding: '0.5em', fontSize: '0.85em', borderRadius: '4px' }}
+          >
+            {/* Example JSON string */} 
+            {`{
+  "data": [
+    {
+      "id": "1460323737035677698",
+      "text": "Who am I? I'm Jean Valjean!"
+    }
+  ]
+}`}
+          </Highlighter>
         </> 
       ) : (
         <> 
           <h3>API Documentation</h3>
           <p>Select an endpoint from the list on the left to view its documentation.</p>
-            <h3>Guides</h3>
-            <ul className="info-list links">
-              <li><a href="#">Getting Started</a></li>
-              <li><a href="#">Authentication</a></li>
-              <li><a href="#">Rate Limits</a></li>
-            </ul>
+          <h3>Guides</h3>
+          <ul className="info-list links">
+            <li><a href="#">Getting Started</a></li>
+            <li><a href="#">Authentication</a></li>
+            <li><a href="#">Rate Limits</a></li>
+          </ul>
         </> 
       )}
     </>
