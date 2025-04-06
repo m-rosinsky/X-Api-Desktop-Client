@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
-import { ApiViewProps, Endpoint, PathParam } from '../types';
+import { ApiViewProps, Endpoint, User } from '../types';
 import AppSelector from '../components/AppSelector';
 import EndpointSelector from '../components/EndpointSelector';
 import ApiViewLayout from '../components/ApiViewLayout';
@@ -12,6 +12,7 @@ import ExpansionsSelector from '../components/ExpansionsSelector';
 interface UsersViewProps extends ApiViewProps {
   initialWidth: number;
   onResize: (newWidth: number) => void;
+  currentUser: User | null;
 }
 
 // Moved from App.tsx as it seems specific to this view
@@ -21,9 +22,7 @@ const usersEndpoints: Endpoint[] = [
     method: 'GET',
     path: '/2/users',
     summary: 'Look up multiple users based on query parameters (e.g., ids, usernames)',
-    // TODO: Add query params for GET /2/users (e.g., ids, usernames)
     queryParams: [
-      // Add necessary params like ids or usernames here later
       {
         name: 'ids',
         type: 'array',
@@ -46,7 +45,7 @@ const usersEndpoints: Endpoint[] = [
       {
         name: 'id',
         description: 'The unique identifier of the User to retrieve.',
-        example: '2244994945' // Example User ID (TwitterDev)
+        example: '2244994945' // Example User ID
       },
     ],
     queryParams: [
@@ -66,7 +65,7 @@ const usersEndpoints: Endpoint[] = [
       {
         name: 'username',
         description: 'The Twitter username (handle) of the User to retrieve.',
-        example: 'XDevelopers' // Changed Example Username
+        example: 'XDevelopers'
       },
     ],
     queryParams: [
@@ -83,19 +82,25 @@ const UsersView: React.FC<UsersViewProps> = ({
   projects, 
   activeAppId, 
   setActiveAppId, 
-  initialWidth, // Receive prop
-  onResize      // Receive prop
+  currentUser,
+  initialWidth,
+  onResize
 }) => {
   const [selectedEndpoint, setSelectedEndpoint] = useState<string | null>(usersEndpoints[0]?.id ?? null);
   const [pathParamValues, setPathParamValues] = useState<Record<string, string>>({});
   const [queryParamValues, setQueryParamValues] = useState<Record<string, string>>({});
   const [selectedExpansions, setSelectedExpansions] = useState<string>('');
 
-  // Find the project containing the active app (duplicate logic, could be extracted)
+  // Find the project containing the active app
   const activeProject = useMemo(() => {
     if (activeAppId === null) return null;
     return projects.find(p => p.apps.some(app => app.id === activeAppId));
   }, [projects, activeAppId]);
+
+  // Filter projects based on currentUser
+  const projectsForSelector = useMemo(() => {
+    return currentUser ? projects : [];
+  }, [currentUser, projects]);
 
   const usagePercentage = activeProject ? Math.min((activeProject.usage / activeProject.cap) * 100, 100) : 0;
 
@@ -192,23 +197,24 @@ curl ...`}</code></pre>
   return (
     <ApiViewLayout 
       sidebarContent={sidebarContent} 
-      initialWidth={initialWidth} // Pass down
-      onResize={onResize}           // Pass down
+      initialWidth={initialWidth}
+      onResize={onResize}          
     >
        {/* Main Content */}
       <div className="api-header-section">
         <div className="selector-and-package">
-          <AppSelector projects={projects} selectedAppId={activeAppId} onChange={setActiveAppId} />
-          {/* Conditionally render package label outside selector */}
+          <AppSelector 
+            projects={projectsForSelector} 
+            selectedAppId={activeAppId} 
+            onChange={setActiveAppId} 
+          />
           {activeProject && (
             <span className={`project-package package-${activeProject.package.toLowerCase()}`}>
               {activeProject.package}
             </span>
           )}
         </div>
-          {/* Always render usage preview container, toggle visibility with class */}
         <div className={`api-usage-preview ${activeProject ? 'visible' : ''}`}>
-            {/* Content inside is only relevant when visible */}
             <p>Project Usage ({activeProject?.name || 'N/A'}): {activeProject?.usage.toLocaleString() || 0} / {activeProject?.cap.toLocaleString() || 0}</p>
             <div className="usage-bar-container">
               <div
@@ -224,7 +230,6 @@ curl ...`}</code></pre>
             selectedEndpointId={selectedEndpoint}
             onChange={setSelectedEndpoint}
           />
-        {/* Add endpoint summary below selector */}
         {endpointDetails?.summary && (
           <p className="endpoint-summary">{endpointDetails.summary}</p>
         )}
@@ -237,8 +242,6 @@ curl ...`}</code></pre>
           />
         )}
 
-        {/* TODO: Add QueryParamBuilder if needed for GET /2/users */}
-        {/* Query Parameters - Render if GET request and params exist */}
         {endpointDetails?.method === 'GET' && currentQueryParams.length > 0 && (
           <QueryParamBuilder 
              params={currentQueryParams} 
@@ -246,7 +249,6 @@ curl ...`}</code></pre>
            />
         )}
 
-        {/* Expansions Selector */}
         {endpointDetails?.method === 'GET' && currentExpansionOptions.length > 0 && (
           <ExpansionsSelector 
             options={currentExpansionOptions} 
@@ -254,21 +256,18 @@ curl ...`}</code></pre>
           />
         )}
 
-         {/* Add Run Request Button */}
         <div className="run-request-section">
-           {/* Display usage estimate */}
            <span className="usage-estimate">{usageEstimateText}</span>
            <button 
              className="run-button" 
-             onClick={() => { /* TODO: Implement request logic */ console.log('Run Request Clicked!'); }}
-             disabled={isRunDisabled} // Apply disabled state
-             title={isRunDisabled ? "Select an active app and fill all required parameters (*)" : "Run the API request"} // Add helpful title
+             onClick={() => { console.log('Run Request Clicked!'); }}
+             disabled={isRunDisabled}
+             title={isRunDisabled ? "Select an active app and fill all required parameters (*)" : "Run the API request"}
            >
              Run Request
            </button>
         </div>
 
-        {/* Use CodeSnippetDisplay component */} 
         <CodeSnippetDisplay 
           endpoint={endpointDetails} 
           pathParams={pathParamValues} 

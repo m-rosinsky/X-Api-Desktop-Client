@@ -1,14 +1,10 @@
-import { useState, useMemo, useEffect } from "react";
-import React from 'react';
+import { useState, useMemo, useEffect, useRef } from "react";
 import "./App.css";
-import reactLogo from "./assets/react.svg";
 import { 
-  NavItem, ApiViewProps, AppInfo, Project // Add AppInfo and Project here
+  NavItem, ApiViewProps, AppInfo, Project, User // Add User import
 } from './types'; // Import types
 // Removed AppInfo, Project, DashboardProps, AppSelectorProps, Endpoint, EndpointSelectorProps
 
-import AppSelector from "./components/AppSelector"; // Import AppSelector
-import EndpointSelector from "./components/EndpointSelector"; // Import EndpointSelector
 import { mockProjects, navigation } from "./data/mockData"; // Import mock data
 import SplashScreen from "./components/SplashScreen"; // Import SplashScreen
 
@@ -19,6 +15,14 @@ import UsersView from "./views/UsersView";
 import ProjectView from "./views/ProjectView"; // Import the new view
 import AppView from "./views/AppView"; // Import the new AppView
 
+// Define a dummy user for simulation
+const dummyUser: User = {
+  id: 'usr_123',
+  name: 'Demo User',
+  email: 'demo@example.com',
+  initials: 'DU'
+};
+
 // --- Main App Component ---
 function App() {
   const [isLoading, setIsLoading] = useState(true); // Add loading state
@@ -28,6 +32,11 @@ function App() {
   const [activeView, setActiveView] = useState<string>("dashboard"); // Default to dashboard
   const [activeAppId, setActiveAppId] = useState<number | null>(null); // State for selected app
   const [sidebarWidth, setSidebarWidth] = useState(280); // Lifted state for sidebar width
+  // State for current user (null = logged out)
+  const [currentUser, setCurrentUser] = useState<User | null>(null); 
+  // State for user dropdown visibility
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null); // Ref for click outside
 
   // Create the populated navigation structure using useMemo
   const populatedNavigation = useMemo(() => {
@@ -38,21 +47,28 @@ function App() {
     const projectsCategory = navCopy.find(item => item.id === 'nav-projects');
 
     if (projectsCategory && projectsCategory.type === 'category') {
-      // Create NavItem categories for each project
-      projectsCategory.subItems = mockProjects.map(project => ({
-        label: project.name, 
-        type: 'category', // Project is now a category
-        viewId: `project-${project.id}`, // Still navigate to ProjectView for the category header
-        subItems: project.apps.map(app => ({ // Apps are links within the project category
-          label: app.name,
-          type: 'link',
-          viewId: `app-${app.id}` // Navigate to AppView
-        }))
-      }));
+      // *** Conditionally populate based on currentUser ***
+      if (currentUser) {
+        // User is logged in, populate with mock projects (replace with actual user projects later)
+        projectsCategory.subItems = mockProjects.map(project => ({
+          label: project.name, 
+          type: 'category', 
+          viewId: `project-${project.id}`,
+          subItems: project.apps.map(app => ({ 
+            label: app.name,
+            type: 'link',
+            viewId: `app-${app.id}`
+          }))
+        }));
+      } else {
+        // User is logged out, clear sub-items for Projects category
+        projectsCategory.subItems = []; 
+      }
     }
 
     return navCopy; // Return the modified copy
-  }, []); // Empty dependency array means this runs once on mount
+  // *** Add currentUser to dependency array ***
+  }, [currentUser]); // Re-run when currentUser changes
 
   // Simulate loading completion
   useEffect(() => {
@@ -62,6 +78,40 @@ function App() {
 
     return () => clearTimeout(timer); // Cleanup timer on unmount
   }, []);
+
+  // Close user menu on click outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        setIsUserMenuOpen(false);
+      }
+    };
+    if (isUserMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    } else {
+      document.removeEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isUserMenuOpen]);
+
+  // Login handler
+  const handleLogin = () => {
+    setCurrentUser(dummyUser);
+    setIsUserMenuOpen(false); // Close menu after action
+  };
+
+  // Logout handler
+  const handleLogout = () => {
+    setCurrentUser(null);
+    setActiveView("dashboard"); // Go back to dashboard on logout
+    setActiveAppId(null); // Reset active app
+    setIsUserMenuOpen(false); // Close menu after action
+  };
+
+  // Toggle user menu dropdown
+  const toggleUserMenu = () => {
+    setIsUserMenuOpen(prev => !prev);
+  };
 
   // Function to toggle category expansion
   const toggleCategory = (label: string) => {
@@ -136,27 +186,36 @@ function App() {
 
   // Updated renderCurrentView to handle layout differences and pass props
   const renderCurrentView = () => {
-    const apiViewProps: Omit<ApiViewProps, 'projects'> = { activeAppId, setActiveAppId }; 
+    // Include currentUser in the props for API views
+    const apiViewProps: Omit<ApiViewProps, 'projects'> & { currentUser: User | null } = {
+      activeAppId,
+      setActiveAppId,
+      currentUser // Pass the current user state
+    }; 
     
-    // Props specifically for ApiViewLayout used in Tweets/Users views
     const apiLayoutProps = {
       initialWidth: sidebarWidth,
-      onResize: setSidebarWidth // Pass the state setter directly
+      onResize: setSidebarWidth 
     };
 
+    // Always render Views requiring API keys enabled, but maybe show a message if logged out?
+    // Or prevent navigation? For now, allow navigation but dashboard is conditional.
     switch (activeView) {
       case 'tweets': 
-        // Pass layout props to TweetsView (it will pass them to ApiViewLayout)
+        // Pass currentUser down via apiViewProps
         return <TweetsView projects={mockProjects} {...apiViewProps} {...apiLayoutProps} />;
       case 'users': 
-        // Pass layout props to UsersView (it will pass them to ApiViewLayout)
+        // Pass currentUser down via apiViewProps
         return <UsersView projects={mockProjects} {...apiViewProps} {...apiLayoutProps} />;
-      
-      // For other views, wrap them in the standard main-content padding
       case 'dashboard':
         return (
           <main className="main-content">
-            <Dashboard projects={mockProjects} onNavigate={handleNavClick} />
+            {/* Pass currentUser to Dashboard */}
+            <Dashboard 
+              projects={mockProjects} 
+              currentUser={currentUser} 
+              onNavigate={handleNavClick} 
+            />
           </main>
         );
       case 'subscription':
@@ -177,8 +236,6 @@ function App() {
           // Parse the activeView string
           const parts = activeView.split('/');
           const projectIdPart = parts[0]; // e.g., "project-1"
-          const appIdPart = parts[1];     // e.g., "app-101" (optional)
-          const tabPart = parts[2];       // e.g., "keys" (optional)
           
           const projectId = parseInt(projectIdPart.split('-')[1], 10);
           const project = mockProjects.find(p => p.id === projectId);
@@ -249,9 +306,35 @@ function App() {
             <div className="top-nav-logo">
               <img src="/tauri.svg" alt="App Logo" />
             </div>
+            {/* Maybe add global search or other controls here */}
           </div>
           <div className="top-nav-right">
-            <span>User Actions</span>
+            {/* User Menu Section */}
+            <div className="user-menu-container" ref={userMenuRef}>
+              {currentUser ? (
+                // Logged In State
+                <>
+                  <button className="user-menu-button" onClick={toggleUserMenu}>
+                    <span className="user-info">
+                      <span className="user-initials">{currentUser.initials || currentUser.name.charAt(0)}</span>
+                      {/* Optionally display full name: <span className="user-name">{currentUser.name}</span> */}
+                    </span>
+                    <span className={`dropdown-arrow ${isUserMenuOpen ? 'open' : ''}`}>▼</span>
+                  </button>
+                  {isUserMenuOpen && (
+                    <ul className="user-dropdown">
+                      {/* Add other items like 'Profile' or 'Settings' if needed */}
+                      <li onClick={handleLogout}>Sign Out</li>
+                    </ul>
+                  )}
+                </>
+              ) : (
+                // Logged Out State
+                <button className="sign-in-button" onClick={handleLogin}>
+                  Sign In
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </nav>

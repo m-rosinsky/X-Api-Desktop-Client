@@ -25,6 +25,7 @@ export interface NavItem {
 
 export interface DashboardProps {
   projects: Project[];
+  currentUser: User | null;
   onNavigate?: (viewId: string | undefined) => void; // Add optional navigation handler
 }
 
@@ -54,6 +55,7 @@ export interface ApiViewProps {
   projects: Project[];
   activeAppId: number | null;
   setActiveAppId: (id: number | null) => void;
+  currentUser: User | null;
 }
 
 // New type for Query Parameters
@@ -77,4 +79,11 @@ export interface PathParam {
 export interface ExpansionOption {
   name: string;
   description?: string;
+} 
+
+export interface User {
+  id: string;
+  name: string;
+  email: string; // Or username
+  initials?: string; // Optional for display
 } 

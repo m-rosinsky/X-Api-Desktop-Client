@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { AppInfo, Project } from '../types'; // Import relevant types
 import '../styles/app-view.css'; // Import CSS file (will create later)
 
@@ -12,11 +12,50 @@ interface AppViewProps {
 const AppView: React.FC<AppViewProps> = ({ app, project, initialTab, onNavigate }) => {
   // State to track the active tab (default to 'overview' or initialTab)
   const [activeTab, setActiveTab] = useState<'overview' | 'keys'>(initialTab || 'overview');
+  // Refs for measurement
+  const tabsContainerRef = useRef<HTMLDivElement>(null);
+  const overviewTabRef = useRef<HTMLButtonElement>(null);
+  const keysTabRef = useRef<HTMLButtonElement>(null); // Ref for keys tab
+  // State for indicator style
+  const [indicatorStyle, setIndicatorStyle] = useState({ left: 0, width: 0 });
 
   // Reset tab if initialTab changes (e.g., navigating from dashboard)
   useEffect(() => {
       setActiveTab(initialTab || 'overview');
   }, [initialTab]);
+
+  // Effect to update indicator position
+  useEffect(() => {
+    const updateIndicator = () => {
+      if (!tabsContainerRef.current) return;
+      const containerRect = tabsContainerRef.current.getBoundingClientRect();
+      let targetTabRect: DOMRect | null = null;
+
+      if (activeTab === 'overview' && overviewTabRef.current) {
+        targetTabRect = overviewTabRef.current.getBoundingClientRect();
+      } else if (activeTab === 'keys' && keysTabRef.current) { // Check keys tab
+        targetTabRect = keysTabRef.current.getBoundingClientRect();
+      }
+
+      if (targetTabRect) {
+        const left = targetTabRect.left - containerRect.left + tabsContainerRef.current.scrollLeft; // Adjust for container scroll
+        const width = targetTabRect.width;
+        setIndicatorStyle({ left, width });
+      } else {
+         // Default or hide if no tab is active/found (adjust as needed)
+         setIndicatorStyle({ left: 0, width: 0 });
+      }
+    };
+
+    // Update immediately and on resize
+    updateIndicator();
+    window.addEventListener('resize', updateIndicator);
+    // Optional: If tabs can change dynamically, might need ResizeObserver on container
+
+    return () => {
+      window.removeEventListener('resize', updateIndicator);
+    };
+  }, [activeTab]); // Re-run when activeTab changes
 
   return (
     <div className="app-view">
@@ -38,20 +77,24 @@ const AppView: React.FC<AppViewProps> = ({ app, project, initialTab, onNavigate 
         <span className="app-environment">({app.environment})</span> 
       </h1>
       
-      {/* Tabs for Overview/Keys */}
-      <div className="app-details-tabs">
+      {/* Tabs for Overview/Keys - Add ref to container */}
+      <div className="app-details-tabs" ref={tabsContainerRef}>
         <button 
+          ref={overviewTabRef} // Add ref
           className={`tab-button ${activeTab === 'overview' ? 'active' : ''}`}
           onClick={() => setActiveTab('overview')}
         >
           Overview
         </button>
         <button 
+          ref={keysTabRef} // Add ref
           className={`tab-button ${activeTab === 'keys' ? 'active' : ''}`}
           onClick={() => setActiveTab('keys')}
         >
           Keys & Tokens
         </button>
+        {/* Add the indicator element */}
+        <div className="active-tab-indicator" style={indicatorStyle}></div>
       </div>
 
       {/* Tab Content */} 

@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
-import { ApiViewProps, Endpoint, QueryParam, PathParam } from '../types';
+import { ApiViewProps, Endpoint, QueryParam, PathParam, User, Project } from '../types';
 import AppSelector from '../components/AppSelector';
 import EndpointSelector from '../components/EndpointSelector';
 import ApiViewLayout from '../components/ApiViewLayout';
@@ -88,8 +88,9 @@ const TweetsView: React.FC<TweetsViewProps> = ({
   projects, 
   activeAppId, 
   setActiveAppId, 
-  initialWidth, // Receive prop
-  onResize      // Receive prop
+  currentUser,
+  initialWidth,
+  onResize
 }) => {
   const [selectedEndpoint, setSelectedEndpoint] = useState<string | null>(tweetsEndpoints[0]?.id ?? null);
   const [queryParamValues, setQueryParamValues] = useState<Record<string, string>>({});
@@ -101,6 +102,11 @@ const TweetsView: React.FC<TweetsViewProps> = ({
     if (activeAppId === null) return null;
     return projects.find(p => p.apps.some(app => app.id === activeAppId));
   }, [projects, activeAppId]);
+
+  // Filter projects based on currentUser BEFORE passing to AppSelector
+  const projectsForSelector = useMemo(() => {
+    return currentUser ? projects : []; // Pass empty array if logged out
+  }, [currentUser, projects]);
 
   const usagePercentage = activeProject ? Math.min((activeProject.usage / activeProject.cap) * 100, 100) : 0;
 
@@ -215,23 +221,24 @@ curl ...`}</code></pre>
   return (
     <ApiViewLayout 
       sidebarContent={sidebarContent} 
-      initialWidth={initialWidth} // Pass down
-      onResize={onResize}           // Pass down
+      initialWidth={initialWidth}
+      onResize={onResize}          
     >
        {/* Main Content */}
       <div className="api-header-section">
         <div className="selector-and-package">
-          <AppSelector projects={projects} selectedAppId={activeAppId} onChange={setActiveAppId} />
-          {/* Conditionally render package label outside selector */}
+          <AppSelector 
+            projects={projectsForSelector} 
+            selectedAppId={activeAppId} 
+            onChange={setActiveAppId} 
+          />
           {activeProject && (
             <span className={`project-package package-${activeProject.package.toLowerCase()}`}>
               {activeProject.package}
             </span>
           )}
         </div>
-        {/* Always render usage preview container, toggle visibility with class */}
         <div className={`api-usage-preview ${activeProject ? 'visible' : ''}`}>
-          {/* Content inside is only relevant when visible, but rendering it doesn't hurt */}
            <p>Project Usage ({activeProject?.name || 'N/A'}): {activeProject?.usage.toLocaleString() || 0} / {activeProject?.cap.toLocaleString() || 0}</p>
            <div className="usage-bar-container">
               <div
@@ -247,12 +254,10 @@ curl ...`}</code></pre>
             selectedEndpointId={selectedEndpoint}
             onChange={setSelectedEndpoint}
           />
-        {/* Add endpoint summary below selector */}
         {endpointDetails?.summary && (
           <p className="endpoint-summary">{endpointDetails.summary}</p>
         )}
         
-         {/* Path Parameters */} 
          {currentPathParams.length > 0 && (
            <PathParamBuilder 
              params={currentPathParams}
@@ -261,7 +266,6 @@ curl ...`}</code></pre>
            />
          )}
           
-         {/* Query Parameters */}
          {endpointDetails?.method === 'GET' && currentQueryParams.length > 0 && (
            <QueryParamBuilder 
               params={currentQueryParams} 
@@ -269,7 +273,6 @@ curl ...`}</code></pre>
             />
          )}
 
-         {/* Expansions Selector */} 
          {endpointDetails?.method === 'GET' && currentExpansionOptions.length > 0 && (
            <ExpansionsSelector 
              options={currentExpansionOptions} 
@@ -277,21 +280,18 @@ curl ...`}</code></pre>
            />
          )}
 
-        {/* Add Run Request Button */}
         <div className="run-request-section">
-           {/* Display usage estimate */}
            <span className="usage-estimate">{usageEstimateText}</span>
            <button 
              className="run-button" 
              onClick={() => { /* TODO: Implement request logic */ console.log('Run Request Clicked!'); }}
-             disabled={isRunDisabled} // Apply disabled state
-             title={isRunDisabled ? "Select an active app and fill all required parameters (*)" : "Run the API request"} // Add helpful title
+             disabled={isRunDisabled}
+             title={isRunDisabled ? "Select an active app and fill all required parameters (*)" : "Run the API request"}
            >
              Run Request
            </button>
         </div>
 
-        {/* Use CodeSnippetDisplay component */}
         <CodeSnippetDisplay 
           endpoint={endpointDetails} 
           pathParams={pathParamValues} 

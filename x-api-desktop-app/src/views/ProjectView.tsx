@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Project } from '../types';
 import '../styles/project-view.css';
 
@@ -9,6 +9,39 @@ interface ProjectViewProps {
 
 const ProjectView: React.FC<ProjectViewProps> = ({ project, onNavigate }) => {
   const [activeTab, setActiveTab] = useState<'overview' | 'settings'>('overview');
+  const tabsContainerRef = useRef<HTMLDivElement>(null);
+  const overviewTabRef = useRef<HTMLButtonElement>(null);
+  const settingsTabRef = useRef<HTMLButtonElement>(null);
+  const [indicatorStyle, setIndicatorStyle] = useState({ left: 0, width: 0 });
+
+  useEffect(() => {
+    const updateIndicator = () => {
+      if (!tabsContainerRef.current) return;
+      const containerRect = tabsContainerRef.current.getBoundingClientRect();
+      let targetTabRect: DOMRect | null = null;
+
+      if (activeTab === 'overview' && overviewTabRef.current) {
+        targetTabRect = overviewTabRef.current.getBoundingClientRect();
+      } else if (activeTab === 'settings' && settingsTabRef.current) {
+        targetTabRect = settingsTabRef.current.getBoundingClientRect();
+      }
+
+      if (targetTabRect) {
+        const left = targetTabRect.left - containerRect.left + tabsContainerRef.current.scrollLeft;
+        const width = targetTabRect.width;
+        setIndicatorStyle({ left, width });
+      } else {
+        setIndicatorStyle({ left: 0, width: 0 });
+      }
+    };
+
+    updateIndicator();
+    window.addEventListener('resize', updateIndicator);
+
+    return () => {
+      window.removeEventListener('resize', updateIndicator);
+    };
+  }, [activeTab]);
 
   const handleAppClick = (appId: number) => {
     if (onNavigate) {
@@ -26,19 +59,22 @@ const ProjectView: React.FC<ProjectViewProps> = ({ project, onNavigate }) => {
         <span>{project.name}</span>
       </h1>
       
-      <div className="project-details-tabs">
+      <div className="project-details-tabs" ref={tabsContainerRef}>
         <button 
+          ref={overviewTabRef}
           className={`tab-button ${activeTab === 'overview' ? 'active' : ''}`}
           onClick={() => setActiveTab('overview')}
         >
           Overview
         </button>
         <button 
+          ref={settingsTabRef}
           className={`tab-button ${activeTab === 'settings' ? 'active' : ''}`}
           onClick={() => setActiveTab('settings')}
         >
           Settings
         </button>
+        <div className="active-tab-indicator" style={indicatorStyle}></div>
       </div>
 
       <div className="project-details-content">

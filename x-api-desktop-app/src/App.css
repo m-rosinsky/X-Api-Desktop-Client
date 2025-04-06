@@ -1,0 +1,125 @@
+/* Top Navigation Styles */
+.top-nav {
+  background-color: var(--background-color-secondary); /* Or your desired nav background */
+  border-bottom: 1px solid var(--border-color);
+  height: 55px; /* Adjust height as needed */
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.top-nav-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 100%;
+  padding: 0 0.5em; /* Reduced horizontal padding */
+  max-width: var(--max-width); /* Optional: Limit width */
+  margin: 0 auto; /* Center content if max-width is used */
+}
+
+.top-nav-left {
+  display: flex;
+  align-items: center;
+}
+
+.top-nav-logo img {
+  height: 28px; /* Adjust logo size */
+  display: block; /* Prevent extra space below image */
+}
+
+.top-nav-right {
+  display: flex;
+  align-items: center;
+}
+
+/* User Menu Styles */
+.user-menu-container {
+  position: relative; /* For dropdown positioning */
+}
+
+.sign-in-button,
+.user-menu-button {
+  background-color: var(--button-secondary-bg);
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
+  padding: 0.4em 1em;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9em;
+  display: flex;
+  align-items: center;
+  gap: 0.6em;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.sign-in-button:hover,
+.user-menu-button:hover {
+  background-color: var(--button-secondary-hover-bg);
+  border-color: var(--accent-color-darker); 
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+}
+
+.user-initials {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background-color: var(--accent-color); 
+  color: var(--button-text-color); /* White or contrasting color */
+  font-size: 0.8em;
+  font-weight: 600;
+  line-height: 1;
+}
+
+/* Optional: Style for full name if displayed */
+/* .user-name { ... } */
+
+.user-menu-button .dropdown-arrow {
+  font-size: 0.7em;
+  transition: transform 0.2s ease-in-out;
+}
+
+.user-menu-button .dropdown-arrow.open {
+  transform: rotate(180deg);
+}
+
+.user-dropdown {
+  position: absolute;
+  top: calc(100% + 8px); /* Position below button with some gap */
+  right: 0;
+  /* background-color: #2a2a2a; */ /* Revert hardcoded value */
+  background-color: var(--card-background-solid); /* Use the correct solid background variable */
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  list-style: none;
+  padding: 0.5em 0;
+  margin: 0;
+  min-width: 150px; 
+  z-index: 110; /* Above nav content */
+  box-shadow: 0 3px 8px rgba(0,0,0,0.2);
+  overflow: hidden;
+}
+
+.user-dropdown li {
+  padding: 0.6em 1.2em;
+  cursor: pointer;
+  color: var(--text-color);
+  font-size: 0.9em;
+  white-space: nowrap;
+  transition: background-color 0.15s ease;
+}
+
+.user-dropdown li:hover {
+  background-color: var(--list-hover-background); 
+  color: var(--accent-color); /* Optional: Highlight text on hover */
+}
+
+/* ... rest of App.css ... */

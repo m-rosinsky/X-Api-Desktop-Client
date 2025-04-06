@@ -14,9 +14,11 @@
 /* Tab Styles */
 .app-details-tabs {
   display: flex;
+  justify-content: center; /* Center the tab buttons */
   border-bottom: 1px solid var(--border-color);
   background-color: var(--background-color-secondary); /* Tab bar background */
   margin-bottom: 1em; /* Space below tabs */
+  position: relative; /* Needed for absolute positioning of the indicator */
 }
 
 .tab-button {
@@ -27,9 +29,10 @@
   cursor: pointer;
   font-size: 0.9em;
   font-weight: 500;
-  border-bottom: 3px solid transparent; /* Space for active indicator */
-  margin-bottom: -1px; /* Overlap border-bottom of container */
-  transition: color 0.2s ease, border-color 0.2s ease;
+  /* border-bottom: 3px solid transparent; */ /* REMOVED - Handled by indicator */
+  /* margin-bottom: -1px; */ /* REMOVED - No longer needed */
+  transition: color 0.2s ease; /* Only transition color now */
+  z-index: 1; /* Ensure buttons are clickable above the main border */
 }
 
 .tab-button:hover {
@@ -38,7 +41,18 @@
 
 .tab-button.active {
   color: var(--accent-color);
-  border-bottom-color: var(--accent-color);
+  /* border-bottom-color: var(--accent-color); */ /* REMOVED - Handled by indicator */
+}
+
+/* NEW: Sliding indicator style (copied from project-view.css) */
+.active-tab-indicator {
+  position: absolute;
+  bottom: -1px; /* Position it to overlap the container's bottom border */
+  height: 3px; /* Match original border thickness */
+  background-color: var(--accent-color);
+  border-radius: 1px; /* Optional: slightly rounded edges */
+  transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s cubic-bezier(0.4, 0, 0.2, 1); /* Smooth transition */
+  z-index: 0; /* Behind buttons if needed, but bottom positioning should be fine */
 }
 
 /* Tab Content Styles */
