@@ -129,3 +129,25 @@
 }
 
 /* ... rest of App.css ... */
+
+.sidebar {
+  width: 280px; 
+  background: var(--card-gradient); /* Use card gradient for sidebar */
+  border-right: 1px solid var(--border-color); 
+  flex-shrink: 0; 
+  overflow-y: auto; /* Allow scrolling within sidebar if content overflows */
+  padding-top: 1em; /* Add some padding at the top */
+  /* Disable text selection */
+  -webkit-user-select: none; /* Safari */
+  -moz-user-select: none;    /* Firefox */
+  -ms-user-select: none;     /* IE/Edge */
+  user-select: none;          /* Standard */
+}
+
+.sidebar-nav {
+  /* ... rest of file ... */
+}
+
+.nav-list {
+  /* ... existing styles ... */
+}
