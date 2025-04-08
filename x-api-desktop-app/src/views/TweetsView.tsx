@@ -24,6 +24,7 @@ interface TweetsViewProps extends ApiViewProps {
 interface BackendApiResponse {
   status: number;
   body: any; 
+  headers: Record<string, string>;
 }
 
 // Update endpoint data with queryParams and pathParams
@@ -114,6 +115,7 @@ const TweetsView: React.FC<TweetsViewProps> = ({
   const [apiErrorDetails, setApiErrorDetails] = useState<{ status: number, message: string, body?: any } | null>(null);
   const [dtabFrom, setDtabFrom] = useState<string>('');
   const [dtabTo, setDtabTo] = useState<string>('');
+  const [enableTracing, setEnableTracing] = useState<boolean>(false);
 
   // Find the project containing the active app
   const activeProject = useMemo(() => {
@@ -239,6 +241,11 @@ const TweetsView: React.FC<TweetsViewProps> = ({
         headers['Dtab-Local'] = `${dtabFrom.trim()} => ${dtabTo.trim()}`;
       }
 
+      // Add Trace header if enabled
+      if (enableTracing) {
+          headers['X-B3-Flags'] = '1';
+      }
+
       // 4. Prepare Body (Only for POST/PUT for now)
       let requestBody = null;
       if (endpointDetails.method === 'POST') {
@@ -280,7 +287,8 @@ const TweetsView: React.FC<TweetsViewProps> = ({
       selectedExpansions, 
       currentPathParams,
       dtabFrom,
-      dtabTo
+      dtabTo,
+      enableTracing
   ]);
 
   const usageEstimateText = useMemo(() => {
@@ -425,7 +433,23 @@ const TweetsView: React.FC<TweetsViewProps> = ({
         <details className="advanced-details">
           <summary className="advanced-summary">Advanced Options</summary>
           <div className="advanced-section-content form-group">
-            <label htmlFor="dtab-from-input">Dtabs:</label>
+
+            {/* Trace Checkbox (Moved Up) */} 
+            <div className="form-check">
+                <input 
+                    className="form-check-input" 
+                    type="checkbox" 
+                    id="enableTracingCheck"
+                    checked={enableTracing}
+                    onChange={(e) => setEnableTracing(e.target.checked)}
+                />
+                <label className="form-check-label" htmlFor="enableTracingCheck">
+                    Enable Tracing (Adds X-B3-Flags: 1 header)
+                </label>
+            </div>
+
+            {/* Dtabs Input */} 
+            <label htmlFor="dtab-from-input" style={{ marginTop: '1.0em' }}>Dtabs:</label> {/* Add margin to Dtabs label */} 
             <div className="dtab-input-container">
               <input
                 id="dtab-from-input"
@@ -445,6 +469,7 @@ const TweetsView: React.FC<TweetsViewProps> = ({
                 onChange={(e) => setDtabTo(e.target.value)}
               />
             </div>
+
           </div>
         </details>
         {/* --- End Advanced Section --- */}
@@ -463,10 +488,7 @@ const TweetsView: React.FC<TweetsViewProps> = ({
 
         {/* --- Response/Error Display Area --- */}
         <div className="api-response-area" style={{ marginTop: '2em' }}>
-          {isLoading && (
-            <div className="loading-indicator">Loading response...</div>
-          )}
-
+          {isLoading && ( <div className="loading-indicator"></div> )}
           {apiErrorDetails && (
             <div className="error-message" style={{ color: '#ffcccc', background: '#4d2020', border: '1px solid #a85050', padding: '1em', borderRadius: '4px', marginBottom: '1em' }}>
               <strong>Error {apiErrorDetails.status > 0 ? `(HTTP ${apiErrorDetails.status})` : ''}:</strong> {apiErrorDetails.message}
@@ -493,6 +515,12 @@ const TweetsView: React.FC<TweetsViewProps> = ({
               <h4 className={`response-status status-${Math.floor((apiResponse.status || 0) / 100)}xx`}>
                  Status: {apiResponse.status}
               </h4>
+              {/* Trace ID Display */} 
+              {apiResponse.headers && apiResponse.headers['x-transaction-id'] && (
+                 <div className="trace-id-display">
+                     <strong>Trace ID:</strong> {apiResponse.headers['x-transaction-id']}
+                 </div>
+              )}
               {/* Response Body Display */} 
               <Highlighter 
                 language="json" 
@@ -515,6 +543,7 @@ const TweetsView: React.FC<TweetsViewProps> = ({
           bearerToken={effectiveBearerToken}
           dtabFrom={dtabFrom}
           dtabTo={dtabTo}
+          enableTracing={enableTracing}
         />
       </div>
     </ApiViewLayout>

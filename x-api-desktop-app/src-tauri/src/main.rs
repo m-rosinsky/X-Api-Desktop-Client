@@ -3,6 +3,7 @@
 
 use serde::{Serialize, Deserialize};
 use std::collections::HashMap;
+use reqwest::header::{HeaderMap, HeaderName, HeaderValue};
 
 // Define the structure for the request payload coming from the frontend
 #[derive(Deserialize)]
@@ -18,6 +19,7 @@ struct ApiRequestArgs {
 struct ApiResponse {
     status: u16,
     body: serde_json::Value, // Represent body as flexible JSON value
+    headers: HashMap<String, String>, // Added headers map
 }
 
 // Define the structure for the error payload going back to the frontend
@@ -66,13 +68,24 @@ async fn make_api_request(args: ApiRequestArgs) -> Result<ApiResponse, ApiError>
     match request_builder.send().await {
         Ok(response) => {
             let status = response.status().as_u16();
-            // Try to parse the response body as JSON
+            // Clone headers before consuming the response body
+            let response_headers = response.headers().clone(); 
+            
             let body_result = response.json::<serde_json::Value>().await;
+
+            // Convert HeaderMap to HashMap<String, String>
+            let headers_map: HashMap<String, String> = response_headers
+                .iter()
+                .filter_map(|(name, value)| {
+                    // Attempt to convert value to string, skip if invalid UTF-8
+                    value.to_str().ok().map(|val_str| (name.to_string(), val_str.to_string()))
+                })
+                .collect();
 
             match body_result {
                 Ok(body) => {
                     if status >= 200 && status < 300 {
-                         Ok(ApiResponse { status, body })
+                         Ok(ApiResponse { status, body, headers: headers_map })
                     } else {
                          // Request failed (e.g., 4xx, 5xx), return structured error
                          Err(ApiError {
@@ -86,10 +99,11 @@ async fn make_api_request(args: ApiRequestArgs) -> Result<ApiResponse, ApiError>
                      // JSON parsing failed
                      let error_message = format!("Failed to parse response body: {}", e);
                      if status >= 200 && status < 300 {
-                        // Successful status but bad body? Return as success with error message in body
+                        // Successful status but bad body? Include headers anyway
                          Ok(ApiResponse {
                               status,
-                              body: serde_json::json!({ "warning": error_message })
+                              body: serde_json::json!({ "warning": error_message }),
+                              headers: headers_map
                          })
                      } else {
                          // Failed status and bad body, return as error without body

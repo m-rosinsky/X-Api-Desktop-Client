@@ -42,7 +42,8 @@ export function generateCurlCommand(
   expansions?: string,
   bearerToken?: string | null,
   dtabFrom?: string,
-  dtabTo?: string
+  dtabTo?: string,
+  enableTracing?: boolean
 ): string {
   if (!endpoint) return "";
 
@@ -61,6 +62,10 @@ export function generateCurlCommand(
     curlCommand += ` \\\n  -H "Dtab-Local: ${dtabFrom.trim()} => ${dtabTo.trim()}"`;
   }
 
+  if (enableTracing) {
+      curlCommand += ` \\\n  -H "X-B3-Flags: 1"`;
+  }
+
   if (['POST', 'PUT', 'PATCH'].includes(endpoint.method)) {
        curlCommand += ` \\\n  -H "Content-Type: application/json" \\\n  -d '{"your_key":"your_value"}'`; 
   }
@@ -76,7 +81,8 @@ export function generatePythonRequestsCode(
     expansions?: string,
     bearerToken?: string | null,
     dtabFrom?: string,
-    dtabTo?: string
+    dtabTo?: string,
+    enableTracing?: boolean
 ): string {
     if (!endpoint) return "";
     
@@ -96,6 +102,10 @@ export function generatePythonRequestsCode(
     
     if (dtabFrom && dtabTo && dtabFrom.trim() && dtabTo.trim()) {
         headers["Dtab-Local"] = `${dtabFrom.trim()} => ${dtabTo.trim()}`;
+    }
+    
+    if (enableTracing) {
+        headers["X-B3-Flags"] = '1';
     }
     
     if (['POST', 'PUT', 'PATCH'].includes(endpoint.method)) {
@@ -140,7 +150,8 @@ export function generateJavascriptFetchCode(
     expansions?: string,
     bearerToken?: string | null,
     dtabFrom?: string,
-    dtabTo?: string
+    dtabTo?: string,
+    enableTracing?: boolean
 ): string {
     if (!endpoint) return "";
 
@@ -154,6 +165,10 @@ export function generateJavascriptFetchCode(
 
     if (dtabFrom && dtabTo && dtabFrom.trim() && dtabTo.trim()) {
         headers["Dtab-Local"] = `${dtabFrom.trim()} => ${dtabTo.trim()}`;
+    }
+
+    if (enableTracing) {
+        headers["X-B3-Flags"] = '1';
     }
 
     const options: RequestInit = {
