@@ -736,3 +736,49 @@
 /* ... existing dtabs styles ... */
 
 /* ... rest of api-views.css ... */
+
+/* --- TFE Environment Dropdown Styles --- */
+.tfe-environment-section {
+  display: flex;
+  align-items: center;
+  gap: 0.75em; /* Space between label and select */
+  margin-top: 1em; /* Space above this section */
+  margin-bottom: 1em; /* Space below this section */
+}
+
+.tfe-env-label {
+  font-size: 0.9em;
+  color: var(--text-color);
+  white-space: nowrap; /* Prevent wrapping */
+}
+
+.tfe-env-select {
+  /* Use similar styles to dtab-select for consistency */
+  background-color: var(--input-background);
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  /* Adjust padding for arrow */
+  padding: 0.5em 2em 0.5em 0.8em; 
+  font-size: 0.9em;
+  min-width: 150px; 
+  cursor: pointer;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  /* Add custom appearance and arrow */
+  appearance: none; 
+  -webkit-appearance: none;
+  background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23aaa%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E');
+  background-repeat: no-repeat;
+  background-position: right 0.7em top 50%;
+  background-size: 0.65em auto;
+}
+
+.tfe-env-select:hover {
+  border-color: var(--accent-color-secondary);
+}
+
+.tfe-env-select:focus {
+  outline: none;
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 2px rgba(0, 122, 204, 0.3);
+}

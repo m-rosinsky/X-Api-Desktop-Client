@@ -18,20 +18,21 @@ interface CodeSnippetDisplayProps {
   bearerToken?: string | null;
   dtabs?: DtabPair[];
   enableTracing?: boolean;
+  tfeEnvironment: string;
 }
 
 // --- Try casting the component type to 'any' as a workaround ---
 const Highlighter: any = SyntaxHighlighter; 
 
-const CodeSnippetDisplay: React.FC<CodeSnippetDisplayProps> = ({ endpoint, pathParams, queryParams, expansions, bearerToken, dtabs, enableTracing }) => {
+const CodeSnippetDisplay: React.FC<CodeSnippetDisplayProps> = ({ endpoint, pathParams, queryParams, expansions, bearerToken, dtabs, enableTracing, tfeEnvironment }) => {
   const [selectedLanguage, setSelectedLanguage] = useState<Language>('curl');
 
   // Generate code snippets only when needed
   const codeSnippets = useMemo(() => ({
-    curl: generateCurlCommand(endpoint, pathParams, queryParams, expansions, bearerToken, dtabs, enableTracing),
-    python: generatePythonRequestsCode(endpoint, pathParams, queryParams, expansions, bearerToken, dtabs, enableTracing),
-    javascript: generateJavascriptFetchCode(endpoint, pathParams, queryParams, expansions, bearerToken, dtabs, enableTracing),
-  }), [endpoint, pathParams, queryParams, expansions, bearerToken, dtabs, enableTracing]);
+    curl: generateCurlCommand(endpoint, pathParams, queryParams, expansions, bearerToken, dtabs, enableTracing, tfeEnvironment),
+    python: generatePythonRequestsCode(endpoint, pathParams, queryParams, expansions, bearerToken, dtabs, enableTracing, tfeEnvironment),
+    javascript: generateJavascriptFetchCode(endpoint, pathParams, queryParams, expansions, bearerToken, dtabs, enableTracing, tfeEnvironment),
+  }), [endpoint, pathParams, queryParams, expansions, bearerToken, dtabs, enableTracing, tfeEnvironment]);
 
   const handleCopy = () => {
     const codeToCopy = codeSnippets[selectedLanguage];

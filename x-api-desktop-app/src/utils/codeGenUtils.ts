@@ -42,7 +42,8 @@ export function generateCurlCommand(
   expansions?: string,
   bearerToken?: string | null,
   dtabs?: DtabPair[] | undefined,
-  enableTracing?: boolean
+  enableTracing?: boolean,
+  tfeEnvironment?: string
 ): string {
   if (!endpoint) return "";
 
@@ -69,6 +70,13 @@ export function generateCurlCommand(
       curlCommand += ` \\\n  -H "X-B3-Flags: 1"`;
   }
 
+  // Add TFE Env header conditionally
+  if (tfeEnvironment === 'staging1' || tfeEnvironment === 'staging2') {
+    curlCommand += ` \\\n  -H "X-TFE-Experiment-environment: ${tfeEnvironment}"`;
+    // Add decider override header
+    curlCommand += ` \\\n  -H "X-Decider-Overrides: tfe_route:des_apiservice_${tfeEnvironment}=on"`;
+  }
+
   if (['POST', 'PUT', 'PATCH'].includes(endpoint.method)) {
        curlCommand += ` \\\n  -H "Content-Type: application/json" \\\n  -d '{"your_key":"your_value"}'`; 
   }
@@ -84,7 +92,8 @@ export function generatePythonRequestsCode(
     expansions?: string,
     bearerToken?: string | null,
     dtabs?: DtabPair[] | undefined,
-    enableTracing?: boolean
+    enableTracing?: boolean,
+    tfeEnvironment?: string
 ): string {
     if (!endpoint) return "";
     
@@ -112,6 +121,13 @@ export function generatePythonRequestsCode(
     
     if (enableTracing) {
         headers["X-B3-Flags"] = '1';
+    }
+
+    // Add TFE Env header conditionally
+    if (tfeEnvironment === 'staging1' || tfeEnvironment === 'staging2') {
+        headers["X-TFE-Experiment-environment"] = tfeEnvironment;
+        // Add decider override header
+        headers["X-Decider-Overrides"] = `tfe_route:des_apiservice_${tfeEnvironment}=on`;
     }
     
     if (['POST', 'PUT', 'PATCH'].includes(endpoint.method)) {
@@ -156,7 +172,8 @@ export function generateJavascriptFetchCode(
     expansions?: string,
     bearerToken?: string | null,
     dtabs?: DtabPair[] | undefined,
-    enableTracing?: boolean
+    enableTracing?: boolean,
+    tfeEnvironment?: string
 ): string {
     if (!endpoint) return "";
 
@@ -178,6 +195,13 @@ export function generateJavascriptFetchCode(
 
     if (enableTracing) {
         headers["X-B3-Flags"] = '1';
+    }
+
+    // Add TFE Env header conditionally
+    if (tfeEnvironment === 'staging1' || tfeEnvironment === 'staging2') {
+        headers["X-TFE-Experiment-environment"] = tfeEnvironment;
+        // Add decider override header
+        headers["X-Decider-Overrides"] = `tfe_route:des_apiservice_${tfeEnvironment}=on`;
     }
 
     const options: RequestInit = {

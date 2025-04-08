@@ -51,6 +51,8 @@ const GenericApiView: React.FC<GenericApiViewProps> = ({
   const [apiErrorDetails, setApiErrorDetails] = useState<{ status: number, message: string, body?: any } | null>(null);
   const [dtabs, setDtabs] = useState<DtabPair[]>([{ id: Date.now(), from: '', to: '' }]);
   const [enableTracing, setEnableTracing] = useState<boolean>(false);
+  // Add state for TFE Environment selection
+  const [tfeEnvironment, setTfeEnvironment] = useState<string>('prod');
 
   // State for save/load feature
   const [savedDtabSets, setSavedDtabSets] = useState<Record<string, DtabPair[]>>({});
@@ -256,15 +258,22 @@ const GenericApiView: React.FC<GenericApiViewProps> = ({
       'Content-Type': 'application/json', // Assuming JSON for POST/PUT bodies if any
     };
 
-    // Add Dtabs as X-Dtab header if any exist
+    // Add Dtabs header if any exist - Use Dtab-Local to match curl generation
     const activeDtabs = dtabs.filter(d => d.from.trim() && d.to.trim());
     if (activeDtabs.length > 0) {
-      headers['X-Dtab'] = activeDtabs.map(d => `${d.from}=>${d.to}`).join(';');
+      headers['Dtab-Local'] = activeDtabs.map(d => `${d.from}=>${d.to}`).join(';');
     }
 
     // Add tracing header if enabled
     if (enableTracing) {
       headers['X-B3-Flags'] = '1';
+    }
+
+    // Add TFE environment header if staging selected
+    if (tfeEnvironment === 'staging1' || tfeEnvironment === 'staging2') {
+      headers['X-TFE-Experiment-environment'] = tfeEnvironment;
+      // Add corresponding decider override header
+      headers['X-Decider-Overrides'] = `tfe_route:des_apiservice_${tfeEnvironment}=on`;
     }
 
     // 4. Prepare Body (for POST/PUT etc.) - Placeholder for now
@@ -308,6 +317,7 @@ const GenericApiView: React.FC<GenericApiViewProps> = ({
       currentPathParams, // Added dependency
       dtabs,
       enableTracing,
+      tfeEnvironment, // Add tfeEnvironment dependency
       // We don't need all dependencies like isLoading, apiResponse etc. here
   ]);
 
@@ -471,6 +481,20 @@ const GenericApiView: React.FC<GenericApiViewProps> = ({
                         </span>
                       </label>
                     </div>
+                    {/* Add TFE Environment Dropdown */}
+                    <div className="tfe-environment-section">
+                      <label htmlFor="tfe-env-select" className="tfe-env-label">TFE Environment:</label>
+                      <select 
+                        id="tfe-env-select"
+                        value={tfeEnvironment}
+                        onChange={(e) => setTfeEnvironment(e.target.value)}
+                        className="tfe-env-select"
+                      >
+                        <option value="prod">prod</option>
+                        <option value="staging1">staging1</option>
+                        <option value="staging2">staging2</option>
+                      </select>
+                    </div>
                     <div className="dtabs-section">
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5em' }}>
                         <h4>Dtabs:</h4>
@@ -611,6 +635,7 @@ const GenericApiView: React.FC<GenericApiViewProps> = ({
                   bearerToken={effectiveBearerToken}
                   dtabs={dtabs}
                   enableTracing={enableTracing}
+                  tfeEnvironment={tfeEnvironment}
               />
             </div>
           ) : (
