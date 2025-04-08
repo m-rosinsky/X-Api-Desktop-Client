@@ -14,6 +14,7 @@ import TweetsView from "./views/TweetsView";
 import UsersView from "./views/UsersView";
 import ProjectView from "./views/ProjectView"; // Import the new view
 import AppView from "./views/AppView"; // Import the new AppView
+import AccountActivityView from "./views/AccountActivityView"; // Import the new view
 
 // Define a dummy user for simulation
 const dummyUser: User = {
@@ -188,11 +189,10 @@ function App() {
 
   // Updated renderCurrentView to handle layout differences and pass props
   const renderCurrentView = () => {
-    // Include currentUser in the props for API views
     const apiViewProps: Omit<ApiViewProps, 'projects'> & { currentUser: User | null } = {
       activeAppId,
       setActiveAppId,
-      currentUser // Pass the current user state
+      currentUser
     }; 
     
     const apiLayoutProps = {
@@ -200,100 +200,84 @@ function App() {
       onResize: setSidebarWidth 
     };
 
-    // Always render Views requiring API keys enabled, but maybe show a message if logged out?
-    // Or prevent navigation? For now, allow navigation but dashboard is conditional.
-    switch (activeView) {
-      case 'tweets': 
-        // Pass currentUser down via apiViewProps
-        return <TweetsView projects={mockProjects} {...apiViewProps} {...apiLayoutProps} />;
-      case 'users': 
-        // Pass currentUser down via apiViewProps
-        return <UsersView projects={mockProjects} {...apiViewProps} {...apiLayoutProps} />;
-      case 'dashboard':
+    // Project/App View Logic
+    if (activeView.startsWith('project-')) {
+      // Parse the activeView string
+      const parts = activeView.split('/');
+      const projectIdPart = parts[0]; // e.g., "project-1"
+      
+      const projectId = parseInt(projectIdPart.split('-')[1], 10);
+      const project = mockProjects.find(p => p.id === projectId);
+      
+      if (project) {
         return (
           <main className="main-content">
-            {/* Pass currentUser and handleLogin to Dashboard */}
-            <Dashboard 
-              projects={mockProjects} 
-              currentUser={currentUser} 
-              onNavigate={handleNavClick} 
-              onLogin={handleLogin} // Pass the login handler
+            <ProjectView 
+              project={project} 
+              onNavigate={handleNavClick}
             />
           </main>
         );
-      case 'subscription':
+      }
+    }
+    if (activeView.startsWith('app-')) {
+      // Parse the activeView string (e.g., "app-101" or "app-101/keys")
+      const parts = activeView.split('/');
+      const appIdPart = parts[0]; // e.g., "app-101"
+      const tabPart = parts[1];   // e.g., "keys" (optional)
+
+      const appId = parseInt(appIdPart.split('-')[1], 10);
+      let app: AppInfo | undefined;
+      let project: Project | undefined;
+      
+      // Find the app and its project
+      for (const p of mockProjects) {
+        const foundApp = p.apps.find(a => a.id === appId);
+        if (foundApp) {
+          app = foundApp;
+          project = p;
+          break;
+        }
+      }
+
+      if (app && project) {
+        return (
+          <main className="main-content">
+            <AppView 
+              app={app} 
+              project={project} 
+              initialTab={tabPart as ('overview' | 'keys') | undefined} 
+              onNavigate={handleNavClick}
+            />
+          </main>
+        );
+      }
+    }
+
+    // Standard View Logic
+    switch (activeView) {
+      case "dashboard":
+        return <Dashboard projects={mockProjects} currentUser={currentUser} onNavigate={handleNavClick} onLogin={handleLogin} />;
+      case "tweets":
+        return <TweetsView {...apiViewProps} {...apiLayoutProps} projects={mockProjects} />;
+      case "users":
+        return <UsersView {...apiViewProps} {...apiLayoutProps} projects={mockProjects} />;
+      case "account-activity":
+        return <AccountActivityView {...apiViewProps} {...apiLayoutProps} projects={mockProjects} />;
+      case "subscription":
         return (
           <main className="main-content">
              <div><h2>Subscription</h2><p>Subscription details go here.</p></div>
           </main>
          );
-      case 'invoices':
+      case "invoices":
         return (
           <main className="main-content">
             <div><h2>Invoices</h2><p>Invoice list goes here.</p></div>
           </main>
         );
       default:
-        // Handle Project Views
-        if (activeView.startsWith('project-')) {
-          // Parse the activeView string
-          const parts = activeView.split('/');
-          const projectIdPart = parts[0]; // e.g., "project-1"
-          
-          const projectId = parseInt(projectIdPart.split('-')[1], 10);
-          const project = mockProjects.find(p => p.id === projectId);
-          
-          if (project) {
-            return (
-              <main className="main-content">
-                <ProjectView 
-                  project={project} 
-                  onNavigate={handleNavClick}
-                />
-              </main>
-            );
-          }
-        }
-        // Handle App Views
-        else if (activeView.startsWith('app-')) {
-          // Parse the activeView string (e.g., "app-101" or "app-101/keys")
-          const parts = activeView.split('/');
-          const appIdPart = parts[0]; // e.g., "app-101"
-          const tabPart = parts[1];   // e.g., "keys" (optional)
-
-          const appId = parseInt(appIdPart.split('-')[1], 10);
-          let app: AppInfo | undefined;
-          let project: Project | undefined;
-          
-          // Find the app and its project
-          for (const p of mockProjects) {
-            const foundApp = p.apps.find(a => a.id === appId);
-            if (foundApp) {
-              app = foundApp;
-              project = p;
-              break;
-            }
-          }
-
-          if (app && project) {
-            return (
-              <main className="main-content">
-                <AppView 
-                  app={app} 
-                  project={project} 
-                  initialTab={tabPart as ('overview' | 'keys') | undefined} 
-                  onNavigate={handleNavClick}
-                />
-              </main>
-            );
-          }
-        }
-        // Fallback for unknown views or missing project/app
-        return (
-          <main className="main-content">
-             <div><h2>Select a section</h2></div>
-          </main>
-        );
+        return <div>View not found: {activeView}</div>;
     }
   };
 

@@ -22,8 +22,8 @@
 }
 
 .selector-button {
-    background-color: var(--card-background);
-    border: 1px solid var(--border-color);
+  background-color: var(--card-background);
+  border: 1px solid var(--border-color);
   border-radius: 6px;
   padding: 0.6em 1em;
   width: 100%;
@@ -40,6 +40,7 @@
   align-items: center;
   justify-content: space-between; /* Space left and right sections */
   width: 100%;
+  font-size: 0.9em;
 }
 
 .selector-button-left {
@@ -181,8 +182,8 @@
 .app-selector-label,
 .endpoint-selector-label {
   margin-right: 0.8em;
-  font-size: 0.9em;
-  color: #a0a0a0;
+  font-size: 1.0em;
+  color: var(--text-color);
 }
 
 /* Endpoint Selector Container */
@@ -235,6 +236,7 @@
   padding: 0.6em 1em;
   display: flex; /* Use flex for alignment */
   align-items: baseline; /* Align method and path text */
+  font-size: 0.8em;
 }
 
 .endpoint-dropdown-options li span {

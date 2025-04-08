@@ -92,3 +92,10 @@ export interface User {
   email: string; // Or username
   initials?: string; // Optional for display
 } 
+
+// Structure for a single Dtab key-value pair
+export interface DtabPair {
+    id: number; // Unique ID for React key
+    from: string;
+    to: string;
+} 

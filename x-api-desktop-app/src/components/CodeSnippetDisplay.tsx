@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Endpoint } from '../types';
+import { Endpoint, DtabPair } from '../types/index';
 import { generateCurlCommand, generatePythonRequestsCode, generateJavascriptFetchCode } from '../utils/codeGenUtils';
 import '../styles/code-snippet-display.css';
 // Import syntax highlighter - Revert to named import
@@ -14,25 +14,24 @@ interface CodeSnippetDisplayProps {
   endpoint: Endpoint | undefined | null;
   pathParams: Record<string, string>;
   queryParams: Record<string, string>;
-  expansions?: string; // Add optional expansions prop
-  bearerToken?: string | null; // Add bearerToken prop
-  dtabFrom?: string; // Add dtabFrom prop
-  dtabTo?: string; // Add dtabTo prop
-  enableTracing?: boolean; // Add enableTracing prop
+  expansions?: string;
+  bearerToken?: string | null;
+  dtabs?: DtabPair[];
+  enableTracing?: boolean;
 }
 
 // --- Try casting the component type to 'any' as a workaround ---
 const Highlighter: any = SyntaxHighlighter; 
 
-const CodeSnippetDisplay: React.FC<CodeSnippetDisplayProps> = ({ endpoint, pathParams, queryParams, expansions, bearerToken, dtabFrom, dtabTo, enableTracing }) => {
+const CodeSnippetDisplay: React.FC<CodeSnippetDisplayProps> = ({ endpoint, pathParams, queryParams, expansions, bearerToken, dtabs, enableTracing }) => {
   const [selectedLanguage, setSelectedLanguage] = useState<Language>('curl');
 
   // Generate code snippets only when needed
   const codeSnippets = useMemo(() => ({
-    curl: generateCurlCommand(endpoint, pathParams, queryParams, expansions, bearerToken, dtabFrom, dtabTo, enableTracing),
-    python: generatePythonRequestsCode(endpoint, pathParams, queryParams, expansions, bearerToken, dtabFrom, dtabTo, enableTracing),
-    javascript: generateJavascriptFetchCode(endpoint, pathParams, queryParams, expansions, bearerToken, dtabFrom, dtabTo, enableTracing),
-  }), [endpoint, pathParams, queryParams, expansions, bearerToken, dtabFrom, dtabTo, enableTracing]);
+    curl: generateCurlCommand(endpoint, pathParams, queryParams, expansions, bearerToken, dtabs, enableTracing),
+    python: generatePythonRequestsCode(endpoint, pathParams, queryParams, expansions, bearerToken, dtabs, enableTracing),
+    javascript: generateJavascriptFetchCode(endpoint, pathParams, queryParams, expansions, bearerToken, dtabs, enableTracing),
+  }), [endpoint, pathParams, queryParams, expansions, bearerToken, dtabs, enableTracing]);
 
   const handleCopy = () => {
     const codeToCopy = codeSnippets[selectedLanguage];

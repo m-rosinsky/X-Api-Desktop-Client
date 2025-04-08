@@ -140,36 +140,68 @@
 
 /* Usage Preview Styles (API Screens) */
 .api-usage-preview {
-  /* Initial hidden state */
+  /* Existing styles for visibility transition */
   max-height: 0;
   opacity: 0;
   overflow: hidden;
-  padding: 0 2em; /* Remove vertical padding initially */
-  margin-bottom: 0; /* Remove margin initially */
-  transition: max-height 0.3s ease-in-out, 
-              opacity 0.3s ease-in-out, 
-              padding 0.3s ease-in-out, 
-              margin-bottom 0.3s ease-in-out;
+  /* Adjust transition for smoothness */
+  transition: max-height 0.5s ease-in-out, opacity 0.5s ease-in-out, margin-top 0.5s ease-in-out;
+  width: 100%; /* Ensure it can take up space */
+  display: flex;
+  justify-content: center; /* Center the usage-meter div */
+  margin-top: 0; /* Start with no margin */
 }
 
-/* Visible state */
 .api-usage-preview.visible {
-  max-height: 100px; /* Adjust as needed, large enough for content */
+  max-height: 100px; /* Adjust as needed */
   opacity: 1;
-  padding: 0.5em 2em 1em 2em; /* Restore vertical padding */
-  margin-bottom: 1.5em; /* Restore margin */
+  margin-top: 0.5em; /* Add margin when visible */
 }
 
-.api-usage-preview p {
-  margin: 0 0 0.6em 0;
-  font-size: 0.85em;
-  color: #a0a0a0;
-  text-align: center;
+.api-usage-preview .usage-meter {
+  display: flex;
+  /* Align items based on text baseline */
+  align-items: baseline; 
+  gap: 0.75em; /* Adjust gap */
+  width: auto; /* Let content determine width initially */
+  padding: 0.25em 0.5em; /* Optional: add some padding */
+  border-radius: 4px;
+  /* background-color: rgba(255, 255, 255, 0.05); Optional: subtle background */
+}
+
+.api-usage-preview .usage-label {
+  font-size: 0.8em;
+  color: var(--text-muted);
+  white-space: nowrap; /* Prevent wrapping */
+  line-height: 10px; /* Match bar height */
 }
 
 .api-usage-preview .usage-bar-container {
-  max-width: 400px; /* Limit width */
-  margin: 0 auto; /* Center the bar container */
+  height: 10px; 
+  /* Change background for better contrast */
+  background-color: var(--border-color); 
+  border-radius: 4px;
+  overflow: hidden;
+  width: 350px; 
+}
+
+.api-usage-preview .usage-bar {
+  height: 100%;
+  background: linear-gradient(to right, var(--accent-color-secondary, #3a7bd5), var(--accent-color, #00d2ff));
+  border-radius: 4px;
+  transition: width 0.5s ease-in-out; /* Keep smooth transition */
+}
+
+.api-usage-preview .usage-bar.at-cap {
+  background: linear-gradient(to right, #ff8080, #ff4d4d); /* Red gradient when at cap */
+}
+
+.api-usage-preview .usage-value {
+  font-size: 0.8em;
+  color: var(--text-muted);
+  font-family: monospace; /* Use monospace font for numbers */
+  white-space: nowrap; /* Prevent wrapping */
+  line-height: 10px; /* Match bar height */
 }
 
 /* Ensure API tools content is left-aligned */
@@ -314,40 +346,13 @@
   border-top: 1px solid var(--border-color, #444); /* Separator line */
 }
 
-.advanced-section-content label {
-   /* Use default form-group label styles */
-   /* Removed margin-top: 1em; as it's now handled differently */
-}
-
-/* Style for checkbox container */
-.form-check {
-  display: flex;
-  align-items: center;
-  gap: 0.5em;
-  margin-bottom: 0.5em;
-  margin-top: 1.0em; /* Add some top margin */
-}
-
-.form-check .form-check-input {
-  /* Adjust checkbox size/margin if needed */
-  margin: 0; /* Reset default margins */
-  width: 16px;
-  height: 16px;
-}
-
-.form-check .form-check-label {
-  margin-bottom: 0; /* Override potential bottom margin from default label styles */
-  font-weight: normal; /* Make label less prominent than main labels */
-  color: #b0b0b0; /* Slightly dimmer text */
-  font-size: 0.9em;
-  cursor: pointer; /* Make label clickable */
-}
-
 /* New styles for Dtab container */
 .dtab-input-container {
   display: flex;
   align-items: center; /* Align items vertically */
   gap: 0.8em; /* Space between elements */
+  margin-bottom: 0.5em; /* Space below the checkbox line */
+  margin-top: 0.5em;
 }
 
 .dtab-input-container .dtab-input {
@@ -435,30 +440,31 @@
   font-weight: 600;
 }
 
-/* Status Code Colors */
-.response-status {
+/* Status Code Colors - Match JSX class names */
+/* Use .status-code instead of .response-status */
+.status-code {
   padding: 0.4em 0.8em;
-  margin-bottom: 1em;
+  /* margin-bottom: 1em; Removed - margin handled by parent p */
   border-radius: 4px;
   display: inline-block; /* Fit content */
   font-size: 0.9em;
   font-weight: bold;
 }
 
-.response-status.status-2xx { /* Success */
+.status-code.status-2xx { /* Success */
   color: #caffc4;
   background-color: #284d21;
   border: 1px solid #4a8c3e;
 }
 
-.response-status.status-3xx { /* Redirect/Other */
+.status-code.status-3xx { /* Redirect/Other */
   color: #fff9c4;
   background-color: #5d531c;
   border: 1px solid #a19138;
 }
 
-.response-status.status-4xx, /* Client Error */
-.response-status.status-5xx { /* Server Error */
+.status-code.status-4xx, /* Client Error */
+.status-code.status-5xx { /* Server Error */
   color: #ffcccc;
   background-color: #4d2020;
   border: 1px solid #a85050;
@@ -512,8 +518,221 @@
   margin-right: 0.5em;
 }
 
-.response-status.status-2xx {
-  /* ... 2xx styles ... */
+/* Add/Remove Dtab Button Styles */
+.add-remove-dtab-button {
+  background-color: transparent;
+  border: 1px solid var(--border-color, #666);
+  color: #ccc;
+  font-weight: bold;
+  cursor: pointer;
+  border-radius: 50%; /* Make it round */
+  width: 22px;
+  height: 22px;
+  line-height: 20px; /* Center text vertically */
+  text-align: center;
+  padding: 0;
+  margin-left: 0.0em;
+  font-size: 1em;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 
-/* ... other status styles ... */
+.add-remove-dtab-button:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-color: var(--accent-color, #007acc);
+}
+
+.add-remove-dtab-button.remove:hover {
+  border-color: #ff6666; /* Red border on hover for remove */
+  background-color: rgba(255, 102, 102, 0.1);
+}
+
+.add-remove-dtab-button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  border-color: var(--border-color, #666);
+  background-color: transparent;
+}
+
+/* New Dtabs Header Style */
+.dtabs-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between; /* Push label and button apart */
+  margin-bottom: 0.8em;
+  margin-top: 1.5em;
+}
+
+.dtabs-header label {
+  font-weight: 500; /* Match other form labels if needed */
+  color: #c0c0c0;
+  margin-bottom: 0; /* Remove bottom margin if set globally */
+}
+
+.dtabs-header .add-remove-dtab-button {
+  margin-left: 0; /* Remove left margin from button */
+}
+
+/* New styles for Dtab container */
+.dtab-input-container {
+  margin-bottom: 0.5em; /* Space below the checkbox line */
+  margin-top: 0.5em;
+}
+
+/* Dtab Save/Load Controls Container */
+.dtab-save-load {
+  display: flex;
+  align-items: center;
+  gap: 0.6em;
+}
+
+.dtab-save-load .save-name-input {
+  padding: 0.4em 0.8em; /* Smaller padding */
+  width: 150px; /* Fixed width for save input */
+  font-size: 0.85em;
+}
+
+.dtab-save-load .dtab-select {
+  padding: 0.4em 2em 0.4em 0.8em; /* Adjust right padding for arrow */
+  background-color: var(--input-background, #2a2a2a);
+  border: 1px solid var(--border-color, #444);
+  color: var(--text-color, #e0e0e0);
+  border-radius: 4px;
+  font-size: 0.85em;
+  /* Add max-width if needed */
+  appearance: none; /* Remove default styling */
+  -webkit-appearance: none;
+  background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23aaa%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E');
+  background-repeat: no-repeat;
+  background-position: right 0.7em top 50%;
+  background-size: 0.65em auto;
+  cursor: pointer;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.dtab-save-load .dtab-select:hover {
+  border-color: #777;
+}
+
+.dtab-save-load .dtab-select:focus {
+  outline: none;
+  border-color: var(--accent-color, #007acc);
+  box-shadow: 0 0 0 2px rgba(0, 122, 204, 0.3);
+}
+
+/* General small action button style */
+.dtab-action-button {
+  padding: 0.4em 0.9em;
+  font-size: 0.85em;
+  font-weight: 500;
+  color: #fff;
+  background: var(--accent-gradient);
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.dtab-action-button:hover {
+  opacity: 0.9;
+}
+
+.dtab-action-button:disabled {
+  background: #555;
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.dtab-action-button.remove {
+  background: #8a3333; /* Red background for delete */
+}
+.dtab-action-button.remove:hover {
+  background: #a34242;
+  opacity: 1;
+}
+.dtab-action-button.remove:disabled {
+  background: #6e4343;
+  opacity: 0.5;
+}
+
+/* --- Checkbox Styling (Increased Specificity) --- */
+.tracing-section .checkbox-label {
+  display: inline-flex; 
+  align-items: center;
+  cursor: pointer;
+  /* gap: 1em; Using margin on child */
+  font-size: 0.9em;
+  color: var(--text-color);
+}
+
+.tracing-section .checkbox-input-area {
+  display: inline-flex; 
+}
+
+.tracing-section .checkbox-label input[type="checkbox"] {
+  cursor: pointer;
+  width: 1.1em;
+  height: 1.1em;
+  accent-color: var(--accent-color); 
+  margin: 0; 
+  /* Try forcing border and background */
+  border: 1px solid var(--border-color) !important; 
+  border-radius: 3px; 
+  background-color: var(--input-background) !important; 
+  transition: border-color 0.2s ease, box-shadow 0.2s ease; 
+}
+
+.tracing-section .checkbox-label input[type="checkbox"]:hover {
+  border-color: var(--accent-color); 
+}
+
+.tracing-section .checkbox-label input[type="checkbox"]:focus {
+  outline: none;
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 2px rgba(0, 122, 204, 0.3); 
+}
+
+.tracing-section .checkbox-text-label {
+  line-height: 0.5em; 
+  margin-left: 0.5em; 
+}
+
+/* --- Dtabs Section Specific Styles --- */
+/* ... other styles ... */
+
+/* Style for the container around status, trace, headers */
+.response-details {
+  /* Remove flex properties to allow vertical stacking */
+  /* display: flex; */
+  /* flex-wrap: wrap; */
+  /* align-items: baseline; */
+  /* gap: 1em; */
+  margin-bottom: 1em; /* Add space below the details section */
+}
+
+.response-details p {
+  margin: 0 0 0.5em 0; /* Add margin below status/trace ID paragraphs */
+}
+
+.response-headers-details {
+  margin-bottom: 1em; /* Add space below the headers dropdown */
+}
+
+.response-headers-details summary {
+  cursor: pointer;
+  color: var(--text-muted);
+  font-size: 0.9em;
+  margin-bottom: 0.5em;
+}
+
+/* Add space above the main response body */
+.response-body-container {
+  margin-top: 1em;
+}
+
+/* Styling for response status code */
+/* ... existing status code styles ... */
+
+/* Dtabs section specific styles */
+/* ... existing dtabs styles ... */
+
+/* ... rest of api-views.css ... */

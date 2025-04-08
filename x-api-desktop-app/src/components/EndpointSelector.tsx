@@ -26,7 +26,7 @@ const EndpointSelector: React.FC<EndpointSelectorProps> = ({ endpoints, selected
 
   return (
     <div className="endpoint-selector-container">
-      <span className="endpoint-selector-label">Selected Endpoint:</span>
+      <span className="endpoint-selector-label">Endpoint:</span>
       <div className="custom-endpoint-selector">
         <button 
           type="button"

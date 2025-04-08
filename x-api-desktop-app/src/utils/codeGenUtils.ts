@@ -1,4 +1,4 @@
-import { Endpoint } from "../types";
+import { Endpoint, DtabPair } from "../types/index";
 
 const BASE_URL = "https://api.twitter.com";
 
@@ -41,8 +41,7 @@ export function generateCurlCommand(
   queryParams: Record<string, string>,
   expansions?: string,
   bearerToken?: string | null,
-  dtabFrom?: string,
-  dtabTo?: string,
+  dtabs?: DtabPair[] | undefined,
   enableTracing?: boolean
 ): string {
   if (!endpoint) return "";
@@ -58,8 +57,12 @@ export function generateCurlCommand(
   const token = bearerToken || 'YOUR_BEARER_TOKEN';
   curlCommand += ` \\\n  -H "Authorization: Bearer ${token}"`; 
 
-  if (dtabFrom && dtabTo && dtabFrom.trim() && dtabTo.trim()) {
-    curlCommand += ` \\\n  -H "Dtab-Local: ${dtabFrom.trim()} => ${dtabTo.trim()}"`;
+  // Construct Dtab header from array
+  const validDtabs = dtabs
+    ?.filter(dtab => dtab.from.trim() !== '' && dtab.to.trim() !== '')
+    .map(dtab => `${dtab.from.trim()} => ${dtab.to.trim()}`) || [];
+  if (validDtabs.length > 0) {
+    curlCommand += ` \\\n  -H "Dtab-Local: ${validDtabs.join(';')}"`;
   }
 
   if (enableTracing) {
@@ -80,8 +83,7 @@ export function generatePythonRequestsCode(
     queryParams: Record<string, string>,
     expansions?: string,
     bearerToken?: string | null,
-    dtabFrom?: string,
-    dtabTo?: string,
+    dtabs?: DtabPair[] | undefined,
     enableTracing?: boolean
 ): string {
     if (!endpoint) return "";
@@ -100,8 +102,12 @@ export function generatePythonRequestsCode(
     };
     let body = null;
     
-    if (dtabFrom && dtabTo && dtabFrom.trim() && dtabTo.trim()) {
-        headers["Dtab-Local"] = `${dtabFrom.trim()} => ${dtabTo.trim()}`;
+    // Construct Dtab header from array
+    const validDtabs = dtabs
+        ?.filter(dtab => dtab.from.trim() !== '' && dtab.to.trim() !== '')
+        .map(dtab => `${dtab.from.trim()} => ${dtab.to.trim()}`) || [];
+    if (validDtabs.length > 0) {
+        headers["Dtab-Local"] = validDtabs.join(';');
     }
     
     if (enableTracing) {
@@ -149,8 +155,7 @@ export function generateJavascriptFetchCode(
     queryParams: Record<string, string>,
     expansions?: string,
     bearerToken?: string | null,
-    dtabFrom?: string,
-    dtabTo?: string,
+    dtabs?: DtabPair[] | undefined,
     enableTracing?: boolean
 ): string {
     if (!endpoint) return "";
@@ -163,8 +168,12 @@ export function generateJavascriptFetchCode(
         "Authorization": `Bearer ${token}`
     };
 
-    if (dtabFrom && dtabTo && dtabFrom.trim() && dtabTo.trim()) {
-        headers["Dtab-Local"] = `${dtabFrom.trim()} => ${dtabTo.trim()}`;
+    // Construct Dtab header from array
+    const validDtabs = dtabs
+        ?.filter(dtab => dtab.from.trim() !== '' && dtab.to.trim() !== '')
+        .map(dtab => `${dtab.from.trim()} => ${dtab.to.trim()}`) || [];
+    if (validDtabs.length > 0) {
+        headers["Dtab-Local"] = validDtabs.join(';');
     }
 
     if (enableTracing) {

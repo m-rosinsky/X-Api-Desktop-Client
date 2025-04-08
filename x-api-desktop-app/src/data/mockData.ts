@@ -65,6 +65,7 @@ export const navigation: NavItem[] = [
   { label: "API", type: 'header' }, // New API header
   { label: "Tweets", type: 'link', viewId: "tweets" }, // New Tweets link
   { label: "Users", type: 'link', viewId: "users" }, // New Users link
+  { label: "Account Activity", type: 'link', viewId: "account-activity" },
 
   { label: "Support", type: 'header' }, // New Support header
   { 

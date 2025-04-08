@@ -53,8 +53,15 @@ async fn make_api_request(args: ApiRequestArgs) -> Result<ApiResponse, ApiError>
 
     let mut request_builder = client.request(method.clone(), &args.url);
 
-    // Add headers
+    // Check if tracing was requested by the frontend
+    let mut tracing_requested = false;
+
+    // Add headers from frontend request
     for (key, value) in args.headers {
+        // Check for the tracing header (case-insensitive key comparison)
+        if key.eq_ignore_ascii_case("X-B3-Flags") && value == "1" {
+            tracing_requested = true;
+        }
         request_builder = request_builder.header(&key, value);
     }
 
@@ -74,13 +81,19 @@ async fn make_api_request(args: ApiRequestArgs) -> Result<ApiResponse, ApiError>
             let body_result = response.json::<serde_json::Value>().await;
 
             // Convert HeaderMap to HashMap<String, String>
-            let headers_map: HashMap<String, String> = response_headers
+            let mut headers_map: HashMap<String, String> = response_headers
                 .iter()
                 .filter_map(|(name, value)| {
                     // Attempt to convert value to string, skip if invalid UTF-8
                     value.to_str().ok().map(|val_str| (name.to_string(), val_str.to_string()))
                 })
                 .collect();
+
+            // Conditionally remove the transaction ID if tracing was not requested
+            if !tracing_requested {
+                // Remove header (case-insensitive key check - standard is lowercase)
+                headers_map.remove("x-transaction-id"); 
+            }
 
             match body_result {
                 Ok(body) => {
