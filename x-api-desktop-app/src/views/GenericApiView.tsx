@@ -506,6 +506,7 @@ const GenericApiView: React.FC<GenericApiViewProps> = ({
                                 value={dtabSetName}
                                 onChange={(e) => setDtabSetName(e.target.value)}
                                 className="text-input save-name-input"
+                                spellCheck="false"
                               />
                               <button onClick={handleSaveDtabs} className="dtab-action-button" title="Save current Dtabs" disabled={!dtabs.some(d => d.from.trim() || d.to.trim())}>Save</button>
                               <select
@@ -597,9 +598,11 @@ const GenericApiView: React.FC<GenericApiViewProps> = ({
                       <p><strong>Status:</strong> <span className={`status-code status-${String(apiResponse.status)[0]}xx`}>{apiResponse.status}</span></p>
                       {/* Display Trace ID only if the header exists in the response */}
                       {apiResponse.headers && apiResponse.headers['x-transaction-id'] && (
-                        <p>
-                          <strong>Trace ID:</strong> {apiResponse.headers['x-transaction-id']}
-                        </p>
+                        <div className="trace-id-display">
+                          <p>
+                            <strong>Trace ID:</strong> {apiResponse.headers['x-transaction-id']}
+                          </p>
+                        </div>
                       )}
                       {/* Render headers if they exist */}
                       {apiResponse.headers && Object.keys(apiResponse.headers).filter(h => h !== 'x-transaction-id').length > 0 && (

@@ -507,7 +507,11 @@
   border: 1px dashed var(--border-color, #444);
   border-radius: 4px;
   padding: 0.6em 1em;
-  margin-bottom: 1em;
+  margin-bottom: 1em; /* Space below trace ID */
+}
+
+.trace-id-display p {
+  margin: 0; /* Reset paragraph margin */
   font-size: 0.85em;
   color: #ccc;
   word-break: break-all; /* Wrap long IDs */
@@ -782,3 +786,20 @@
   border-color: var(--accent-color);
   box-shadow: 0 0 0 2px rgba(0, 122, 204, 0.3);
 }
+
+/* Add separator line and spacing above TFE Env section */
+.advanced-section-content .form-group .tfe-environment-section {
+  border-top: 1px solid var(--border-color); 
+  margin-top: 1.5em; /* Space above the separator line */
+  padding-top: 1.5em; /* Space below the separator line */
+}
+
+/* Add separator line and spacing above Dtabs section */
+.advanced-section-content .form-group .dtabs-section {
+  border-top: 1px solid var(--border-color);
+  margin-top: 1.5em; /* Space above the separator line */
+  padding-top: 1.5em; /* Space below the separator line */
+}
+
+/* --- Dtabs Section Specific Styles --- */
+/* ... */
