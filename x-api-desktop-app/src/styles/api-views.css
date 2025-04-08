@@ -229,9 +229,8 @@
 
 /* Styles for the Bearer Token Override */
 .form-group {
-  margin-bottom: 1.5em; /* Add space below the group */
-  margin-top: 2em; /* Add more space above the group */
-  max-width: 600px; /* Limit width like endpoint summary */
+  margin-bottom: 1.5em; 
+  margin-top: 2em; 
 }
 
 .form-group label {
@@ -259,6 +258,90 @@
   outline: none;
   border-color: var(--accent-color, #007acc);
   box-shadow: 0 0 0 2px rgba(0, 122, 204, 0.3); /* Focus ring */
+}
+
+/* Styling for <details> element */
+.advanced-details {
+  margin-top: 1em; 
+  margin-bottom: 1.5em;
+  border: 1px solid var(--border-color, #444);
+  border-radius: 6px;
+  background-color: var(--card-background, #252525);
+}
+
+/* Styling for <summary> element (the clickable part) */
+.advanced-summary {
+  padding: 0.8em 1.2em;
+  cursor: pointer;
+  font-weight: 500;
+  color: #c0c0c0;
+  list-style: none; /* Remove default marker */
+  position: relative; /* For positioning the custom marker */
+  transition: background-color 0.2s ease;
+}
+
+.advanced-summary:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+/* Custom marker (arrow) */
+.advanced-summary::before {
+  content: '\25B6'; /* Right-pointing triangle */
+  position: absolute;
+  left: 0.5em; /* Adjust position as needed */
+  top: 50%;
+  transform: translateY(-50%) rotate(0deg);
+  font-size: 0.8em;
+  color: #888;
+  transition: transform 0.2s ease;
+}
+
+/* Rotate marker when details are open */
+.advanced-details[open] > .advanced-summary::before {
+  transform: translateY(-50%) rotate(90deg);
+}
+
+/* Remove default browser marker */
+.advanced-summary::-webkit-details-marker {
+  display: none;
+}
+
+/* Content area within the <details> */
+.advanced-section-content {
+  /* Inherits form-group margin */
+  padding: 0 1.5em 1.5em 1.5em; /* Padding only inside */
+  margin-top: 0; /* Reset top margin from form-group */
+  border-top: 1px solid var(--border-color, #444); /* Separator line */
+}
+
+.advanced-section-content label {
+   /* Use default form-group label styles */
+   margin-top: 1em; /* Add space above label within content */
+}
+
+/* New styles for Dtab container */
+.dtab-input-container {
+  display: flex;
+  align-items: center; /* Align items vertically */
+  gap: 0.8em; /* Space between elements */
+}
+
+.dtab-input-container .dtab-input {
+  flex: 1; /* Allow inputs to grow and fill space */
+  min-width: 0; /* Prevent overflow */
+}
+
+.dtab-input-container .dtab-separator {
+  font-weight: bold;
+  color: #aaa; 
+}
+
+.advanced-section-content textarea.text-input {
+  /* Styles for old textarea - can be removed if no other textareas use it */
+  width: 100%; 
+  box-sizing: border-box; 
+  min-height: 60px;
+  resize: vertical;
 }
 
 /* Styles for Run Request Button */
@@ -317,4 +400,55 @@
   color: var(--text-color-secondary);
   margin-bottom: 0.3em;
   margin-top: 1em; /* Space above label */
-} 
+}
+
+/* Response Area Styles */
+.api-response-area h4 {
+  /* Basic style for headings in this area */
+  margin-top: 0;
+  margin-bottom: 0.8em;
+  font-size: 1em;
+  font-weight: 600;
+}
+
+/* Status Code Colors */
+.response-status {
+  padding: 0.4em 0.8em;
+  margin-bottom: 1em;
+  border-radius: 4px;
+  display: inline-block; /* Fit content */
+  font-size: 0.9em;
+  font-weight: bold;
+}
+
+.response-status.status-2xx { /* Success */
+  color: #caffc4;
+  background-color: #284d21;
+  border: 1px solid #4a8c3e;
+}
+
+.response-status.status-3xx { /* Redirect/Other */
+  color: #fff9c4;
+  background-color: #5d531c;
+  border: 1px solid #a19138;
+}
+
+.response-status.status-4xx, /* Client Error */
+.response-status.status-5xx { /* Server Error */
+  color: #ffcccc;
+  background-color: #4d2020;
+  border: 1px solid #a85050;
+}
+
+/* Error Message Styling (Keep existing inline styles for now or move here) */
+.error-message {
+  /* Consider moving inline styles here for consistency */
+  /* color: #ffcccc; background: #4d2020; ... */
+}
+
+/* Loading Indicator Styling */
+.loading-indicator {
+  color: #aaa;
+  padding: 1em;
+  text-align: center;
+}

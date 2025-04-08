@@ -16,20 +16,22 @@ interface CodeSnippetDisplayProps {
   queryParams: Record<string, string>;
   expansions?: string; // Add optional expansions prop
   bearerToken?: string | null; // Add bearerToken prop
+  dtabFrom?: string; // Add dtabFrom prop
+  dtabTo?: string; // Add dtabTo prop
 }
 
 // --- Try casting the component type to 'any' as a workaround ---
 const Highlighter: any = SyntaxHighlighter; 
 
-const CodeSnippetDisplay: React.FC<CodeSnippetDisplayProps> = ({ endpoint, pathParams, queryParams, expansions, bearerToken }) => {
+const CodeSnippetDisplay: React.FC<CodeSnippetDisplayProps> = ({ endpoint, pathParams, queryParams, expansions, bearerToken, dtabFrom, dtabTo }) => {
   const [selectedLanguage, setSelectedLanguage] = useState<Language>('curl');
 
   // Generate code snippets only when needed
   const codeSnippets = useMemo(() => ({
-    curl: generateCurlCommand(endpoint, pathParams, queryParams, expansions, bearerToken),
-    python: generatePythonRequestsCode(endpoint, pathParams, queryParams, expansions, bearerToken),
-    javascript: generateJavascriptFetchCode(endpoint, pathParams, queryParams, expansions, bearerToken),
-  }), [endpoint, pathParams, queryParams, expansions, bearerToken]);
+    curl: generateCurlCommand(endpoint, pathParams, queryParams, expansions, bearerToken, dtabFrom, dtabTo),
+    python: generatePythonRequestsCode(endpoint, pathParams, queryParams, expansions, bearerToken, dtabFrom, dtabTo),
+    javascript: generateJavascriptFetchCode(endpoint, pathParams, queryParams, expansions, bearerToken, dtabFrom, dtabTo),
+  }), [endpoint, pathParams, queryParams, expansions, bearerToken, dtabFrom, dtabTo]);
 
   const handleCopy = () => {
     const codeToCopy = codeSnippets[selectedLanguage];

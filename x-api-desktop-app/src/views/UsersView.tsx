@@ -21,6 +21,12 @@ interface UsersViewProps extends ApiViewProps {
   currentUser: User | null;
 }
 
+// Define structure for successful backend response
+interface BackendApiResponse {
+  status: number;
+  body: any; 
+}
+
 // Moved from App.tsx as it seems specific to this view
 const usersEndpoints: Endpoint[] = [
   {
@@ -98,8 +104,10 @@ const UsersView: React.FC<UsersViewProps> = ({
   const [selectedExpansions, setSelectedExpansions] = useState<string>('');
   const [overwriteToken, setOverwriteToken] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [apiResponse, setApiResponse] = useState<any>(null);
+  const [apiResponse, setApiResponse] = useState<BackendApiResponse | null>(null);
   const [apiErrorDetails, setApiErrorDetails] = useState<{ status: number, message: string, body?: any } | null>(null);
+  const [dtabFrom, setDtabFrom] = useState<string>('');
+  const [dtabTo, setDtabTo] = useState<string>('');
 
   const projectsForSelector = useMemo(() => {
     return currentUser ? projects : [];
@@ -173,6 +181,7 @@ const UsersView: React.FC<UsersViewProps> = ({
     return false;
   }, [activeAppId, overwriteToken, effectiveBearerToken, currentPathParams, pathParamValues, currentQueryParams, queryParamValues]);
 
+  // --- API Request Logic using Tauri invoke ---
   const handleRunRequest = useCallback(async () => {
     if (!endpointDetails || !effectiveBearerToken) return;
 
@@ -195,14 +204,18 @@ const UsersView: React.FC<UsersViewProps> = ({
         url.searchParams.append('expansions', selectedExpansions);
       }
 
-      const headers = {
+      const headers: Record<string, string> = {
         'Authorization': `Bearer ${effectiveBearerToken}`,
         'Content-Type': 'application/json'
       };
 
+      if (dtabFrom.trim() !== '' && dtabTo.trim() !== '') {
+        headers['Dtab-Local'] = `${dtabFrom.trim()} => ${dtabTo.trim()}`;
+      }
+
       let requestBody = null;
 
-      const result = await invoke('make_api_request', {
+      const result = await invoke<BackendApiResponse>('make_api_request', {
         args: {
           method: endpointDetails.method,
           url: url.toString(),
@@ -211,7 +224,7 @@ const UsersView: React.FC<UsersViewProps> = ({
         }
       });
 
-      setApiResponse((result as any).body);
+      setApiResponse(result);
 
     } catch (error: any) {
       console.error("API Request Failed via Backend:", error);
@@ -230,7 +243,9 @@ const UsersView: React.FC<UsersViewProps> = ({
       pathParamValues, 
       queryParamValues, 
       selectedExpansions, 
-      currentPathParams
+      currentPathParams,
+      dtabFrom,
+      dtabTo
   ]);
 
   const usageEstimateText = useMemo(() => {
@@ -360,6 +375,32 @@ const UsersView: React.FC<UsersViewProps> = ({
           />
         </div>
 
+        <details className="advanced-details">
+          <summary className="advanced-summary">Advanced Options</summary>
+          <div className="advanced-section-content form-group">
+            <label htmlFor="dtab-from-input">Dtabs:</label>
+            <div className="dtab-input-container">
+              <input
+                id="dtab-from-input"
+                type="text"
+                className="text-input dtab-input"
+                placeholder="/s/role/service"
+                value={dtabFrom}
+                onChange={(e) => setDtabFrom(e.target.value)}
+              />
+              <span className="dtab-separator">=&gt;</span>
+              <input
+                id="dtab-to-input"
+                type="text"
+                className="text-input dtab-input"
+                placeholder="/srv#/env/dc/role/service"
+                value={dtabTo}
+                onChange={(e) => setDtabTo(e.target.value)}
+              />
+            </div>
+          </div>
+        </details>
+
         <div className="run-request-section">
            <span className="usage-estimate">{usageEstimateText}</span>
            <button
@@ -389,9 +430,16 @@ const UsersView: React.FC<UsersViewProps> = ({
            )}
            {apiResponse && !apiErrorDetails && (
              <div>
-               <h4>API Response:</h4>
-               <Highlighter language="json" style={vscDarkPlus} customStyle={{ margin: 0, padding: '1em', fontSize: '0.9em', borderRadius: '4px', border: '1px solid var(--border-color)', maxHeight: '400px', overflowY: 'auto' }} wrapLongLines={true}>
-                 {JSON.stringify(apiResponse, null, 2)}
+               <h4 className={`response-status status-${Math.floor((apiResponse.status || 0) / 100)}xx`}>
+                 Status: {apiResponse.status}
+               </h4>
+               <Highlighter 
+                 language="json" 
+                 style={vscDarkPlus} 
+                 customStyle={{ margin: 0, padding: '1em', fontSize: '0.9em', borderRadius: '4px', border: '1px solid var(--border-color)', maxHeight: '400px', overflowY: 'auto' }} 
+                 wrapLongLines={true}
+               >
+                 {JSON.stringify(apiResponse.body, null, 2)}
                </Highlighter>
              </div>
            )}
@@ -403,6 +451,8 @@ const UsersView: React.FC<UsersViewProps> = ({
           queryParams={queryParamValues} 
           expansions={selectedExpansions}
           bearerToken={effectiveBearerToken}
+          dtabFrom={dtabFrom}
+          dtabTo={dtabTo}
         />
       </div>
     </ApiViewLayout>

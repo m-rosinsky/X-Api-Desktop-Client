@@ -20,6 +20,12 @@ interface TweetsViewProps extends ApiViewProps {
   onResize: (newWidth: number) => void;
 }
 
+// Define structure for successful backend response
+interface BackendApiResponse {
+  status: number;
+  body: any; 
+}
+
 // Update endpoint data with queryParams and pathParams
 const tweetsEndpoints: Endpoint[] = [
   {
@@ -104,8 +110,10 @@ const TweetsView: React.FC<TweetsViewProps> = ({
   const [selectedExpansions, setSelectedExpansions] = useState<string>('');
   const [overwriteToken, setOverwriteToken] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [apiResponse, setApiResponse] = useState<any>(null);
+  const [apiResponse, setApiResponse] = useState<BackendApiResponse | null>(null);
   const [apiErrorDetails, setApiErrorDetails] = useState<{ status: number, message: string, body?: any } | null>(null);
+  const [dtabFrom, setDtabFrom] = useState<string>('');
+  const [dtabTo, setDtabTo] = useState<string>('');
 
   // Find the project containing the active app
   const activeProject = useMemo(() => {
@@ -222,10 +230,14 @@ const TweetsView: React.FC<TweetsViewProps> = ({
       }
 
       // 3. Prepare Headers
-      const headers = {
+      const headers: Record<string, string> = {
         'Authorization': `Bearer ${effectiveBearerToken}`,
-        // Let backend handle Content-Type based on body presence
       };
+
+      // Add Dtab-Local header if both from and to values are set
+      if (dtabFrom.trim() !== '' && dtabTo.trim() !== '') {
+        headers['Dtab-Local'] = `${dtabFrom.trim()} => ${dtabTo.trim()}`;
+      }
 
       // 4. Prepare Body (Only for POST/PUT for now)
       let requestBody = null;
@@ -236,7 +248,7 @@ const TweetsView: React.FC<TweetsViewProps> = ({
        // DELETE requests won't have a body sent via JSON
 
       // 5. Invoke Tauri Command
-       const result = await invoke('make_api_request', {
+       const result = await invoke<BackendApiResponse>('make_api_request', {
         args: {
           method: endpointDetails.method,
           url: url.toString(),
@@ -246,7 +258,7 @@ const TweetsView: React.FC<TweetsViewProps> = ({
       });
 
       // 6. Handle Success Response from Backend
-      setApiResponse((result as any).body);
+      setApiResponse(result);
 
     } catch (error: any) {
       console.error("API Request Failed via Backend:", error);
@@ -266,7 +278,9 @@ const TweetsView: React.FC<TweetsViewProps> = ({
       pathParamValues, 
       queryParamValues, 
       selectedExpansions, 
-      currentPathParams
+      currentPathParams,
+      dtabFrom,
+      dtabTo
   ]);
 
   const usageEstimateText = useMemo(() => {
@@ -407,6 +421,34 @@ const TweetsView: React.FC<TweetsViewProps> = ({
           />
         </div>
 
+        {/* --- Advanced Section using <details> --- */}
+        <details className="advanced-details">
+          <summary className="advanced-summary">Advanced Options</summary>
+          <div className="advanced-section-content form-group">
+            <label htmlFor="dtab-from-input">Dtabs:</label>
+            <div className="dtab-input-container">
+              <input
+                id="dtab-from-input"
+                type="text"
+                className="text-input dtab-input"
+                placeholder="/s/role/service"
+                value={dtabFrom}
+                onChange={(e) => setDtabFrom(e.target.value)}
+              />
+              <span className="dtab-separator">=&gt;</span>
+              <input
+                id="dtab-to-input"
+                type="text"
+                className="text-input dtab-input"
+                placeholder="/srv#/env/dc/role/service"
+                value={dtabTo}
+                onChange={(e) => setDtabTo(e.target.value)}
+              />
+            </div>
+          </div>
+        </details>
+        {/* --- End Advanced Section --- */}
+
         <div className="run-request-section">
            <span className="usage-estimate">{usageEstimateText}</span>
            <button
@@ -444,16 +486,21 @@ const TweetsView: React.FC<TweetsViewProps> = ({
             </div>
           )}
 
+          {/* Success Response Display */} 
           {apiResponse && !apiErrorDetails && (
             <div>
-              <h4>API Response:</h4>
-              <Highlighter
-                language="json"
-                style={vscDarkPlus}
-                customStyle={{ margin: 0, padding: '1em', fontSize: '0.9em', borderRadius: '4px', border: '1px solid var(--border-color)', maxHeight: '400px', overflowY: 'auto' }}
+              {/* Status Code Display */} 
+              <h4 className={`response-status status-${Math.floor((apiResponse.status || 0) / 100)}xx`}>
+                 Status: {apiResponse.status}
+              </h4>
+              {/* Response Body Display */} 
+              <Highlighter 
+                language="json" 
+                style={vscDarkPlus} 
+                customStyle={{ margin: 0, padding: '1em', fontSize: '0.9em', borderRadius: '4px', border: '1px solid var(--border-color)', maxHeight: '400px', overflowY: 'auto' }} 
                 wrapLongLines={true}
               >
-                {JSON.stringify(apiResponse, null, 2)}
+                 {JSON.stringify(apiResponse.body, null, 2)} {/* Display apiResponse.body */}
               </Highlighter>
             </div>
           )}
@@ -466,6 +513,8 @@ const TweetsView: React.FC<TweetsViewProps> = ({
           queryParams={queryParamValues} 
           expansions={selectedExpansions}
           bearerToken={effectiveBearerToken}
+          dtabFrom={dtabFrom}
+          dtabTo={dtabTo}
         />
       </div>
     </ApiViewLayout>

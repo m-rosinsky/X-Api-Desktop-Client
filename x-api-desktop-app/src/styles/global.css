@@ -202,4 +202,44 @@ textarea::placeholder {
     color: var(--text-color-secondary);
     margin-left: 0.8em; /* Space before environment tag */
     vertical-align: baseline; /* Align with breadcrumb text */
+}
+
+/* Custom Scrollbar Styles (WebKit) */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--background-color-secondary, #252525); /* Slightly lighter than main background */
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: #555; /* Dark grey thumb */
+  border-radius: 5px;
+  border: 2px solid var(--background-color-secondary, #252525); /* Padding effect */
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: #777; /* Lighter grey on hover */
+}
+
+::-webkit-scrollbar-corner {
+  background: var(--background-color-secondary, #252525);
+}
+
+/* Apply specifically to known scrollable containers for robustness */
+.api-main-content::-webkit-scrollbar-track,
+.sidebar-content-area::-webkit-scrollbar-track,
+pre::-webkit-scrollbar-track,
+textarea::-webkit-scrollbar-track {
+   background: var(--background-color, #1a1a1a); /* Match container background */
+}
+
+.api-main-content::-webkit-scrollbar-thumb,
+.sidebar-content-area::-webkit-scrollbar-thumb,
+pre::-webkit-scrollbar-thumb,
+textarea::-webkit-scrollbar-thumb {
+  border-color: var(--background-color, #1a1a1a); /* Match container background */
 } 

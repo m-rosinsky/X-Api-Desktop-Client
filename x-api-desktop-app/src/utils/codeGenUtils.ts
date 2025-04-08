@@ -40,7 +40,9 @@ export function generateCurlCommand(
   pathParams: Record<string, string>,
   queryParams: Record<string, string>,
   expansions?: string,
-  bearerToken?: string | null
+  bearerToken?: string | null,
+  dtabFrom?: string,
+  dtabTo?: string
 ): string {
   if (!endpoint) return "";
 
@@ -55,6 +57,10 @@ export function generateCurlCommand(
   const token = bearerToken || 'YOUR_BEARER_TOKEN';
   curlCommand += ` \\\n  -H "Authorization: Bearer ${token}"`; 
 
+  if (dtabFrom && dtabTo && dtabFrom.trim() && dtabTo.trim()) {
+    curlCommand += ` \\\n  -H "Dtab-Local: ${dtabFrom.trim()} => ${dtabTo.trim()}"`;
+  }
+
   if (['POST', 'PUT', 'PATCH'].includes(endpoint.method)) {
        curlCommand += ` \\\n  -H "Content-Type: application/json" \\\n  -d '{"your_key":"your_value"}'`; 
   }
@@ -68,7 +74,9 @@ export function generatePythonRequestsCode(
     pathParams: Record<string, string>,
     queryParams: Record<string, string>,
     expansions?: string,
-    bearerToken?: string | null
+    bearerToken?: string | null,
+    dtabFrom?: string,
+    dtabTo?: string
 ): string {
     if (!endpoint) return "";
     
@@ -85,6 +93,10 @@ export function generatePythonRequestsCode(
         "Authorization": `Bearer ${token}`
     };
     let body = null;
+    
+    if (dtabFrom && dtabTo && dtabFrom.trim() && dtabTo.trim()) {
+        headers["Dtab-Local"] = `${dtabFrom.trim()} => ${dtabTo.trim()}`;
+    }
     
     if (['POST', 'PUT', 'PATCH'].includes(endpoint.method)) {
         headers["Content-Type"] = "application/json";
@@ -126,7 +138,9 @@ export function generateJavascriptFetchCode(
     pathParams: Record<string, string>,
     queryParams: Record<string, string>,
     expansions?: string,
-    bearerToken?: string | null
+    bearerToken?: string | null,
+    dtabFrom?: string,
+    dtabTo?: string
 ): string {
     if (!endpoint) return "";
 
@@ -134,11 +148,17 @@ export function generateJavascriptFetchCode(
     
     // Use provided token or placeholder
     const token = bearerToken || 'YOUR_BEARER_TOKEN';
+    const headers: Record<string, string> = {
+        "Authorization": `Bearer ${token}`
+    };
+
+    if (dtabFrom && dtabTo && dtabFrom.trim() && dtabTo.trim()) {
+        headers["Dtab-Local"] = `${dtabFrom.trim()} => ${dtabTo.trim()}`;
+    }
+
     const options: RequestInit = {
         method: endpoint.method,
-        headers: {
-            "Authorization": `Bearer ${token}`,
-        }
+        headers: headers
     };
 
     if (['POST', 'PUT', 'PATCH'].includes(endpoint.method)) {
