@@ -10,7 +10,7 @@
     "tauri": "tauri"
   },
   "dependencies": {
-    "@tauri-apps/api": "^2",
+    "@tauri-apps/api": "^2.4.1",
     "@tauri-apps/plugin-opener": "^2",
     "@types/react-syntax-highlighter": "^15.5.13",
     "lucide-react": "^0.487.0",

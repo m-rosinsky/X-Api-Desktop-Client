@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import { invoke } from '@tauri-apps/api/core';
 import { ApiViewProps, Endpoint, User } from '../types';
 import AppSelector from '../components/AppSelector';
 import EndpointSelector from '../components/EndpointSelector';
@@ -95,6 +96,10 @@ const UsersView: React.FC<UsersViewProps> = ({
   const [pathParamValues, setPathParamValues] = useState<Record<string, string>>({});
   const [queryParamValues, setQueryParamValues] = useState<Record<string, string>>({});
   const [selectedExpansions, setSelectedExpansions] = useState<string>('');
+  const [overwriteToken, setOverwriteToken] = useState<string>('');
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [apiResponse, setApiResponse] = useState<any>(null);
+  const [apiErrorDetails, setApiErrorDetails] = useState<{ status: number, message: string, body?: any } | null>(null);
 
   const projectsForSelector = useMemo(() => {
     return currentUser ? projects : [];
@@ -106,13 +111,14 @@ const UsersView: React.FC<UsersViewProps> = ({
     return projectsForSelector.find(p => p.apps.some(app => app.id === activeAppId));
   }, [projectsForSelector, activeAppId]);
 
-  // *** Find the active app and its token ***
+  // Find the active app and its token
   const activeApp = useMemo(() => {
     if (!activeProject || activeAppId === null) return null;
     return activeProject.apps.find(app => app.id === activeAppId);
   }, [activeProject, activeAppId]);
 
-  const bearerToken = activeApp?.keys.bearerToken; // Get token or undefined
+  const originalBearerToken = activeApp?.keys.bearerToken;
+  const effectiveBearerToken = overwriteToken.trim() !== '' ? overwriteToken : originalBearerToken;
 
   const usagePercentage = activeProject ? Math.min((activeProject.usage / activeProject.cap) * 100, 100) : 0;
 
@@ -124,18 +130,18 @@ const UsersView: React.FC<UsersViewProps> = ({
     setPathParamValues({});
     setQueryParamValues({});
     setSelectedExpansions('');
+    setApiResponse(null);
+    setApiErrorDetails(null);
   }, [selectedEndpoint]);
 
   const currentPathParams = useMemo(() => {
     return endpointDetails?.pathParams ?? [];
   }, [endpointDetails]);
 
-  // Placeholder for query params if added later
   const currentQueryParams = useMemo(() => {
     return endpointDetails?.queryParams ?? [];
   }, [endpointDetails]);
 
-  // Memoize the expansion options for the selected endpoint
   const currentExpansionOptions = useMemo(() => {
     return endpointDetails?.expansionOptions ?? [];
   }, [endpointDetails]);
@@ -144,40 +150,96 @@ const UsersView: React.FC<UsersViewProps> = ({
     setPathParamValues(prev => ({ ...prev, [paramName]: value }));
   }, []);
 
-  // Placeholder for query param handler
   const handleQueryParamChange = useCallback((newValues: Record<string, string>) => {
     setQueryParamValues(newValues);
   }, []);
 
-  // Callback for the ExpansionsSelector
   const handleExpansionChange = useCallback((newExpansions: string) => {
     setSelectedExpansions(newExpansions);
   }, []);
 
-   // --- Button Logic ---
   const isRunDisabled = useMemo(() => {
-    if (activeAppId === null) return true;
+    if (activeAppId === null && !overwriteToken) return true;
+    if (!effectiveBearerToken) return true;
+
     for (const param of currentPathParams) {
       if (!pathParamValues[param.name]) return true;
     }
-    // Add check for required query params if QueryParamBuilder is added
     for (const param of currentQueryParams) {
-       if (param.required && !queryParamValues[param.name]) { // Check if required and value is empty/falsy
+       if (param.required && !queryParamValues[param.name]) {
          return true;
       }
     }
     return false;
-  }, [activeAppId, currentPathParams, pathParamValues, currentQueryParams, queryParamValues]);
+  }, [activeAppId, overwriteToken, effectiveBearerToken, currentPathParams, pathParamValues, currentQueryParams, queryParamValues]);
+
+  const handleRunRequest = useCallback(async () => {
+    if (!endpointDetails || !effectiveBearerToken) return;
+
+    setIsLoading(true);
+    setApiResponse(null);
+    setApiErrorDetails(null);
+
+    try {
+      let path = endpointDetails.path;
+      currentPathParams.forEach(param => {
+        path = path.replace(`:${param.name}`, encodeURIComponent(pathParamValues[param.name] || ''));
+      });
+      const baseUrl = 'https://api.twitter.com';
+      const url = new URL(baseUrl + path);
+
+      Object.entries(queryParamValues).forEach(([key, value]) => {
+        if (value) { url.searchParams.append(key, value); }
+      });
+      if (selectedExpansions) {
+        url.searchParams.append('expansions', selectedExpansions);
+      }
+
+      const headers = {
+        'Authorization': `Bearer ${effectiveBearerToken}`,
+        'Content-Type': 'application/json'
+      };
+
+      let requestBody = null;
+
+      const result = await invoke('make_api_request', {
+        args: {
+          method: endpointDetails.method,
+          url: url.toString(),
+          headers: headers,
+          body: requestBody
+        }
+      });
+
+      setApiResponse((result as any).body);
+
+    } catch (error: any) {
+      console.error("API Request Failed via Backend:", error);
+      setApiErrorDetails({
+        status: error.status ?? 0,
+        message: error.message ?? 'An unexpected error occurred.',
+        body: error.body
+      });
+      setApiResponse(null);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [
+      endpointDetails, 
+      effectiveBearerToken, 
+      pathParamValues, 
+      queryParamValues, 
+      selectedExpansions, 
+      currentPathParams
+  ]);
 
   const usageEstimateText = useMemo(() => {
-    // Basic estimate for users view
-     if (endpointDetails?.method === 'GET') {
+    if (endpointDetails?.method === 'GET') {
         return `Usage estimate: 1 Request`; 
     }
     return "";
   }, [endpointDetails]);
 
-  // Sidebar content as a fragment
   const sidebarContent = (
     <>
       {endpointDetails ? (
@@ -286,24 +348,61 @@ const UsersView: React.FC<UsersViewProps> = ({
           />
         )}
 
+        <div className="form-group">
+          <label htmlFor="overwrite-token-input">Override Bearer Token (Optional):</label>
+          <input
+            id="overwrite-token-input"
+            type="password"
+            className="text-input"
+            placeholder="Paste Bearer token here to override app selection"
+            value={overwriteToken}
+            onChange={(e) => setOverwriteToken(e.target.value)}
+          />
+        </div>
+
         <div className="run-request-section">
            <span className="usage-estimate">{usageEstimateText}</span>
-           <button 
-             className="run-button" 
-             onClick={() => { console.log('Run Request Clicked!'); }}
-             disabled={isRunDisabled}
-             title={isRunDisabled ? "Select an active app and fill all required parameters (*)" : "Run the API request"}
+           <button
+             className="run-button"
+             onClick={handleRunRequest}
+             disabled={isRunDisabled || isLoading}
+             title={isRunDisabled ? "Select an active app/token and fill required parameters (*)" : "Run the API request"}
            >
-             Run Request
+             {isLoading ? 'Running...' : 'Run Request'}
            </button>
         </div>
+
+        <div className="api-response-area" style={{ marginTop: '2em' }}>
+          {isLoading && <div className="loading-indicator">Loading response...</div>}
+          {apiErrorDetails && (
+             <div className="error-message" style={{ color: '#ffcccc', background: '#4d2020', border: '1px solid #a85050', padding: '1em', borderRadius: '4px', marginBottom: '1em' }}>
+               <strong>Error {apiErrorDetails.status > 0 ? `(HTTP ${apiErrorDetails.status})` : ''}:</strong> {apiErrorDetails.message}
+               {apiErrorDetails.body && (
+                  <div style={{marginTop: '1em'}}>
+                   <h4>Error Response Body:</h4>
+                    <Highlighter language="json" style={vscDarkPlus} customStyle={{ margin: 0, padding: '1em', fontSize: '0.9em', borderRadius: '4px', border: '1px solid var(--border-color)', maxHeight: '300px', overflowY: 'auto' }} wrapLongLines={true}>
+                       {JSON.stringify(apiErrorDetails.body, null, 2)}
+                     </Highlighter>
+                  </div>
+               )}
+             </div>
+           )}
+           {apiResponse && !apiErrorDetails && (
+             <div>
+               <h4>API Response:</h4>
+               <Highlighter language="json" style={vscDarkPlus} customStyle={{ margin: 0, padding: '1em', fontSize: '0.9em', borderRadius: '4px', border: '1px solid var(--border-color)', maxHeight: '400px', overflowY: 'auto' }} wrapLongLines={true}>
+                 {JSON.stringify(apiResponse, null, 2)}
+               </Highlighter>
+             </div>
+           )}
+         </div>
 
         <CodeSnippetDisplay 
           endpoint={endpointDetails} 
           pathParams={pathParamValues} 
           queryParams={queryParamValues} 
           expansions={selectedExpansions}
-          bearerToken={bearerToken}
+          bearerToken={effectiveBearerToken}
         />
       </div>
     </ApiViewLayout>
