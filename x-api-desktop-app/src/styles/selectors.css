@@ -249,4 +249,27 @@
     word-break: break-all; /* Break long paths */
     flex-shrink: 1; /* Allow path to shrink */
     min-width: 0; /* Important for flex shrinking */
+}
+
+/* Styling for Category Headers in Dropdowns */
+.dropdown-category-header {
+  padding: 0.6em 1em;
+  font-size: 0.8em;
+  font-weight: bold;
+  color: var(--text-muted); /* Use muted color */
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background-color: rgba(255, 255, 255, 0.03); /* Subtle background */
+  border-top: 1px solid var(--border-color); /* Separator */
+  border-bottom: 1px solid var(--border-color);
+  margin-top: 0.3em; /* Space above */
+  /* Prevent selection/hover effects */
+  cursor: default;
+}
+
+/* Ensure first category doesn't have top border/margin */
+.dropdown-options li:first-child .dropdown-category-header,
+.dropdown-options li.dropdown-category-header:first-child {
+  margin-top: 0;
+  border-top: none;
 } 

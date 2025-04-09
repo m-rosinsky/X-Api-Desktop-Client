@@ -48,7 +48,7 @@ const GenericApiView: React.FC<GenericApiViewProps> = ({
   const [overwriteToken, setOverwriteToken] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [apiResponse, setApiResponse] = useState<BackendApiResponse | null>(null);
-  const [apiErrorDetails, setApiErrorDetails] = useState<{ status: number, message: string, body?: any } | null>(null);
+  const [apiErrorDetails, setApiErrorDetails] = useState<{ status: number, message: string, body?: any, headers?: Record<string, string> } | null>(null);
   const [dtabs, setDtabs] = useState<DtabPair[]>([{ id: Date.now(), from: '', to: '' }]);
   const [enableTracing, setEnableTracing] = useState<boolean>(false);
   // Add state for TFE Environment selection
@@ -144,12 +144,26 @@ const GenericApiView: React.FC<GenericApiViewProps> = ({
   // --- Dtab Handlers ---
   const handleDtabChange = (index: number, field: 'from' | 'to', value: string) => {
     const newDtabs = [...dtabs];
-    newDtabs[index] = { ...newDtabs[index], [field]: value };
+    const currentDtab = newDtabs[index];
+
+    if (field === 'from' && value.includes('=>')) {
+      // If pasting into 'from' and it contains =>, split and update both
+      const parts = value.split('=>', 2); // Split into max 2 parts
+      const fromPart = parts[0]?.trim() || '';
+      const toPart = parts[1]?.trim() || '';
+      newDtabs[index] = { ...currentDtab, from: fromPart, to: toPart };
+    } else {
+      // Otherwise, update the specific field as usual
+      newDtabs[index] = { ...currentDtab, [field]: value };
+    }
+    
     setDtabs(newDtabs);
   };
+
   const handleAddDtab = () => {
     setDtabs([...dtabs, { id: Date.now(), from: '', to: '' }]);
   };
+
   const handleRemoveDtab = (index: number) => {
     if (dtabs.length === 1) {
       setDtabs([{ id: dtabs[0].id, from: '', to: '' }]);
@@ -302,7 +316,8 @@ const GenericApiView: React.FC<GenericApiViewProps> = ({
       setApiErrorDetails({
         status: error.status ?? 0,
         message: error.message ?? 'An unexpected error occurred.',
-        body: error.body
+        body: error.body,
+        headers: error.headers
       });
       setApiResponse(null);
     } finally {
@@ -572,14 +587,35 @@ const GenericApiView: React.FC<GenericApiViewProps> = ({
                 <h3>Response</h3>
                 {isLoading && <p>Loading...</p>}
 
-                {/* Error Display - Restructured to match success display */}
+                {/* Error Display */}
                 {apiErrorDetails && (
-                  <div> {/* Outer div like success */} 
+                  <div> 
                     <div className="response-details">
-                      {/* Status Code using the same structure/classes */}
+                      {/* Status Code */} 
                       <p><strong>Status:</strong> <span className={`status-code status-${String(apiErrorDetails.status)[0]}xx`}>{apiErrorDetails.status || 'Error'}</span></p>
+                      {/* Display Trace ID if available in error headers */}
+                      {apiErrorDetails.headers && apiErrorDetails.headers['x-transaction-id'] && (
+                        <div className="trace-id-display">
+                          <p>
+                            <strong>Trace ID:</strong> {apiErrorDetails.headers['x-transaction-id']}
+                          </p>
+                        </div>
+                      )}
+                      {/* Display Headers spoiler if available in error headers */}
+                      {apiErrorDetails.headers && Object.keys(apiErrorDetails.headers).filter(h => h !== 'x-transaction-id').length > 0 && (
+                        <details className="response-headers-details">
+                          <summary>Response Headers</summary>
+                          <Highlighter language="json" style={vscDarkPlus} customStyle={{ margin: 0, padding: '1em', fontSize: '0.9em', borderRadius: '4px', border: '1px solid var(--border-color)' }} wrapLongLines={true}>
+                            {JSON.stringify(
+                              Object.fromEntries(Object.entries(apiErrorDetails.headers).filter(([key]) => key !== 'x-transaction-id')),
+                              null,
+                              2
+                            )}
+                          </Highlighter>
+                        </details>
+                      )}
                     </div>
-                    {/* Error Body using the same structure/classes */}
+                    {/* Error Body */} 
                     {apiErrorDetails.body && (
                       <div className="response-body-container">
                         <h4>Error Response Body:</h4> {/* Add heading */} 

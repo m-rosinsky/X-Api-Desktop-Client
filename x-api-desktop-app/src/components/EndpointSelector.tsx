@@ -5,6 +5,20 @@ const EndpointSelector: React.FC<EndpointSelectorProps> = ({ endpoints, selected
   const [isOpen, setIsOpen] = useState(false);
   const selectedEndpoint = useMemo(() => endpoints.find(ep => ep.id === selectedEndpointId), [endpoints, selectedEndpointId]);
 
+  // Group endpoints by category
+  const groupedEndpoints = useMemo(() => {
+    const groups: Record<string, Endpoint[]> = {};
+    endpoints.forEach(ep => {
+      const category = ep.category || 'Uncategorized'; // Default category
+      if (!groups[category]) {
+        groups[category] = [];
+      }
+      groups[category].push(ep);
+    });
+    // Optional: Sort categories if needed
+    return Object.entries(groups).sort(([catA], [catB]) => catA.localeCompare(catB));
+  }, [endpoints]);
+
   const handleSelect = (endpointId: string | null) => {
     if (endpointId !== null) {
       onChange(endpointId);
@@ -26,7 +40,7 @@ const EndpointSelector: React.FC<EndpointSelectorProps> = ({ endpoints, selected
 
   return (
     <div className="endpoint-selector-container">
-      <span className="endpoint-selector-label">Endpoint:</span>
+      <span className="endpoint-selector-label">Selected Endpoint:</span>
       <div className="custom-endpoint-selector">
         <button 
           type="button"
@@ -41,7 +55,7 @@ const EndpointSelector: React.FC<EndpointSelectorProps> = ({ endpoints, selected
                   <span className="endpoint-path">{selectedEndpoint.path}</span>
                 </>
               ) : (
-                <span>-- Loading... --</span>
+                <span>-- Select an Endpoint --</span>
               )}
             </div>
             <div className="selector-button-right">
@@ -52,15 +66,20 @@ const EndpointSelector: React.FC<EndpointSelectorProps> = ({ endpoints, selected
 
         {isOpen && (
           <ul className="dropdown-options endpoint-dropdown-options">
-            {endpoints.map(ep => (
-              <li 
-                key={ep.id} 
-                onClick={() => handleSelect(ep.id)}
-                className={ep.id === selectedEndpointId ? 'selected' : ''}
-              >
-                <span className={`endpoint-method method-${ep.method.toLowerCase()}`}>{ep.method}</span>
-                <span className="endpoint-path">{ep.path}</span>
-              </li>
+            {groupedEndpoints.map(([category, groupEndpoints]) => (
+              <React.Fragment key={category}> 
+                <li className="dropdown-category-header">{category}</li>
+                {groupEndpoints.map(ep => (
+                  <li 
+                    key={ep.id} 
+                    onClick={() => handleSelect(ep.id)}
+                    className={ep.id === selectedEndpointId ? 'selected' : ''}
+                  >
+                    <span className={`endpoint-method method-${ep.method.toLowerCase()}`}>{ep.method}</span>
+                    <span className="endpoint-path">{ep.path}</span>
+                  </li>
+                ))}
+              </React.Fragment>
             ))}
           </ul>
         )}

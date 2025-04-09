@@ -27,7 +27,8 @@ struct ApiResponse {
 struct ApiError {
     status: u16,
     message: String,
-    body: Option<serde_json::Value>, // Optional error body
+    body: Option<serde_json::Value>,
+    headers: Option<HashMap<String, String>>, // Add optional headers field
 }
 
 // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
@@ -48,7 +49,7 @@ async fn make_api_request(args: ApiRequestArgs) -> Result<ApiResponse, ApiError>
         "PATCH" => reqwest::Method::PATCH,
         "HEAD" => reqwest::Method::HEAD,
         "OPTIONS" => reqwest::Method::OPTIONS,
-        _ => return Err(ApiError { status: 0, message: format!("Unsupported HTTP method: {}", args.method), body: None }),
+        _ => return Err(ApiError { status: 0, message: format!("Unsupported HTTP method: {}", args.method), body: None, headers: None }),
     };
 
     let mut request_builder = client.request(method.clone(), &args.url);
@@ -75,66 +76,63 @@ async fn make_api_request(args: ApiRequestArgs) -> Result<ApiResponse, ApiError>
     match request_builder.send().await {
         Ok(response) => {
             let status = response.status().as_u16();
-            // Clone headers before consuming the response body
             let response_headers = response.headers().clone(); 
             
-            let body_result = response.json::<serde_json::Value>().await;
-
-            // Convert HeaderMap to HashMap<String, String>
+            // Convert headers early so they are available for error reporting
             let mut headers_map: HashMap<String, String> = response_headers
                 .iter()
                 .filter_map(|(name, value)| {
-                    // Attempt to convert value to string, skip if invalid UTF-8
                     value.to_str().ok().map(|val_str| (name.to_string(), val_str.to_string()))
                 })
                 .collect();
 
-            // Conditionally remove the transaction ID if tracing was not requested
             if !tracing_requested {
-                // Remove header (case-insensitive key check - standard is lowercase)
                 headers_map.remove("x-transaction-id"); 
             }
+            
+            let body_result = response.json::<serde_json::Value>().await;
 
             match body_result {
                 Ok(body) => {
                     if status >= 200 && status < 300 {
                          Ok(ApiResponse { status, body, headers: headers_map })
                     } else {
-                         // Request failed (e.g., 4xx, 5xx), return structured error
                          Err(ApiError {
                             status,
                             message: format!("API request failed with status {}", status),
                             body: Some(body),
+                            headers: Some(headers_map), // Include headers in error
                         })
                     }
                 }
                 Err(e) => {
-                     // JSON parsing failed
                      let error_message = format!("Failed to parse response body: {}", e);
                      if status >= 200 && status < 300 {
-                        // Successful status but bad body? Include headers anyway
+                        // Successful status but bad body - treat as success for headers
                          Ok(ApiResponse {
                               status,
                               body: serde_json::json!({ "warning": error_message }),
                               headers: headers_map
                          })
                      } else {
-                         // Failed status and bad body, return as error without body
+                         // Failed status and bad body
                          Err(ApiError {
                             status,
                             message: error_message,
                             body: None,
+                            headers: Some(headers_map), // Include headers in error
                         })
                      }
                 }
             }
         }
         Err(e) => {
-            // Network error or other issue during request sending
+            // Network error - headers are not available here
             Err(ApiError {
-                status: 0, // Use 0 for non-HTTP errors
+                status: 0, 
                 message: format!("Request failed: {}", e),
                 body: None,
+                headers: None, // No headers available
             })
         }
     }

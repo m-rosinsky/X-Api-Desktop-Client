@@ -12,15 +12,17 @@ interface AccountActivityViewProps extends Omit<ApiViewProps, 'setActiveAppId'> 
     setActiveAppId: (id: number | null) => void; 
 }
 
-// Define endpoint data specific to Account Activity API
+// Define endpoint data specific to Account Activity API with categories
 const accountActivityEndpoints: Endpoint[] = [
+    // Webhook Management Category
     {
         id: 'get-webhooks',
         method: 'GET',
         path: '/2/account_activity/webhooks',
         summary: 'Returns all webhooks registered for the authenticating app.',
-        queryParams: [], // No specific query params mentioned for GET all
-        expansionOptions: [], // No expansions typically for webhook listing
+        queryParams: [], 
+        expansionOptions: [], 
+        category: 'Webhook Management' // Assign category
     },
     {
         id: 'post-webhook',
@@ -36,7 +38,7 @@ const accountActivityEndpoints: Endpoint[] = [
                 example: 'https://example.com/webhooks/twitter'
             }
         ],
-        // Note: POST might typically use a request body, but API v2 uses query param here.
+        category: 'Webhook Management' // Assign category
     },
     {
         id: 'delete-webhook',
@@ -51,12 +53,13 @@ const accountActivityEndpoints: Endpoint[] = [
             },
         ],
         queryParams: [],
+        category: 'Webhook Management' // Assign category
     },
     {
         id: 'put-webhook-crc',
         method: 'PUT',
         path: '/2/account_activity/webhooks/:webhook_id',
-        summary: 'Challenges the specified webhook URL to validate ownership (CRC check). Returns no response body on success.',
+        summary: 'Challenges the specified webhook URL to validate ownership (CRC check).',
         pathParams: [
             {
                 name: 'webhook_id',
@@ -65,12 +68,28 @@ const accountActivityEndpoints: Endpoint[] = [
             },
         ],
         queryParams: [],
-        // Note: PUT usually implies a body, but CRC check might not require one from the client.
+        category: 'Webhook Management' // Assign category
+    },
+    // Subscriptions Category
+    {
+        id: 'get-webhook-subscriptions',
+        method: 'GET',
+        path: '/2/account_activity/webhooks/:webhook_id/subscriptions/all/list',
+        summary: 'Returns a list of subscriptions for the specified webhook ID.',
+        pathParams: [
+            {
+                name: 'webhook_id',
+                description: 'The unique identifier of the webhook.',
+                example: '1234567890123456789'
+            },
+        ],
+        queryParams: [],
+        category: 'Subscriptions' // Assign category
     },
 ];
 
 const AccountActivityView: React.FC<AccountActivityViewProps> = (props) => {
-    // Render the generic view, passing the accountActivityEndpoints and all other props
+    // Render the generic view, passing the categorized endpoints
     return <GenericApiView {...props} endpoints={accountActivityEndpoints} />;
 };
 

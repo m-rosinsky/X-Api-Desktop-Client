@@ -42,12 +42,13 @@ export interface AppSelectorProps {
 
 export interface Endpoint {
   id: string;
-  method: string;
+  method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'HEAD' | 'OPTIONS';
   path: string;
   summary: string;
-  queryParams?: QueryParam[]; // Add query parameters array
-  pathParams?: PathParam[]; // Add path parameters array
-  expansionOptions?: ExpansionOption[]; // Add expansion options array
+  queryParams?: QueryParam[];
+  pathParams?: PathParam[];
+  expansionOptions?: ExpansionOption[];
+  category?: string; // Optional category for grouping
 }
 
 export interface EndpointSelectorProps {
