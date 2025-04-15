@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { ApiViewProps, Endpoint, User, Project } from '../types/index'; 
 import GenericApiView from './GenericApiView';
 
@@ -89,8 +89,62 @@ const accountActivityEndpoints: Endpoint[] = [
 ];
 
 const AccountActivityView: React.FC<AccountActivityViewProps> = (props) => {
-    // Render the generic view, passing the categorized endpoints
-    return <GenericApiView {...props} endpoints={accountActivityEndpoints} />;
+
+    // State to track if the webhook setup process is active
+    const [isWebhookSetupActive, setIsWebhookSetupActive] = useState<boolean>(false);
+
+    // Handler to initiate the webhook setup (mock for now)
+    const handleWebhookSetupClick = () => {
+        setIsWebhookSetupActive(true);
+        // In the future, backend calls will go here
+    };
+
+    // Define the custom section for webhook testing as a collapsible spoiler
+    const webhookTestSection = (
+        <details className="advanced-details" style={{ marginTop: '20px' }} open={isWebhookSetupActive}> {/* Keep spoiler open when active */}
+            <summary className="advanced-summary">Test Webhooks</summary>
+            <div className="advanced-section-content">
+                <p>Use this section to stand up a temporary webhook endpoint to test receiving events.</p>
+                {
+                    !isWebhookSetupActive ? (
+                        // Show button if setup is not active
+                        <button className="run-button" onClick={handleWebhookSetupClick}>
+                            Stand up Temporary Webhook
+                        </button>
+                    ) : (
+                        // Show mock console if setup is active
+                        <div className="mock-console" style={{
+                            backgroundColor: 'var(--code-background, #1e1e1e)',
+                            color: 'var(--text-color-secondary, #ccc)',
+                            padding: '10px',
+                            borderRadius: '4px',
+                            fontFamily: 'monospace',
+                            fontSize: '0.9em',
+                            height: '150px',
+                            overflowY: 'auto',
+                            whiteSpace: 'pre-wrap' // Keep line breaks
+                        }}>
+                            Starting webhook setup...
+                            [INFO] Checking prerequisites...
+                            [INFO] Allocating temporary endpoint...
+                            [INFO] Configuring ngrok tunnel...
+                            [INFO] Registering webhook with Twitter API...
+                            {/* Add more mock output or a loading indicator here later */}
+                        </div>
+                    )
+                }
+            </div>
+        </details>
+    );
+
+    // Render the generic view, passing the categorized endpoints and the custom section
+    return (
+        <GenericApiView
+            {...props}
+            endpoints={accountActivityEndpoints}
+            customSection={webhookTestSection} // Pass the custom section here
+        />
+    );
 };
 
 export default AccountActivityView; 
