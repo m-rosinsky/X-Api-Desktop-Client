@@ -3,13 +3,18 @@
 
 use serde::{Serialize, Deserialize};
 use std::collections::HashMap;
-use reqwest::header::{HeaderMap, HeaderName, HeaderValue};
 use tauri::Emitter;
-use std::time::Duration;
 use ngrok::config::TunnelBuilder;
 use ngrok::tunnel::UrlTunnel;
 use futures::stream::StreamExt;
 use std::sync::{Arc, Mutex};
+use hyper::service::{service_fn};
+use hyper::{Body, Request, Response, StatusCode};
+use std::convert::Infallible;
+use base64::{Engine as _, engine::general_purpose};
+use hmac::{Hmac, Mac};
+use sha2::Sha256;
+use hyper::Method;
 
 // Define the structure for the request payload coming from the frontend
 #[derive(Deserialize)]
@@ -38,9 +43,10 @@ struct ApiError {
 }
 
 // Constants for event names
-const NGROK_PROGRESS_EVENT: &str = "ngrok://progress";
-const NGROK_URL_EVENT: &str = "ngrok://url-obtained";
-const NGROK_ERROR_EVENT: &str = "ngrok://error";
+const NGROK_PROGRESS_EVENT: &str = "ngrok-progress-event";
+const NGROK_URL_EVENT: &str = "ngrok-url-event";
+const NGROK_ERROR_EVENT: &str = "ngrok-error-event";
+const NGROK_WEBHOOK_EVENT: &str = "ngrok-webhook-event";
 
 // --- State Definitions --- 
 #[derive(Clone, Serialize, Default)]
@@ -60,6 +66,15 @@ impl Default for AppState {
             ngrok_info: Arc::new(Mutex::new(None)),
         }
     }
+}
+
+// --- Payload for Webhook Event ---
+#[derive(Clone, Serialize)]
+struct WebhookRequestInfo {
+    method: String,
+    uri: String,
+    headers: HashMap<String, String>,
+    body: String, // Send body as base64 encoded string for simplicity
 }
 // --- End State Definitions ---
 
@@ -186,9 +201,10 @@ async fn make_api_request(args: ApiRequestArgs) -> Result<ApiResponse, ApiError>
 // Command to start the ngrok tunnel
 #[tauri::command]
 async fn start_ngrok_webhook(
-    app_handle: tauri::AppHandle,
+    _app_handle: tauri::AppHandle,
     window: tauri::Window,
     auth_token: String,
+    consumer_secret: String,
     state: tauri::State<'_, AppState>,
 ) -> Result<(), String> {
     let ngrok_state = state.ngrok_info.clone();
@@ -264,41 +280,170 @@ async fn start_ngrok_webhook(
         eprintln!("Failed to emit URL event: {}", e);
     }
 
-    let window_clone = window.clone();
+    // Clone necessary items ONCE before the outer task
+    let window_clone_outer = window.clone();
     let mut listener = listener;
-    let task_state = ngrok_state.clone();
+    let task_state = state.ngrok_info.clone();
+    let consumer_secret_clone = consumer_secret.clone();
+
     tauri::async_runtime::spawn(async move {
         let listener_url = listener.url().to_string();
         println!("Ngrok listener task started for {}", listener_url);
 
         while let Some(conn_result) = listener.next().await {
             match conn_result {
-                Ok(_conn) => {
-                    println!("Received connection on ngrok tunnel (not processed yet)");
+                Ok(conn) => {
+                    // Clone items needed FOR THIS ITERATION
+                    let window_for_iteration = window.clone();
+                    let consumer_secret_for_service = consumer_secret_clone.clone();
+
+                    tokio::spawn(async move {
+                        let window_for_service_move = window_for_iteration.clone();
+                        let captured_consumer_secret = consumer_secret_for_service.clone();
+
+                        let service = service_fn(move |req: Request<Body>| {
+                            let window_for_req_handler = window_for_service_move.clone();
+                            let consumer_secret = captured_consumer_secret.clone();
+
+                            async move {
+                                println!("Handling request: {} {}", req.method(), req.uri());
+
+                                let method = req.method();
+                                let uri = req.uri();
+
+                                // --- Twitter Webhook Logic ---
+                                if method == Method::GET {
+                                    // Handle CRC Check
+                                    let query_params: HashMap<String, String> = uri.query()
+                                        .map(|v| url::form_urlencoded::parse(v.as_bytes()).into_owned().collect())
+                                        .unwrap_or_else(HashMap::new);
+
+                                    if let Some(crc_token) = query_params.get("crc_token") {
+                                        println!("Received CRC check with token: {}", crc_token);
+                                        // Perform HMAC-SHA256
+                                        type HmacSha256 = Hmac<Sha256>; // Define the type alias
+                                        let mut mac = HmacSha256::new_from_slice(consumer_secret.as_bytes())
+                                            .expect("HMAC can take key of any size");
+                                        mac.update(crc_token.as_bytes());
+                                        let result = mac.finalize();
+                                        let code_bytes = result.into_bytes();
+                                        let response_token = format!("sha256={}", general_purpose::STANDARD.encode(&code_bytes));
+
+                                        println!("Generated CRC response: {}", response_token);
+
+                                        // Construct JSON response
+                                        let json_response = serde_json::json!({
+                                            "response_token": response_token
+                                        });
+
+                                        match Response::builder()
+                                            .status(StatusCode::OK)
+                                            .header(hyper::header::CONTENT_TYPE, "application/json")
+                                            .body(Body::from(serde_json::to_string(&json_response).unwrap()))
+                                        {
+                                            Ok(resp) => Ok(resp),
+                                            Err(e) => {
+                                                eprintln!("Failed to build CRC response: {}", e);
+                                                let mut resp = Response::new(Body::from("Internal Server Error"));
+                                                *resp.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
+                                                Ok(resp)
+                                            }
+                                        }
+                                    } else {
+                                        println!("GET request received without crc_token");
+                                        let mut resp = Response::new(Body::from("Missing crc_token parameter"));
+                                        *resp.status_mut() = StatusCode::BAD_REQUEST;
+                                        Ok(resp)
+                                    }
+                                } else if method == Method::POST {
+                                    // Handle incoming webhook event (just acknowledge for now)
+                                    println!("Received POST request (webhook event)");
+
+                                    // --- Capture Request Details (Optional - for debugging/display) ---
+                                    let request_method = req.method().to_string();
+                                    let request_uri = req.uri().to_string();
+                                    let headers = req.headers().iter().map(|(k, v)| {
+                                        (k.to_string(), v.to_str().unwrap_or("[invalid header value]").to_string())
+                                    }).collect();
+
+                                    // Read body bytes
+                                    let body_bytes = match hyper::body::to_bytes(req.into_body()).await {
+                                        Ok(bytes) => bytes,
+                                        Err(e) => {
+                                            eprintln!("Failed to read POST request body: {}", e);
+                                            let mut response = Response::new(Body::from(format!("Error reading body: {}", e)));
+                                            *response.status_mut() = StatusCode::BAD_REQUEST;
+                                            return Ok::<_, Infallible>(response);
+                                        }
+                                    };
+                                    // Encode body using Base64
+                                    let body_base64 = general_purpose::STANDARD.encode(&body_bytes);
+
+                                    // --- Create Payload & Emit Event ---
+                                    let payload = WebhookRequestInfo {
+                                        method: request_method,
+                                        uri: request_uri,
+                                        headers,
+                                        body: body_base64,
+                                    };
+                                    if let Err(e) = window_for_req_handler.emit(NGROK_WEBHOOK_EVENT, Some(&payload)) {
+                                         eprintln!("Failed to emit webhook event: {}", e);
+                                    }
+                                    // --- End Optional Capture ---
+
+                                    // Respond with 200 OK
+                                    let mut resp = Response::new(Body::empty());
+                                    *resp.status_mut() = StatusCode::OK;
+                                    Ok(resp)
+                                } else {
+                                    // Handle other methods
+                                    println!("Received {} request - Method Not Allowed", method);
+                                    let mut resp = Response::new(Body::empty());
+                                    *resp.status_mut() = StatusCode::METHOD_NOT_ALLOWED;
+                                    Ok(resp)
+                                }
+                            }
+                        });
+
+                        // Serve the connection
+                        if let Err(err) = hyper::server::conn::Http::new()
+                            .serve_connection(conn, service)
+                            .await
+                        {
+                            eprintln!("Error serving connection: {:?}", err);
+                            // Use window_for_iteration (which was NOT moved into service_fn)
+                            let _ = window_for_iteration.emit(NGROK_ERROR_EVENT, Some(format!("Connection error: {}", err)));
+                        }
+                    });
                 }
                 Err(e) => {
                     let error_msg = format!("Listener connection error: {}", e);
                     eprintln!("Ngrok listener connection error: {}", e);
+                    // Update state using the clone passed into the outer task
                     if let Ok(mut guard) = task_state.lock() {
                         if let Some(info) = guard.as_mut() {
                             info.console_log.push(error_msg.clone());
                             info.is_active = false;
                         }
                     }
-                    let _ = window_clone.emit(NGROK_ERROR_EVENT, Some(error_msg));
+                    // Use the clone created BEFORE the outer task
+                    let _ = window_clone_outer.emit(NGROK_ERROR_EVENT, Some(format!("Listener connection error: {}", e)));
                     break;
                 }
             }
         }
+        // Loop ends - task finished
         println!("Ngrok listener task finished for {}", listener_url);
         let finish_msg = "Ngrok listener task finished.".to_string();
+        // Restore state update on task finish
         if let Ok(mut guard) = task_state.lock() {
             if let Some(info) = guard.as_mut() {
                 info.console_log.push(finish_msg.clone());
                 info.is_active = false;
             }
         }
-        let _ = window_clone.emit(NGROK_PROGRESS_EVENT, Some(finish_msg));
+        // Use the clone created BEFORE the outer task
+        let _ = window_clone_outer.emit(NGROK_PROGRESS_EVENT, Some(finish_msg));
     });
 
     emit_progress("Ngrok tunnel is active.".to_string());

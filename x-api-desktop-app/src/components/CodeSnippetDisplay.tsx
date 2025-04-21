@@ -14,6 +14,7 @@ interface CodeSnippetDisplayProps {
   endpoint: Endpoint | undefined | null;
   pathParams: Record<string, string>;
   queryParams: Record<string, string>;
+  bodyParams?: Record<string, any>;
   expansions?: string;
   bearerToken?: string | null;
   dtabs?: DtabPair[];
@@ -24,15 +25,15 @@ interface CodeSnippetDisplayProps {
 // --- Try casting the component type to 'any' as a workaround ---
 const Highlighter: any = SyntaxHighlighter; 
 
-const CodeSnippetDisplay: React.FC<CodeSnippetDisplayProps> = ({ endpoint, pathParams, queryParams, expansions, bearerToken, dtabs, enableTracing, tfeEnvironment }) => {
+const CodeSnippetDisplay: React.FC<CodeSnippetDisplayProps> = ({ endpoint, pathParams, queryParams, bodyParams, expansions, bearerToken, dtabs, enableTracing, tfeEnvironment }) => {
   const [selectedLanguage, setSelectedLanguage] = useState<Language>('curl');
 
   // Generate code snippets only when needed
   const codeSnippets = useMemo(() => ({
-    curl: generateCurlCommand(endpoint, pathParams, queryParams, expansions, bearerToken, dtabs, enableTracing, tfeEnvironment),
-    python: generatePythonRequestsCode(endpoint, pathParams, queryParams, expansions, bearerToken, dtabs, enableTracing, tfeEnvironment),
-    javascript: generateJavascriptFetchCode(endpoint, pathParams, queryParams, expansions, bearerToken, dtabs, enableTracing, tfeEnvironment),
-  }), [endpoint, pathParams, queryParams, expansions, bearerToken, dtabs, enableTracing, tfeEnvironment]);
+    curl: generateCurlCommand(endpoint, pathParams, queryParams, bodyParams, expansions, bearerToken, dtabs, enableTracing, tfeEnvironment),
+    python: generatePythonRequestsCode(endpoint, pathParams, queryParams, bodyParams, expansions, bearerToken, dtabs, enableTracing, tfeEnvironment),
+    javascript: generateJavascriptFetchCode(endpoint, pathParams, queryParams, bodyParams, expansions, bearerToken, dtabs, enableTracing, tfeEnvironment),
+  }), [endpoint, pathParams, queryParams, bodyParams, expansions, bearerToken, dtabs, enableTracing, tfeEnvironment]);
 
   const handleCopy = () => {
     const codeToCopy = codeSnippets[selectedLanguage];

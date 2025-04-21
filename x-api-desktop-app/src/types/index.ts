@@ -47,6 +47,7 @@ export interface Endpoint {
   summary: string;
   queryParams?: QueryParam[];
   pathParams?: PathParam[];
+  bodyParams?: BodyParam[];
   expansionOptions?: ExpansionOption[];
   category?: string; // Optional category for grouping
 }
@@ -71,6 +72,15 @@ export interface QueryParam {
   description?: string;
   required?: boolean;
   example?: string; // Add example field
+}
+
+// New type for Body Parameters
+export interface BodyParam {
+  name: string;
+  type: 'string' | 'number' | 'boolean' | 'array' | 'object'; // Add object type
+  description?: string;
+  required?: boolean;
+  example?: string | object; // Example can be object too
 }
 
 // New type for Path Parameters

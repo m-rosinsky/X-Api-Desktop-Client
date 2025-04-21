@@ -1,12 +1,13 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { invoke } from '@tauri-apps/api/core';
-import { ApiViewProps, Endpoint, DtabPair, Project, AppInfo, User } from '../types/index'; // Ensure all necessary types are imported
+import { ApiViewProps, Endpoint, DtabPair, Project, AppInfo, User, BodyParam } from '../types/index'; // Ensure all necessary types are imported
 import AppSelector from '../components/AppSelector';
 import EndpointSelector from '../components/EndpointSelector';
 import ApiViewLayout from '../components/ApiViewLayout';
 import PathParamBuilder from '../components/PathParamBuilder';
 import CodeSnippetDisplay from '../components/CodeSnippetDisplay';
 import QueryParamBuilder from '../components/QueryParamBuilder';
+import BodyParamBuilder from '../components/BodyParamBuilder';
 import ExpansionsSelector from '../components/ExpansionsSelector';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import vscDarkPlus from 'react-syntax-highlighter/dist/esm/styles/prism/vsc-dark-plus';
@@ -46,6 +47,7 @@ const GenericApiView: React.FC<GenericApiViewProps> = ({
   const [selectedEndpoint, setSelectedEndpoint] = useState<string | null>(endpoints[0]?.id ?? null);
   const [pathParamValues, setPathParamValues] = useState<Record<string, string>>({});
   const [queryParamValues, setQueryParamValues] = useState<Record<string, string>>({});
+  const [bodyParamValues, setBodyParamValues] = useState<Record<string, any>>({});
   const [selectedExpansions, setSelectedExpansions] = useState<string>('');
   const [overwriteToken, setOverwriteToken] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -112,6 +114,7 @@ const GenericApiView: React.FC<GenericApiViewProps> = ({
   useEffect(() => {
     setPathParamValues({});
     setQueryParamValues({});
+    setBodyParamValues({});
     setSelectedExpansions('');
     setApiResponse(null);
     setApiErrorDetails(null);
@@ -123,6 +126,10 @@ const GenericApiView: React.FC<GenericApiViewProps> = ({
 
   const currentQueryParams = useMemo(() => {
     return endpointDetails?.queryParams ?? [];
+  }, [endpointDetails]);
+
+  const currentBodyParams = useMemo(() => {
+    return endpointDetails?.bodyParams ?? [];
   }, [endpointDetails]);
 
   const currentExpansionOptions = useMemo(() => {
@@ -137,6 +144,10 @@ const GenericApiView: React.FC<GenericApiViewProps> = ({
 
   const handleQueryParamChange = useCallback((newValues: Record<string, string>) => {
     setQueryParamValues(newValues);
+  }, []);
+
+  const handleBodyParamChange = useCallback((newValues: Record<string, any>) => {
+    setBodyParamValues(newValues);
   }, []);
 
   const handleExpansionChange = useCallback((newExpansions: string) => {
@@ -241,8 +252,13 @@ const GenericApiView: React.FC<GenericApiViewProps> = ({
          return true;
       }
     }
+    for (const param of currentBodyParams) {
+       if (param.required && !bodyParamValues[param.name]) {
+         return true;
+       }
+    }
     return false;
-  }, [activeAppId, overwriteToken, effectiveBearerToken, currentPathParams, pathParamValues, currentQueryParams, queryParamValues]);
+  }, [activeAppId, overwriteToken, effectiveBearerToken, currentPathParams, pathParamValues, currentQueryParams, queryParamValues, currentBodyParams, bodyParamValues]);
 
   const handleRunRequest = useCallback(async () => {
     if (!endpointDetails || !effectiveBearerToken) return;
@@ -292,12 +308,17 @@ const GenericApiView: React.FC<GenericApiViewProps> = ({
       headers['X-Decider-Overrides'] = `tfe_route:des_apiservice_${tfeEnvironment}=on`;
     }
 
-    // 4. Prepare Body (for POST/PUT etc.) - Placeholder for now
+    // 4. Prepare Body
     let requestBody: any = null;
-    if (endpointDetails.method === 'POST' /* || endpointDetails.method === 'PUT' etc. */) {
-      // TODO: Need a way to define and input request bodies
-      // requestBody = { text: "Hello World!" }; // Example
-    }
+    // Check if method needs a body and params are defined
+    if (['POST', 'PUT', 'PATCH'].includes(endpointDetails.method) && currentBodyParams.length > 0) {
+      // Construct body object from state
+      // TODO: Add type conversion based on param.type (e.g., string to number/boolean)
+      requestBody = { ...bodyParamValues }; 
+       // Simple spread for now, assumes BodyParamBuilder provides correct types or handleRunRequest converts
+    } 
+    // If no bodyParams defined but it's POST/PUT, maybe send empty object or handle differently?
+    // For now, requestBody remains null if currentBodyParams is empty.
 
     // Log the full request details before invoking
     console.log("--- Sending API Request ---");
@@ -358,7 +379,7 @@ const GenericApiView: React.FC<GenericApiViewProps> = ({
       dtabs,
       enableTracing,
       tfeEnvironment, // Add tfeEnvironment dependency
-      // We don't need all dependencies like isLoading, apiResponse etc. here
+      currentBodyParams, bodyParamValues // <-- ADDED: Body params dependencies
   ]);
 
   // Generalized Usage Estimate Text
@@ -482,6 +503,14 @@ const GenericApiView: React.FC<GenericApiViewProps> = ({
                   options={currentExpansionOptions}
                   onChange={handleExpansionChange}
                 />
+              )}
+
+              {/* Body Param Builder */}
+              {['POST', 'PUT', 'PATCH'].includes(endpointDetails.method) && currentBodyParams.length > 0 && (
+                 <BodyParamBuilder 
+                   params={currentBodyParams}
+                   onChange={handleBodyParamChange}
+                 />
               )}
 
               {/* Bearer Token Override */}
@@ -699,6 +728,7 @@ const GenericApiView: React.FC<GenericApiViewProps> = ({
                 endpoint={endpointDetails}
                 pathParams={pathParamValues}
                 queryParams={queryParamValues}
+                bodyParams={bodyParamValues}
                 expansions={selectedExpansions}
                 bearerToken={effectiveBearerToken}
                 dtabs={dtabs}

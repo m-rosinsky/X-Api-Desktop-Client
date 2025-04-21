@@ -39,6 +39,7 @@ export function generateCurlCommand(
   endpoint: Endpoint | undefined | null,
   pathParams: Record<string, string>,
   queryParams: Record<string, string>,
+  bodyParams: Record<string, any> | undefined,
   expansions?: string,
   bearerToken?: string | null,
   dtabs?: DtabPair[] | undefined,
@@ -78,7 +79,14 @@ export function generateCurlCommand(
   }
 
   if (['POST', 'PUT', 'PATCH'].includes(endpoint.method)) {
-       curlCommand += ` \\\n  -H "Content-Type: application/json" \\\n  -d '{"your_key":"your_value"}'`; 
+       curlCommand += ` \\\n  -H "Content-Type: application/json"`; 
+       // Use actual bodyParams if available, otherwise placeholder
+       const bodyData = (bodyParams && Object.keys(bodyParams).length > 0) 
+           ? JSON.stringify(bodyParams) 
+           : '{\"your_key\":\"your_value\"}'; // Escaped placeholder
+       // Escape single quotes within the JSON string for the -d argument
+       const escapedBodyData = bodyData.replace(/'/g, `'\''`); 
+       curlCommand += ` \\\n  -d '${escapedBodyData}'`; 
   }
 
   return curlCommand;
@@ -89,6 +97,7 @@ export function generatePythonRequestsCode(
     endpoint: Endpoint | undefined | null,
     pathParams: Record<string, string>,
     queryParams: Record<string, string>,
+    bodyParams: Record<string, any> | undefined,
     expansions?: string,
     bearerToken?: string | null,
     dtabs?: DtabPair[] | undefined,
@@ -132,24 +141,25 @@ export function generatePythonRequestsCode(
     
     if (['POST', 'PUT', 'PATCH'].includes(endpoint.method)) {
         headers["Content-Type"] = "application/json";
-        body = { your_key: "your_value" };
+        // Use actual bodyParams if available
+        body = (bodyParams && Object.keys(bodyParams).length > 0) ? bodyParams : { your_key: "your_value" }; 
     }
 
     const paramsDictString = Object.keys(allQueryParams).length > 0 
         ? `params = ${JSON.stringify(allQueryParams, null, 4)}\n` 
         : "";
     const headersDictString = `headers = ${JSON.stringify(headers, null, 4)}\n`;
-    const bodyJsonString = body ? `payload = ${JSON.stringify(body, null, 4)}\n` : "";
+    const bodyJsonString = body ? `payload = json.dumps(${JSON.stringify(body, null, 4)})\n` : ""; // Use json.dumps for payload
 
     const requestArgs = [
         Object.keys(allQueryParams).length > 0 ? "params=params" : null,
         "headers=headers",
-        body ? "json=payload" : null
+        body ? "json=payload" : null // Use json=payload for requests
     ].filter(Boolean).join(", ");
 
     return (
 `import requests
-import json
+import json # Import json for payload dump
 
 url = "${baseUrl}"
 ${paramsDictString}${headersDictString}${bodyJsonString}
@@ -169,6 +179,7 @@ export function generateJavascriptFetchCode(
     endpoint: Endpoint | undefined | null,
     pathParams: Record<string, string>,
     queryParams: Record<string, string>,
+    bodyParams: Record<string, any> | undefined,
     expansions?: string,
     bearerToken?: string | null,
     dtabs?: DtabPair[] | undefined,
@@ -211,7 +222,9 @@ export function generateJavascriptFetchCode(
 
     if (['POST', 'PUT', 'PATCH'].includes(endpoint.method)) {
         (options.headers as Record<string, string>)["Content-Type"] = "application/json";
-        options.body = JSON.stringify({ your_key: "your_value" }); 
+        // Use actual bodyParams if available
+        const bodyData = (bodyParams && Object.keys(bodyParams).length > 0) ? bodyParams : { your_key: "your_value" }; 
+        options.body = JSON.stringify(bodyData); 
     }
 
     const optionsString = JSON.stringify(options, null, 2).replace(/\n/g, '\n  ');
