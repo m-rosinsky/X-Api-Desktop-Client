@@ -17,7 +17,7 @@ const Highlighter: any = SyntaxHighlighter;
 // Define structure for successful backend response
 interface BackendApiResponse {
   status: number;
-  body: any;
+  body: string; // Keep body as raw string
   headers: Record<string, string>;
 }
 
@@ -299,26 +299,49 @@ const GenericApiView: React.FC<GenericApiViewProps> = ({
       // requestBody = { text: "Hello World!" }; // Example
     }
 
+    // Log the full request details before invoking
+    console.log("--- Sending API Request ---");
+    console.log("Method:", endpointDetails.method);
+    console.log("URL:", url.toString());
+    console.log("Headers:", headers);
+    console.log("Body:", requestBody);
+    console.log("---------------------------");
+
     // 5. Invoke Tauri Command
     try {
+      // Expect the raw string body from invoke
       const result = await invoke<BackendApiResponse>('make_api_request', {
         args: {
           method: endpointDetails.method,
           url: url.toString(),
           headers: headers,
-          body: requestBody // Pass request body
+          body: requestBody
         }
       });
 
-      // 6. Handle Success Response from Backend
-      setApiResponse(result);
+      console.log("Raw string body from backend:", result.body);
+
+      // 6. Handle Success Response from Backend - Store raw string directly
+      setApiResponse(result); // result already matches BackendApiResponse with string body
 
     } catch (error: any) {
       console.error("API Request Failed via Backend:", error);
+
+       // Parse the raw string error body if present
+      let parsedErrorBody: any = null;
+      if (error.body && typeof error.body === 'string') {
+          try {
+            parsedErrorBody = JSON.parse(error.body);
+          } catch (parseError) {
+             console.error("Failed to parse error body JSON:", parseError);
+             parsedErrorBody = error.body; // Fallback to raw string
+          }
+      } // else: error body wasn't a string or didn't exist
+
       setApiErrorDetails({
         status: error.status ?? 0,
         message: error.message ?? 'An unexpected error occurred.',
-        body: error.body,
+        body: parsedErrorBody, // Store parsed (or raw fallback) error body
         headers: error.headers
       });
       setApiResponse(null);
@@ -457,7 +480,6 @@ const GenericApiView: React.FC<GenericApiViewProps> = ({
                {endpointDetails.method === 'GET' && currentExpansionOptions.length > 0 && (
                 <ExpansionsSelector
                   options={currentExpansionOptions}
-                  selectedValues={selectedExpansions}
                   onChange={handleExpansionChange}
                 />
               )}
@@ -480,16 +502,94 @@ const GenericApiView: React.FC<GenericApiViewProps> = ({
               <details className="advanced-details">
                 <summary className="advanced-summary">Advanced Settings</summary>
                 <div className="advanced-section-content">
-                  <div className="form-group">
+                  <div className="form-group"> 
+                    {/* Tracing Checkbox */}
                     <div className="tracing-section">
-                      {/* ... tracing checkbox ... */}
+                      <label className="checkbox-label">
+                        <span className="checkbox-input-area">
+                          <input
+                            type="checkbox"
+                            checked={enableTracing}
+                            onChange={(e) => setEnableTracing(e.target.checked)}
+                          />
+                        </span>
+                        <span className="checkbox-text-label">
+                          Enable Tracing (Adds X-B3-Flags: 1 header)
+                        </span>
+                      </label>
                     </div>
-                    {/* Add TFE Environment Dropdown */}
+
+                    {/* TFE Environment Dropdown */}
                     <div className="tfe-environment-section">
-                     {/* ... TFE env select ... */}
+                      <label htmlFor="tfe-env-select" className="tfe-env-label">TFE Environment:</label>
+                      <select
+                        id="tfe-env-select"
+                        value={tfeEnvironment}
+                        onChange={(e) => setTfeEnvironment(e.target.value)}
+                        className="tfe-env-select"
+                      >
+                        <option value="prod">prod</option>
+                        <option value="staging1">staging1</option>
+                        <option value="staging2">staging2</option>
+                      </select>
                     </div>
+
+                    {/* Dtabs Section */}
                     <div className="dtabs-section">
-                      {/* ... Dtab controls ... */}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5em' }}>
+                        <h4>Dtabs:</h4>
+                        {/* Save/Load Controls */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5em' }}>
+                          <div className="dtab-save-load">
+                              <input
+                                type="text"
+                                placeholder="Save set as..."
+                                value={dtabSetName}
+                                onChange={(e) => setDtabSetName(e.target.value)}
+                                className="text-input save-name-input"
+                                spellCheck="false"
+                              />
+                              <button onClick={handleSaveDtabs} className="dtab-action-button" title="Save current Dtabs" disabled={!dtabs.some(d => d.from.trim() || d.to.trim())}>Save</button>
+                              <select
+                                value={selectedDtabSet}
+                                onChange={(e) => setSelectedDtabSet(e.target.value)}
+                                className="dtab-select"
+                              >
+                                <option value="" disabled>Load Set...</option>
+                                {Object.keys(savedDtabSets).sort().map(name => (
+                                  <option key={name} value={name}>{name}</option>
+                                ))}
+                              </select>
+                              <button onClick={handleLoadDtabs} className="dtab-action-button" title="Load selected Dtab set" disabled={!selectedDtabSet}>Load</button>
+                              <button onClick={handleDeleteDtabSet} className="dtab-action-button remove" title="Delete selected Dtab set" disabled={!selectedDtabSet}>Delete</button>
+                          </div>
+                        </div>
+                      </div>
+                      {/* Dtab Input Rows */}
+                      {dtabs.map((dtab, index) => (
+                        <div key={dtab.id} className="dtab-input-container">
+                          <input
+                            type="text"
+                            placeholder="/s/role/service"
+                            value={dtab.from}
+                            onChange={(e) => handleDtabChange(index, 'from', e.target.value)}
+                            className="text-input dtab-input"
+                          />
+                          <span>=&gt;</span>
+                          <input
+                            type="text"
+                            placeholder="/#srv/env/dc/role/service"
+                            value={dtab.to}
+                            onChange={(e) => handleDtabChange(index, 'to', e.target.value)}
+                            className="text-input dtab-input"
+                          />
+                          <button onClick={() => handleRemoveDtab(index)} className="dtab-action-button remove" title="Remove Dtab Row">×</button>
+                        </div>
+                      ))}
+                      {/* Add Dtab Button */}
+                      <div className="add-dtab-button-container">
+                        <button onClick={handleAddDtab} className="dtab-action-button add" title="Add Dtab Row">+</button>
+                      </div>
                     </div>
                   </div> {/* End of form-group wrapper */}
                 </div>
@@ -518,15 +618,78 @@ const GenericApiView: React.FC<GenericApiViewProps> = ({
 
                 {/* Error Display */}
                 {apiErrorDetails && (
-                  <div>
-                    {/* ... error details rendering ... */}
+                  <div> 
+                    <div className="response-details">
+                      {/* Status Code */} 
+                      <p><strong>Status:</strong> <span className={`status-code status-${String(apiErrorDetails.status)[0]}xx`}>{apiErrorDetails.status || 'Error'}</span></p>
+                      {/* Display Trace ID if available in error headers */}
+                      {apiErrorDetails.headers && apiErrorDetails.headers['x-transaction-id'] && (
+                        <div className="trace-id-display">
+                          <p>
+                            <strong>Trace ID:</strong> {apiErrorDetails.headers['x-transaction-id']}
+                          </p>
+                        </div>
+                      )}
+                      {/* Display Headers spoiler if available in error headers */}
+                      {apiErrorDetails.headers && Object.keys(apiErrorDetails.headers).filter(h => h !== 'x-transaction-id').length > 0 && (
+                        <details className="response-headers-details">
+                          <summary>Response Headers</summary>
+                          <Highlighter language="json" style={vscDarkPlus} customStyle={{ margin: 0, padding: '1em', fontSize: '0.9em', borderRadius: '4px', border: '1px solid var(--border-color)' }} wrapLongLines={true}>
+                            {JSON.stringify(
+                              Object.fromEntries(Object.entries(apiErrorDetails.headers).filter(([key]) => key !== 'x-transaction-id')),
+                              null,
+                              2
+                            )}
+                          </Highlighter>
+                        </details>
+                      )}
+                    </div>
+                    {/* Error Body */} 
+                    {apiErrorDetails.body && (
+                      <div className="response-body-container">
+                        <h4>Error Response Body:</h4> 
+                        <Highlighter language="json" style={vscDarkPlus} customStyle={{ margin: 0, padding: '1em', fontSize: '0.9em', borderRadius: '4px', border: '1px solid var(--border-color-error, #a85050)' }} wrapLongLines={true}>
+                            {typeof apiErrorDetails.body === 'string' ? apiErrorDetails.body : JSON.stringify(apiErrorDetails.body, null, 2)}
+                        </Highlighter>
+                      </div>
+                    )}
                   </div>
                 )}
 
                 {/* Success Response Display */}
                 {apiResponse && !apiErrorDetails && (
                   <div>
-                    {/* ... success response details rendering ... */}
+                    <div className="response-details">
+                      <p><strong>Status:</strong> <span className={`status-code status-${String(apiResponse.status)[0]}xx`}>{apiResponse.status}</span></p>
+                      {/* Display Trace ID only if the header exists in the response */}
+                      {apiResponse.headers && apiResponse.headers['x-transaction-id'] && (
+                        <div className="trace-id-display">
+                          <p>
+                            <strong>Trace ID:</strong> {apiResponse.headers['x-transaction-id']}
+                          </p>
+                        </div>
+                      )}
+                      {/* Render headers if they exist */}
+                      {apiResponse.headers && Object.keys(apiResponse.headers).filter(h => h !== 'x-transaction-id').length > 0 && (
+                        <details className="response-headers-details">
+                            <summary>Response Headers</summary>
+                             <Highlighter language="json" style={vscDarkPlus} customStyle={{ margin: 0, padding: '1em', fontSize: '0.9em', borderRadius: '4px', border: '1px solid var(--border-color)', maxHeight: '300px', overflowY: 'auto' }} wrapLongLines={true}>
+                                {JSON.stringify(
+                                    Object.fromEntries(Object.entries(apiResponse.headers).filter(([key]) => key !== 'x-transaction-id')), // Filter out trace ID here too
+                                    null,
+                                    2
+                                )}
+                             </Highlighter>
+                        </details>
+                      )}
+                    </div>
+
+                    {/* Wrap main body highlighter for styling */}
+                    <div className="response-body-container">
+                      <Highlighter language="json" style={vscDarkPlus} customStyle={{ margin: 0, padding: '1em', fontSize: '0.9em', borderRadius: '4px', border: '1px solid var(--border-color)' }} wrapLongLines={true}>
+                        {apiResponse.body}
+                      </Highlighter>
+                    </div>
                   </div>
                 )}
               </div>
@@ -534,10 +697,8 @@ const GenericApiView: React.FC<GenericApiViewProps> = ({
               {/* Restore CodeSnippetDisplay */}
               <CodeSnippetDisplay
                 endpoint={endpointDetails}
-                pathParams={currentPathParams}
-                queryParams={currentQueryParams}
-                pathValues={pathParamValues}
-                queryValues={queryParamValues}
+                pathParams={pathParamValues}
+                queryParams={queryParamValues}
                 expansions={selectedExpansions}
                 bearerToken={effectiveBearerToken}
                 dtabs={dtabs}
