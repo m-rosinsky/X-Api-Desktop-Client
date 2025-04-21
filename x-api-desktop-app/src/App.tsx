@@ -257,13 +257,29 @@ function App() {
     // Standard View Logic
     switch (activeView) {
       case "dashboard":
-        return <Dashboard projects={mockProjects} currentUser={currentUser} onNavigate={handleNavClick} onLogin={handleLogin} />;
+        return (
+          <main className="main-content">
+             <Dashboard projects={mockProjects} currentUser={currentUser} onNavigate={handleNavClick} onLogin={handleLogin} />
+          </main>
+         );
       case "tweets":
-        return <TweetsView {...apiViewProps} {...apiLayoutProps} projects={mockProjects} />;
+         return (
+           <main className="main-content">
+             <TweetsView {...apiViewProps} {...apiLayoutProps} projects={mockProjects} />
+           </main>
+         );
       case "users":
-        return <UsersView {...apiViewProps} {...apiLayoutProps} projects={mockProjects} />;
+         return (
+           <main className="main-content">
+             <UsersView {...apiViewProps} {...apiLayoutProps} projects={mockProjects} />
+           </main>
+         );
       case "account-activity":
-        return <AccountActivityView {...apiViewProps} {...apiLayoutProps} projects={mockProjects} />;
+        return (
+          <main className="main-content">
+            <AccountActivityView {...apiViewProps} {...apiLayoutProps} projects={mockProjects} />
+          </main>
+        );
       case "subscription":
         return (
           <main className="main-content">
@@ -277,7 +293,11 @@ function App() {
           </main>
         );
       default:
-        return <div>View not found: {activeView}</div>;
+        return (
+            <main className="main-content">
+                <div>View not found: {activeView}</div>
+            </main>
+        );
     }
   };
 

@@ -4,6 +4,12 @@
 use serde::{Serialize, Deserialize};
 use std::collections::HashMap;
 use reqwest::header::{HeaderMap, HeaderName, HeaderValue};
+use tauri::Emitter;
+use std::time::Duration;
+use ngrok::config::TunnelBuilder;
+use ngrok::tunnel::UrlTunnel;
+use futures::stream::StreamExt;
+use std::sync::{Arc, Mutex};
 
 // Define the structure for the request payload coming from the frontend
 #[derive(Deserialize)]
@@ -30,6 +36,32 @@ struct ApiError {
     body: Option<String>, // <-- CHANGE: Send error body as optional raw string
     headers: Option<HashMap<String, String>>,
 }
+
+// Constants for event names
+const NGROK_PROGRESS_EVENT: &str = "ngrok://progress";
+const NGROK_URL_EVENT: &str = "ngrok://url-obtained";
+const NGROK_ERROR_EVENT: &str = "ngrok://error";
+
+// --- State Definitions --- 
+#[derive(Clone, Serialize, Default)]
+struct NgrokTunnelInfo {
+    is_active: bool,
+    url: Option<String>,
+    console_log: Vec<String>,
+}
+
+struct AppState {
+    ngrok_info: Arc<Mutex<Option<NgrokTunnelInfo>>>,
+}
+
+impl Default for AppState {
+    fn default() -> Self {
+        AppState {
+            ngrok_info: Arc::new(Mutex::new(None)),
+        }
+    }
+}
+// --- End State Definitions ---
 
 // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
 #[tauri::command]
@@ -151,11 +183,147 @@ async fn make_api_request(args: ApiRequestArgs) -> Result<ApiResponse, ApiError>
     }
 }
 
+// Command to start the ngrok tunnel
+#[tauri::command]
+async fn start_ngrok_webhook(
+    app_handle: tauri::AppHandle,
+    window: tauri::Window,
+    auth_token: String,
+    state: tauri::State<'_, AppState>,
+) -> Result<(), String> {
+    let ngrok_state = state.ngrok_info.clone();
+    let window_clone_for_helpers = window.clone();
+
+    let emit_progress = |msg: String| {
+        let state_clone = ngrok_state.clone();
+        if let Ok(mut guard) = state_clone.lock() {
+            if let Some(info) = guard.as_mut() {
+                info.console_log.push(msg.clone());
+            }
+        }
+        if let Err(e) = window_clone_for_helpers.emit(NGROK_PROGRESS_EVENT, Some(msg)) {
+            eprintln!("Failed to emit progress event: {}", e);
+        }
+    };
+    let emit_error = |msg: String| -> Result<(), String> {
+        let error_msg = format!("Ngrok Error: {}", msg);
+        let state_clone = ngrok_state.clone();
+        if let Ok(mut guard) = state_clone.lock() {
+            if let Some(info) = guard.as_mut() {
+                 info.console_log.push(error_msg.clone());
+                 info.is_active = false;
+                 info.url = None;
+            } else {
+                 *guard = Some(NgrokTunnelInfo {
+                     is_active: false,
+                     url: None,
+                     console_log: vec![error_msg.clone()],
+                 });
+            }
+        }
+        if let Err(e) = window_clone_for_helpers.emit(NGROK_ERROR_EVENT, Some(error_msg.clone())) {
+             eprintln!("Failed to emit error event: {}", e);
+        }
+        Err(error_msg)
+    };
+
+    {
+        let mut guard = ngrok_state.lock().map_err(|e| format!("Mutex lock error: {}", e))?;
+        *guard = Some(NgrokTunnelInfo { is_active: true, ..Default::default() });
+    }
+
+    emit_progress("Starting ngrok session...".to_string());
+
+    let session_builder = ngrok::Session::builder().authtoken(auth_token);
+
+    let session = match session_builder.connect().await {
+        Ok(s) => {
+            emit_progress("Ngrok session connected.".to_string());
+            s
+        }
+        Err(e) => return emit_error(format!("Failed to connect session: {}", e)),
+    };
+
+    emit_progress("Starting HTTP tunnel...".to_string());
+
+    let listener = match session.http_endpoint().listen().await {
+        Ok(l) => l,
+        Err(e) => return emit_error(format!("Failed to start listener: {}", e)),
+    };
+
+    let url = listener.url().to_string();
+    emit_progress(format!("Tunnel established at: {}", url));
+
+    if let Ok(mut guard) = ngrok_state.lock() {
+        if let Some(info) = guard.as_mut() {
+            info.url = Some(url.clone());
+        }
+    }
+
+    if let Err(e) = window.emit(NGROK_URL_EVENT, Some(url)) {
+        eprintln!("Failed to emit URL event: {}", e);
+    }
+
+    let window_clone = window.clone();
+    let mut listener = listener;
+    let task_state = ngrok_state.clone();
+    tauri::async_runtime::spawn(async move {
+        let listener_url = listener.url().to_string();
+        println!("Ngrok listener task started for {}", listener_url);
+
+        while let Some(conn_result) = listener.next().await {
+            match conn_result {
+                Ok(_conn) => {
+                    println!("Received connection on ngrok tunnel (not processed yet)");
+                }
+                Err(e) => {
+                    let error_msg = format!("Listener connection error: {}", e);
+                    eprintln!("Ngrok listener connection error: {}", e);
+                    if let Ok(mut guard) = task_state.lock() {
+                        if let Some(info) = guard.as_mut() {
+                            info.console_log.push(error_msg.clone());
+                            info.is_active = false;
+                        }
+                    }
+                    let _ = window_clone.emit(NGROK_ERROR_EVENT, Some(error_msg));
+                    break;
+                }
+            }
+        }
+        println!("Ngrok listener task finished for {}", listener_url);
+        let finish_msg = "Ngrok listener task finished.".to_string();
+        if let Ok(mut guard) = task_state.lock() {
+            if let Some(info) = guard.as_mut() {
+                info.console_log.push(finish_msg.clone());
+                info.is_active = false;
+            }
+        }
+        let _ = window_clone.emit(NGROK_PROGRESS_EVENT, Some(finish_msg));
+    });
+
+    emit_progress("Ngrok tunnel is active.".to_string());
+
+    Ok(())
+}
+
+// Command to get current status
+#[tauri::command]
+fn get_ngrok_status(state: tauri::State<'_, AppState>) -> Result<Option<NgrokTunnelInfo>, String> {
+    state.ngrok_info.lock()
+        .map_err(|e| format!("Mutex lock error: {}", e))
+        .map(|guard| guard.clone())
+}
 
 fn main() {
     tauri::Builder::default()
+        .manage(AppState::default())
         .plugin(tauri_plugin_opener::init())
-        .invoke_handler(tauri::generate_handler![greet, make_api_request])
+        .invoke_handler(tauri::generate_handler![
+            greet,
+            make_api_request,
+            start_ngrok_webhook,
+            get_ngrok_status
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

@@ -155,10 +155,14 @@
 .dashboard-layout {
   display: flex;
   gap: 2em; /* Space between main content and sidebar */
+  flex-grow: 1; /* ADDED: Allow dashboard layout to grow in parent flex */
+  min-width: 0; /* ADDED: Allow dashboard layout to shrink properly */
+  /* Add padding here if needed, instead of on main-content if dashboard is top level */
+  /* padding: 1.5em; */ 
 }
 
 .dashboard-main {
-  flex-grow: 1; /* Allow main content to take available space */
+  flex-grow: 1; /* Allow main content to take available space *within* dashboard */
   min-width: 0; /* Prevent flex items from overflowing */
 }
 

@@ -130,6 +130,13 @@
 
 /* ... rest of App.css ... */
 
+.app-layout { /* ADDED: Rule for the main layout container */
+  display: flex;
+  /* Calculate height to fill viewport below top nav */
+  height: calc(100vh - 55px); /* Adjust 55px if top nav height changes */
+  overflow: hidden; /* Prevent unexpected overflow from container */
+}
+
 .sidebar {
   width: 280px; 
   background: var(--card-gradient); /* Use card gradient for sidebar */
@@ -150,4 +157,12 @@
 
 .nav-list {
   /* ... existing styles ... */
+}
+
+.main-content {
+  flex-grow: 1; /* Ensure it takes available horizontal space */
+  min-width: 0; /* Allow it to shrink below its content's intrinsic width */
+  overflow-y: auto; /* Keep vertical scrolling */
+  padding: 1.5em; /* Adjust padding as needed */
+  /* Add any other existing styles back here */
 }
