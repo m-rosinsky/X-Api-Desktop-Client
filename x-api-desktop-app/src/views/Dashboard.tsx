@@ -2,7 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { Project, AppInfo, DashboardProps } from '../types';
 import '../styles/dashboard.css';
 
-const Dashboard: React.FC<DashboardProps> = ({ projects, currentUser, onNavigate, onLogin }) => {
+const Dashboard: React.FC<DashboardProps> = ({
+    projects,
+    currentUser,
+    onNavigate,
+    onLogin,
+    addProject,
+}) => {
   const [isLoggingIn, setIsLoggingIn] = useState(false);
 
   useEffect(() => {
@@ -27,13 +33,26 @@ const Dashboard: React.FC<DashboardProps> = ({ projects, currentUser, onNavigate
     }
   };
 
+  const handleCreateProject = () => {
+    const newProjectName = `New Project ${new Date().toLocaleTimeString()}`;
+    addProject({
+      name: newProjectName,
+      description: 'My new local project',
+      usage: 0,
+      cap: 0,
+      package: 'custom'
+    });
+  };
+
   return (
     <div className="dashboard-layout">
       <div className="dashboard-main">
         <div className="dashboard-header">
           <h2>Dashboard</h2>
           {currentUser && (
-            <span className="logged-in-user-name">{currentUser.name}</span>
+            <div className="dashboard-header-controls">
+               <span className="logged-in-user-name">{currentUser.name}</span>
+            </div>
           )}
         </div>
         
@@ -45,10 +64,12 @@ const Dashboard: React.FC<DashboardProps> = ({ projects, currentUser, onNavigate
                 return (
                   <div key={project.id} className="project-item">
                     <div className="project-header">
-                      <h3>{project.name}</h3>
+                      <h3 onClick={() => onNavigate && onNavigate(`project-${project.id}`)} style={{cursor: 'pointer'}}>
+                          {project.name}
+                      </h3>
                       <span className={`project-package package-${project.package.toLowerCase()}`}>{project.package}</span>
                     </div>
-                    <p>Usage: {project.usage.toLocaleString()} / {project.cap.toLocaleString()}</p>
+                    <p>{project.description || 'No description.'}</p>
                     <div className="usage-bar-container">
                       <div
                         className={`usage-bar ${usagePercentage >= 100 ? 'at-cap' : ''}`}
@@ -96,12 +117,23 @@ const Dashboard: React.FC<DashboardProps> = ({ projects, currentUser, onNavigate
                 );
               })
             ) : (
-              <p>No projects found.</p>
+              <div className="centered">
+                 <p>You don't have any projects yet.</p>
+              </div>
             )}
+            <div style={{ textAlign: 'center', marginTop: '20px' }}>
+                <button
+                    className="action-button create-project-button"
+                    onClick={handleCreateProject}
+                    title="Create New Project"
+                >
+                    + Create Project
+                </button>
+            </div>
           </div>
         ) : (
           <div className="logged-out-message centered">
-            <p>Please sign in to view your projects.</p>
+            <p>Please sign in to manage your local projects.</p>
             {onLogin && (
               <button 
                 className="action-button sign-in-prompt-button" 

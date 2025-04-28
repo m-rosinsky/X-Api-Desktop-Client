@@ -1,18 +1,27 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Project } from '../types';
+import { Project, ProjectViewProps, AppInfo } from '../types';
 import '../styles/project-view.css';
 
-interface ProjectViewProps {
-  project: Project;
-  onNavigate?: (viewId: string | undefined) => void;
-}
-
-const ProjectView: React.FC<ProjectViewProps> = ({ project, onNavigate }) => {
+const ProjectView: React.FC<ProjectViewProps> = ({ 
+    project, 
+    onNavigate, 
+    updateProject,
+    deleteProject,
+    addAppToProject
+}) => {
   const [activeTab, setActiveTab] = useState<'overview' | 'settings'>('overview');
   const tabsContainerRef = useRef<HTMLDivElement>(null);
   const overviewTabRef = useRef<HTMLButtonElement>(null);
   const settingsTabRef = useRef<HTMLButtonElement>(null);
   const [indicatorStyle, setIndicatorStyle] = useState({ left: 0, width: 0 });
+
+  const [editedName, setEditedName] = useState(project.name);
+  const [editedDescription, setEditedDescription] = useState(project.description || '');
+
+  useEffect(() => {
+    setEditedName(project.name);
+    setEditedDescription(project.description || '');
+  }, [project]);
 
   useEffect(() => {
     const updateIndicator = () => {
@@ -48,6 +57,35 @@ const ProjectView: React.FC<ProjectViewProps> = ({ project, onNavigate }) => {
       onNavigate(`app-${appId}`);
     }
   };
+
+  const handleSaveChanges = () => {
+    const updatedProjectData = {
+      ...project,
+      name: editedName.trim(),
+      description: editedDescription.trim()
+    };
+    updateProject(updatedProjectData);
+  };
+
+  const handleDeleteProject = () => {
+    deleteProject(project.id);
+  };
+
+  const handleAddApp = () => {
+    const newAppName = `New App ${new Date().toLocaleTimeString()}`;
+    const defaultAppData: Omit<AppInfo, 'id'> = {
+      name: newAppName,
+      environment: 'development',
+      icon: '🛠️',
+      oauth1Keys: {
+        // bearerToken: '' // Initialize specific keys if needed
+      },
+      oauth2Keys: {}
+    };
+    addAppToProject(project.id, defaultAppData);
+  };
+
+  const hasChanges = editedName !== project.name || editedDescription !== (project.description || '');
 
   return (
     <div className="project-view">
@@ -91,12 +129,22 @@ const ProjectView: React.FC<ProjectViewProps> = ({ project, onNavigate }) => {
               ></div>
             </div>
             
-            <h2 className="apps-heading">Apps in this Project:</h2>
-            {project.apps.length > 0 ? (
+            <div className="apps-header-container">
+                <h2 className="apps-heading">Apps in this Project:</h2>
+                <button 
+                    className="action-button add-app-button" 
+                    onClick={handleAddApp}
+                    title="Add New App"
+                >
+                    + Add App
+                </button>
+            </div>
+
+            {(project.apps || []).length > 0 ? (
               <ul className="overview-app-list">
-                {project.apps.map(app => (
+                {(project.apps || []).map(app => (
                   <li key={app.id} className="overview-app-item" onClick={() => handleAppClick(app.id)}>
-                    <span className="app-icon">{app.icon}</span>
+                    <span className="app-icon">{app.icon || '📱'}</span>
                     <span className="app-name">{app.name}</span>
                     <span className="app-environment">({app.environment})</span>
                     <span className="go-to-app">→</span>
@@ -113,14 +161,35 @@ const ProjectView: React.FC<ProjectViewProps> = ({ project, onNavigate }) => {
             <h2>Project Settings</h2>
             <div className="setting-item">
                 <label htmlFor="projectName">Project Name</label>
-                <input type="text" id="projectName" value={project.name} readOnly />
+                <input 
+                    type="text" 
+                    id="projectName" 
+                    value={editedName} 
+                    onChange={(e) => setEditedName(e.target.value)}
+                />
             </div>
              <div className="setting-item">
                 <label htmlFor="projectDesc">Description</label>
-                <textarea id="projectDesc" value={project.description || ''} readOnly rows={3}></textarea>
+                <textarea 
+                    id="projectDesc" 
+                    value={editedDescription} 
+                    onChange={(e) => setEditedDescription(e.target.value)}
+                    rows={3}
+                ></textarea>
             </div>
-            <button className="action-button">Save Changes</button>
-            <button className="action-button danger">Delete Project</button>
+            <button 
+                className="action-button" 
+                onClick={handleSaveChanges} 
+                disabled={!hasChanges}
+            >
+                Save Changes
+            </button>
+            <button 
+                className="action-button danger" 
+                onClick={handleDeleteProject}
+            >
+                Delete Project
+            </button>
           </div>
         )}
       </div>

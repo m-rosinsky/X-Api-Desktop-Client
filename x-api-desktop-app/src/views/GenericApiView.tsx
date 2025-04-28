@@ -5,12 +5,12 @@ import AppSelector from '../components/AppSelector';
 import EndpointSelector from '../components/EndpointSelector';
 import ApiViewLayout from '../components/ApiViewLayout';
 import PathParamBuilder from '../components/PathParamBuilder';
-import CodeSnippetDisplay from '../components/CodeSnippetDisplay';
 import QueryParamBuilder from '../components/QueryParamBuilder';
 import BodyParamBuilder from '../components/BodyParamBuilder';
 import ExpansionsSelector from '../components/ExpansionsSelector';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import vscDarkPlus from 'react-syntax-highlighter/dist/esm/styles/prism/vsc-dark-plus';
+import CodeSnippetDisplay from '../components/CodeSnippetDisplay';
 
 // Type workaround
 const Highlighter: any = SyntaxHighlighter;
@@ -20,6 +20,23 @@ interface BackendApiResponse {
   status: number;
   body: string; // Keep body as raw string
   headers: Record<string, string>;
+}
+
+// Extend the backend request args structure expectation (frontend side)
+interface BackendRequestArgs {
+    method: string;
+    url: string;
+    headers: Record<string, string>;
+    body?: any;
+    authType: 'bearer' | 'oauth1a' | 'oauth2'; // Add auth type
+    bearerToken?: string; // Optional bearer token
+    oauth1Keys?: { // Optional OAuth1 keys
+        apiKey: string;
+        apiSecret: string;
+        accessToken: string;
+        accessSecret: string;
+    };
+    // Add oauth2Keys later if needed
 }
 
 const LOCAL_STORAGE_KEY = 'savedDtabSets'; // Keep consistent key for now
@@ -49,13 +66,11 @@ const GenericApiView: React.FC<GenericApiViewProps> = ({
   const [queryParamValues, setQueryParamValues] = useState<Record<string, string>>({});
   const [bodyParamValues, setBodyParamValues] = useState<Record<string, any>>({});
   const [selectedExpansions, setSelectedExpansions] = useState<string>('');
-  const [overwriteToken, setOverwriteToken] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [apiResponse, setApiResponse] = useState<BackendApiResponse | null>(null);
   const [apiErrorDetails, setApiErrorDetails] = useState<{ status: number, message: string, body?: any, headers?: Record<string, string> } | null>(null);
   const [dtabs, setDtabs] = useState<DtabPair[]>([{ id: Date.now(), from: '', to: '' }]);
   const [enableTracing, setEnableTracing] = useState<boolean>(false);
-  // Add state for TFE Environment selection
   const [tfeEnvironment, setTfeEnvironment] = useState<string>('prod');
 
   // State for save/load feature
@@ -85,6 +100,14 @@ const GenericApiView: React.FC<GenericApiViewProps> = ({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [endpoints]); // Rerun only when endpoints array itself changes
 
+  useEffect(() => {
+    setPathParamValues({});
+    setQueryParamValues({});
+    setBodyParamValues({});
+    setSelectedExpansions('');
+    setApiResponse(null);
+    setApiErrorDetails(null);
+  }, [selectedEndpoint]); // Runs when endpoint selection changes
 
   // --- Derived State & Memoized Values ---
 
@@ -102,23 +125,9 @@ const GenericApiView: React.FC<GenericApiViewProps> = ({
     return activeProject.apps.find(app => app.id === activeAppId);
   }, [activeProject, activeAppId]);
 
-  const originalBearerToken = activeApp?.keys.bearerToken;
-  const effectiveBearerToken = overwriteToken.trim() !== '' ? overwriteToken : originalBearerToken;
-
-  const usagePercentage = activeProject ? Math.min((activeProject.usage / activeProject.cap) * 100, 100) : 0;
-
   const endpointDetails = useMemo(() => {
     return endpoints.find(ep => ep.id === selectedEndpoint);
   }, [selectedEndpoint, endpoints]); // Add endpoints dependency
-
-  useEffect(() => {
-    setPathParamValues({});
-    setQueryParamValues({});
-    setBodyParamValues({});
-    setSelectedExpansions('');
-    setApiResponse(null);
-    setApiErrorDetails(null);
-  }, [selectedEndpoint]); // Runs when endpoint selection changes
 
   const currentPathParams = useMemo(() => {
     return endpointDetails?.pathParams ?? [];
@@ -135,6 +144,51 @@ const GenericApiView: React.FC<GenericApiViewProps> = ({
   const currentExpansionOptions = useMemo(() => {
     return endpointDetails?.expansionOptions ?? [];
   }, [endpointDetails]);
+
+  // Calculate Usage Percentage
+  const usagePercentage = useMemo(() => {
+    if (!activeProject || !activeProject.cap || activeProject.cap === 0) {
+      return 0; // Return 0 if no project, no cap, or cap is zero
+    }
+    const percentage = (activeProject.usage / activeProject.cap) * 100;
+    return Math.min(percentage, 100); // Cap at 100%
+  }, [activeProject]);
+
+  // --- Determine Effective Keys/Token based on authType --- 
+  const authDetails = useMemo(() => {
+    const authType = endpointDetails?.authType || 'bearer'; // Default to bearer
+    if (authType === 'oauth1a') {
+        const keys = activeApp?.oauth1Keys;
+        if (keys?.apiKey && keys?.apiSecret && keys?.accessToken && keys?.accessSecret) {
+            return {
+                authType: 'oauth1a' as const, // Use const assertion
+                oauth1Keys: { 
+                    apiKey: keys.apiKey, 
+                    apiSecret: keys.apiSecret, 
+                    accessToken: keys.accessToken, 
+                    accessSecret: keys.accessSecret 
+                },
+                bearerToken: undefined // Ensure bearer is undefined
+            };
+        } else {
+            console.warn("OAuth 1.0a endpoint selected, but required keys are missing in the active app.");
+            return { authType: 'oauth1a' as const, oauth1Keys: undefined, bearerToken: undefined, error: "Missing OAuth 1.0a keys" };
+        }
+    } else { // Default to bearer
+        const token = activeApp?.oauth1Keys?.bearerToken;
+        if (token) {
+             return { 
+                 authType: 'bearer' as const, 
+                 bearerToken: token, 
+                 oauth1Keys: undefined // Ensure oauth1Keys is undefined
+             };
+        } else {
+            console.warn("Bearer token endpoint selected, but no bearer token found in active app.");
+             return { authType: 'bearer' as const, bearerToken: undefined, oauth1Keys: undefined, error: "Missing Bearer Token" };
+        }
+    }
+    // Handle oauth2 later
+  }, [activeApp, endpointDetails]);
 
   // --- Input Handlers ---
 
@@ -155,7 +209,7 @@ const GenericApiView: React.FC<GenericApiViewProps> = ({
   }, []);
 
   // --- Dtab Handlers ---
-  const handleDtabChange = (index: number, field: 'from' | 'to', value: string) => {
+  const handleDtabChange = useCallback((index: number, field: 'from' | 'to', value: string) => {
     const newDtabs = [...dtabs];
     const currentDtab = newDtabs[index];
 
@@ -171,23 +225,23 @@ const GenericApiView: React.FC<GenericApiViewProps> = ({
     }
     
     setDtabs(newDtabs);
-  };
+  }, [dtabs]);
 
-  const handleAddDtab = () => {
+  const handleAddDtab = useCallback(() => {
     setDtabs([...dtabs, { id: Date.now(), from: '', to: '' }]);
-  };
+  }, [dtabs]);
 
-  const handleRemoveDtab = (index: number) => {
+  const handleRemoveDtab = useCallback((index: number) => {
     if (dtabs.length === 1) {
       setDtabs([{ id: dtabs[0].id, from: '', to: '' }]);
       return;
     }
     const newDtabs = dtabs.filter((_, i) => i !== index);
     setDtabs(newDtabs);
-  };
+  }, [dtabs]);
 
   // --- Save/Load/Delete Dtab Set Handlers ---
-  const handleSaveDtabs = () => {
+  const handleSaveDtabs = useCallback(() => {
     const name = dtabSetName.trim();
     if (!name) {
       alert("Please enter a name to save the Dtab set.");
@@ -204,9 +258,9 @@ const GenericApiView: React.FC<GenericApiViewProps> = ({
         console.error("Failed to save Dtab set to localStorage:", error);
         alert("Error saving Dtabs. Check browser permissions or console.");
     }
-  };
+  }, [dtabs, dtabSetName, savedDtabSets]);
 
-  const handleLoadDtabs = () => {
+  const handleLoadDtabs = useCallback(() => {
     if (!selectedDtabSet || !savedDtabSets[selectedDtabSet]) {
         alert("Please select a saved set to load.");
         return;
@@ -214,9 +268,9 @@ const GenericApiView: React.FC<GenericApiViewProps> = ({
     const loadedSet = savedDtabSets[selectedDtabSet];
     const newDtabsState = loadedSet.map(d => ({ ...d, id: Date.now() + Math.random() }));
     setDtabs(newDtabsState.length > 0 ? newDtabsState : [{ id: Date.now(), from: '', to: '' }]);
-  };
+  }, [selectedDtabSet, savedDtabSets]);
 
-   const handleDeleteDtabSet = () => {
+   const handleDeleteDtabSet = useCallback(() => {
       if (!selectedDtabSet || !savedDtabSets[selectedDtabSet]) {
         alert("Please select a saved set to delete.");
         return;
@@ -234,152 +288,280 @@ const GenericApiView: React.FC<GenericApiViewProps> = ({
           console.error("Failed to update localStorage after deleting Dtab set:", error);
           alert("Error updating saved Dtabs. Check browser permissions or console.");
       }
-    };
+    }, [selectedDtabSet, savedDtabSets]);
 
   // --- Run Request Logic ---
 
   const isRunDisabled = useMemo(() => {
-    if (activeAppId === null && !overwriteToken) return true;
-    if (!effectiveBearerToken) return true;
+    if (!activeApp || !endpointDetails || authDetails.error) return true;
+    // Check if auth details are valid for the required type
+    if (authDetails.authType === 'bearer' && !authDetails.bearerToken) return true;
+    if (authDetails.authType === 'oauth1a' && !authDetails.oauth1Keys) return true;
 
+    // Parameter checks (unchanged)
     for (const param of currentPathParams) {
       if (!pathParamValues[param.name]) {
         return true;
       }
     }
     for (const param of currentQueryParams) {
-      if (param.required && !queryParamValues[param.name]) {
+      if (param.required && (queryParamValues[param.name] === undefined || queryParamValues[param.name] === '')) {
          return true;
       }
     }
     for (const param of currentBodyParams) {
-       if (param.required && !bodyParamValues[param.name]) {
+       if (param.required && (bodyParamValues[param.name] === undefined || bodyParamValues[param.name] === '')) {
          return true;
        }
     }
     return false;
-  }, [activeAppId, overwriteToken, effectiveBearerToken, currentPathParams, pathParamValues, currentQueryParams, queryParamValues, currentBodyParams, bodyParamValues]);
+  }, [
+    activeApp, endpointDetails, authDetails, 
+    currentPathParams, pathParamValues, 
+    currentQueryParams, queryParamValues, 
+    currentBodyParams, bodyParamValues
+  ]);
+
+  const buildUrl = useCallback(() => {
+    if (!endpointDetails) return '';
+    
+    // --- Define the Base URL --- 
+    // TODO: Make this configurable or derive from project/app settings if needed
+    const baseUrl = "https://api.twitter.com"; 
+    
+    let path = endpointDetails.path;
+    console.log("buildUrl - Raw path:", path); // Log raw path
+    console.log("buildUrl - currentPathParams:", currentPathParams); // Log expected params
+    
+    // Substitute path parameters - Change to replace :param_name format
+    for (const param of currentPathParams) {
+      const placeholder = `:${param.name}`;
+      const value = pathParamValues[param.name] || '';
+      console.log(`buildUrl - Replacing '${placeholder}' with '${value}'`); // Log replacement
+      // Use a loop or regex for global replacement if a param could appear multiple times (unlikely for path)
+      path = path.replace(placeholder, value); 
+    }
+    
+    // Construct the full URL
+    let fullUrl = baseUrl + path;
+
+    // --- Append Query Parameters (if any) --- 
+    const queryParamsToInclude: Record<string, string> = {};
+
+    // Add standard query params from the builder
+    for (const param of currentQueryParams) {
+        if (queryParamValues[param.name] !== undefined && queryParamValues[param.name] !== '') {
+             queryParamsToInclude[param.name] = queryParamValues[param.name];
+        }
+    }
+    // Add expansions if selected
+    if (selectedExpansions) {
+       queryParamsToInclude['expansions'] = selectedExpansions;
+    }
+
+    // Build query string if there are params
+    const queryString = new URLSearchParams(queryParamsToInclude).toString();
+
+    if (queryString) {
+        fullUrl += `?${queryString}`;
+    }
+
+    // Remove path parameters that were placeholders in the base path definition
+    // (This logic might be redundant if path params are correctly handled above, but keeping for safety)
+    // for (const param of currentPathParams) {
+    //   fullUrl = fullUrl.replace(`{${param.name}}`, ''); // Should already be replaced
+    // }
+    
+    console.log("Built URL:", fullUrl); // Log the final built URL
+    return fullUrl;
+    
+  }, [endpointDetails, pathParamValues, queryParamValues, selectedExpansions, currentPathParams, currentQueryParams]); // Added dependencies
+
+  // Helper function to try pretty-printing JSON
+  const formatResponseBody = (rawBody: string): string => {
+    try {
+      const parsed = JSON.parse(rawBody);
+      return JSON.stringify(parsed, null, 2); // Pretty print with 2 spaces
+    } catch (e) {
+      // If parsing fails, return the raw string
+      console.warn("Response body is not valid JSON, displaying raw text.");
+      return rawBody;
+    }
+  };
 
   const handleRunRequest = useCallback(async () => {
-    if (!endpointDetails || !effectiveBearerToken) return;
+    if (!endpointDetails || !authDetails || authDetails.error) {
+         setApiErrorDetails({ status: 0, message: authDetails?.error || "Authentication details missing or invalid." });
+         return;
+    }
+    if (authDetails.authType === 'bearer' && !authDetails.bearerToken) return; // Should be caught by isRunDisabled, but double check
+    if (authDetails.authType === 'oauth1a' && !authDetails.oauth1Keys) return; // Should be caught by isRunDisabled, but double check
 
     setIsLoading(true);
     setApiResponse(null);
     setApiErrorDetails(null);
 
-    // 1. Construct URL with Path Params
-    let urlPath = endpointDetails.path;
-    for (const param of currentPathParams) {
-      urlPath = urlPath.replace(`:${param.name}`, encodeURIComponent(pathParamValues[param.name] || ''));
+    const finalUrl = buildUrl();
+    let headers: Record<string, string> = {}; // Start with empty headers
+    let requestBody: any = null; // Initialize body to null
+
+    // --- Authentication Headers --- 
+    if (authDetails.authType === 'bearer' && authDetails.bearerToken) {
+        headers['Authorization'] = `Bearer ${authDetails.bearerToken}`;
     }
-    const url = new URL(urlPath, 'https://api.twitter.com'); // Base URL
+    // OAuth1 headers are handled by the backend signer
 
-    // 2. Add Query Params & Expansions
-    Object.entries(queryParamValues).forEach(([key, value]) => {
-      if (value) { // Only add if value is present
-        url.searchParams.append(key, value);
-      }
-    });
-    if (selectedExpansions && endpointDetails.method === 'GET') { // Only add expansions for GET
-      url.searchParams.append('expansions', selectedExpansions);
-    }
-
-    // 3. Prepare Headers
-    const headers: Record<string, string> = {
-      'Authorization': `Bearer ${effectiveBearerToken}`,
-      'Content-Type': 'application/json', // Assuming JSON for POST/PUT bodies if any
-    };
-
-    // Add Dtabs header if any exist - Use Dtab-Local to match curl generation
+    // --- Dtabs, Tracing, TFE Headers --- 
     const activeDtabs = dtabs.filter(d => d.from.trim() && d.to.trim());
     if (activeDtabs.length > 0) {
-      headers['Dtab-Local'] = activeDtabs.map(d => `${d.from}=>${d.to}`).join(';');
+        headers['Dtab-Local'] = activeDtabs.map(d => `${d.from}=>${d.to}`).join(';');
     }
-
-    // Add tracing header if enabled
     if (enableTracing) {
-      headers['X-B3-Flags'] = '1';
+        headers['X-B3-Flags'] = '1';
     }
-
-    // Add TFE environment header if staging selected
     if (tfeEnvironment === 'staging1' || tfeEnvironment === 'staging2') {
-      headers['X-TFE-Experiment-environment'] = tfeEnvironment;
-      // Add corresponding decider override header
-      headers['X-Decider-Overrides'] = `tfe_route:des_apiservice_${tfeEnvironment}=on`;
+        headers['X-TFE-Experiment-environment'] = tfeEnvironment;
+        headers['X-Decider-Overrides'] = `tfe_route:des_apiservice_${tfeEnvironment}=on`;
+    }
+    
+    // --- Body Preparation (ONLY for methods that have a body) --- 
+    if (['POST', 'PUT', 'PATCH'].includes(endpointDetails.method)) {
+         // Prepare body object first
+         let constructedBody: Record<string, any> | null = null;
+         if (currentBodyParams.length > 0) {
+            const body: Record<string, any> = {};
+            currentBodyParams.forEach(param => {
+              if (bodyParamValues[param.name] !== undefined) {
+                 if (param.type === 'object' || param.type === 'array') {
+                    try {
+                        body[param.name] = JSON.parse(bodyParamValues[param.name]);
+                    } catch (e) {
+                        console.warn(`Could not parse body parameter ${param.name} as JSON, sending as string.`);
+                        body[param.name] = bodyParamValues[param.name]; // Send as string if parsing fails
+                    }
+                 } else {
+                    body[param.name] = bodyParamValues[param.name];
+                 }
+              } else if (param.required) {
+                console.warn(`Required body parameter ${param.name} is missing.`); // Still warn if required is missing
+              }
+            });
+             if (Object.keys(body).length > 0) {
+                 constructedBody = body;
+             }
+         } else if (Object.keys(bodyParamValues).length > 0 && currentBodyParams.length === 0 && bodyParamValues['rawJson']) {
+              // Handle raw JSON input only if rawJson field has content
+               try {
+                    const parsedRaw = JSON.parse(bodyParamValues['rawJson']);
+                     // Ensure it's an object or array, not primitive for JSON body
+                    if (typeof parsedRaw === 'object' && parsedRaw !== null) { 
+                         constructedBody = parsedRaw;
+                    } else {
+                         console.error("Raw JSON input must parse to an object or array.");
+                         setApiErrorDetails({ status: 0, message: "Raw JSON input must be an object or array." });
+                         setIsLoading(false);
+                         return; 
+                    }
+               } catch (e) {
+                    console.error("Invalid JSON entered in raw body input.", e);
+                     setApiErrorDetails({ status: 0, message: "Invalid JSON in request body." });
+                     setIsLoading(false);
+                     return; 
+               }
+         }
+
+         // Only set body and Content-Type if we actually constructed a body
+         if (constructedBody !== null) {
+             requestBody = constructedBody;
+             headers['Content-Type'] = 'application/json'; 
+         }
     }
 
-    // 4. Prepare Body
-    let requestBody: any = null;
-    // Check if method needs a body and params are defined
-    if (['POST', 'PUT', 'PATCH'].includes(endpointDetails.method) && currentBodyParams.length > 0) {
-      // Construct body object from state
-      // TODO: Add type conversion based on param.type (e.g., string to number/boolean)
-      requestBody = { ...bodyParamValues }; 
-       // Simple spread for now, assumes BodyParamBuilder provides correct types or handleRunRequest converts
-    } 
-    // If no bodyParams defined but it's POST/PUT, maybe send empty object or handle differently?
-    // For now, requestBody remains null if currentBodyParams is empty.
+    // Construct the arguments for the backend
+    const requestArgs: BackendRequestArgs = {
+        method: endpointDetails.method,
+        url: finalUrl,
+        headers: headers,
+        body: requestBody, // Pass null if no body was constructed
+        authType: authDetails.authType, 
+        bearerToken: authDetails.bearerToken, 
+        oauth1Keys: authDetails.oauth1Keys   
+    };
 
-    // Log the full request details before invoking
-    console.log("--- Sending API Request ---");
-    console.log("Method:", endpointDetails.method);
-    console.log("URL:", url.toString());
-    console.log("Headers:", headers);
-    console.log("Body:", requestBody);
-    console.log("---------------------------");
+    console.log("--- Sending API Request Args to Backend ---");
+    console.log(JSON.stringify(requestArgs, null, 2)); // Log stringified version for clarity
+    console.log("-------------------------------------------");
 
-    // 5. Invoke Tauri Command
     try {
-      // Expect the raw string body from invoke
-      const result = await invoke<BackendApiResponse>('make_api_request', {
-        args: {
-          method: endpointDetails.method,
-          url: url.toString(),
-          headers: headers,
-          body: requestBody
+        console.log("Invoking make_api_request...");
+        const result = await invoke<BackendApiResponse>('make_api_request', { args: requestArgs });
+        console.log("--- Backend Raw Success Result ---", result);
+        
+        const formattedBody = formatResponseBody(result.body); // Format the body
+
+        if (result.status < 200 || result.status >= 300) {
+             console.log(`Received non-2xx status (${result.status}), treating as error.`);
+             setApiErrorDetails({
+                status: result.status,
+                message: `Request failed with status ${result.status}`,
+                body: formattedBody, // Use formatted body
+                headers: result.headers
+             });
+             setApiResponse(null);
+        } else {
+             setApiResponse({ ...result, body: formattedBody }); // Use formatted body
+             setApiErrorDetails(null);
         }
-      });
-
-      console.log("Raw string body from backend:", result.body);
-
-      // 6. Handle Success Response from Backend - Store raw string directly
-      setApiResponse(result); // result already matches BackendApiResponse with string body
 
     } catch (error: any) {
-      console.error("API Request Failed via Backend:", error);
+        console.error("--- Backend Raw Error Catch --- Object received:", error);
+        let errorStatus: number = 0;
+        let errorMessage: string = "An unknown error occurred.";
+        let errorBody: string | null = null;
+        let errorHeaders: Record<string, string> | undefined = undefined;
 
-       // Parse the raw string error body if present
-      let parsedErrorBody: any = null;
-      if (error.body && typeof error.body === 'string') {
-          try {
-            parsedErrorBody = JSON.parse(error.body);
-          } catch (parseError) {
-             console.error("Failed to parse error body JSON:", parseError);
-             parsedErrorBody = error.body; // Fallback to raw string
-          }
-      } // else: error body wasn't a string or didn't exist
-
-      setApiErrorDetails({
-        status: error.status ?? 0,
-        message: error.message ?? 'An unexpected error occurred.',
-        body: parsedErrorBody, // Store parsed (or raw fallback) error body
-        headers: error.headers
-      });
-      setApiResponse(null);
+        // Check if the caught error is an object with expected fields from ApiError
+        if (typeof error === 'object' && error !== null) {
+            errorStatus = typeof error.status === 'number' ? error.status : 0;
+            errorMessage = typeof error.message === 'string' ? error.message : errorMessage;
+            errorHeaders = typeof error.headers === 'object' && error.headers !== null ? error.headers : undefined;
+            
+            // Format the body if it exists and is a string
+            if (typeof error.body === 'string') {
+                 errorBody = formatResponseBody(error.body); 
+            } else if (error.body) {
+                 // If body exists but isn't a string, try to stringify it
+                 try {
+                     errorBody = JSON.stringify(error.body);
+                 } catch (e) {
+                     console.warn("Could not stringify non-string error body:", error.body);
+                 }
+            }
+        } else if (typeof error === 'string') {
+            // Fallback if error is unexpectedly a string (previous logic, less likely now)
+            errorMessage = error;
+            errorBody = error; // Display raw error string as body
+        } else if (error instanceof Error) {
+            // Fallback for standard JS Error objects
+            errorMessage = error.message;
+        }
+        
+        setApiErrorDetails({
+            status: errorStatus,
+            message: errorMessage,
+            body: errorBody,
+            headers: errorHeaders
+        });
+        setApiResponse(null);
     } finally {
-      setIsLoading(false);
+        console.log("Setting isLoading to false.");
+        setIsLoading(false);
     }
   }, [
-      endpointDetails,
-      effectiveBearerToken,
-      pathParamValues,
-      queryParamValues,
-      selectedExpansions,
-      currentPathParams, // Added dependency
-      dtabs,
-      enableTracing,
-      tfeEnvironment, // Add tfeEnvironment dependency
-      currentBodyParams, bodyParamValues // <-- ADDED: Body params dependencies
+    endpointDetails, authDetails, dtabs, enableTracing, tfeEnvironment,
+    pathParamValues, queryParamValues, bodyParamValues,
+    currentPathParams, currentQueryParams, currentBodyParams,
+    buildUrl
   ]);
 
   // Generalized Usage Estimate Text
@@ -393,6 +575,13 @@ const GenericApiView: React.FC<GenericApiViewProps> = ({
     }
     return "";
   }, [endpointDetails]);
+
+  // Log apiErrorDetails state before rendering
+  useEffect(() => {
+    if (apiErrorDetails) {
+      console.log("--- apiErrorDetails State Update ---", apiErrorDetails);
+    }
+  }, [apiErrorDetails]);
 
   // --- Render Logic ---
 
@@ -513,20 +702,6 @@ const GenericApiView: React.FC<GenericApiViewProps> = ({
                  />
               )}
 
-              {/* Bearer Token Override */}
-              <div className="form-group">
-                <label htmlFor="overwrite-token-input">Override Bearer Token (Optional):</label>
-                <input
-                  id="overwrite-token-input"
-                  type="password"
-                  className="text-input"
-                  placeholder="Paste Bearer token here to override app selection"
-                  value={overwriteToken}
-                  onChange={(e) => setOverwriteToken(e.target.value)}
-                  disabled={!currentUser} // Disable if not logged in
-                />
-              </div>
-
               {/* Advanced Settings (Dtabs, Tracing) */}
               <details className="advanced-details">
                 <summary className="advanced-summary">Advanced Settings</summary>
@@ -645,7 +820,7 @@ const GenericApiView: React.FC<GenericApiViewProps> = ({
                 <h3>Response</h3>
                 {isLoading && <p>Loading...</p>}
 
-                {/* Error Display */}
+                {/* Restore Detailed Error Display */}
                 {apiErrorDetails && (
                   <div> 
                     <div className="response-details">
@@ -664,6 +839,7 @@ const GenericApiView: React.FC<GenericApiViewProps> = ({
                         <details className="response-headers-details">
                           <summary>Response Headers</summary>
                           <Highlighter language="json" style={vscDarkPlus} customStyle={{ margin: 0, padding: '1em', fontSize: '0.9em', borderRadius: '4px', border: '1px solid var(--border-color)' }} wrapLongLines={true}>
+                            {/* Headers are already an object, stringify them */}
                             {JSON.stringify(
                               Object.fromEntries(Object.entries(apiErrorDetails.headers).filter(([key]) => key !== 'x-transaction-id')),
                               null,
@@ -678,63 +854,72 @@ const GenericApiView: React.FC<GenericApiViewProps> = ({
                       <div className="response-body-container">
                         <h4>Error Response Body:</h4> 
                         <Highlighter language="json" style={vscDarkPlus} customStyle={{ margin: 0, padding: '1em', fontSize: '0.9em', borderRadius: '4px', border: '1px solid var(--border-color-error, #a85050)' }} wrapLongLines={true}>
-                            {typeof apiErrorDetails.body === 'string' ? apiErrorDetails.body : JSON.stringify(apiErrorDetails.body, null, 2)}
+                           {/* apiErrorDetails.body is already a string (potentially formatted) */}
+                           {apiErrorDetails.body}
                         </Highlighter>
                       </div>
                     )}
                   </div>
                 )}
 
-                {/* Success Response Display */}
+                {/* Success Response Display */} 
                 {apiResponse && !apiErrorDetails && (
                   <div>
-                    <div className="response-details">
-                      <p><strong>Status:</strong> <span className={`status-code status-${String(apiResponse.status)[0]}xx`}>{apiResponse.status}</span></p>
-                      {/* Display Trace ID only if the header exists in the response */}
-                      {apiResponse.headers && apiResponse.headers['x-transaction-id'] && (
-                        <div className="trace-id-display">
-                          <p>
-                            <strong>Trace ID:</strong> {apiResponse.headers['x-transaction-id']}
-                          </p>
-                        </div>
-                      )}
-                      {/* Render headers if they exist */}
-                      {apiResponse.headers && Object.keys(apiResponse.headers).filter(h => h !== 'x-transaction-id').length > 0 && (
-                        <details className="response-headers-details">
-                            <summary>Response Headers</summary>
-                             <Highlighter language="json" style={vscDarkPlus} customStyle={{ margin: 0, padding: '1em', fontSize: '0.9em', borderRadius: '4px', border: '1px solid var(--border-color)', maxHeight: '300px', overflowY: 'auto' }} wrapLongLines={true}>
-                                {JSON.stringify(
-                                    Object.fromEntries(Object.entries(apiResponse.headers).filter(([key]) => key !== 'x-transaction-id')), // Filter out trace ID here too
-                                    null,
-                                    2
-                                )}
-                             </Highlighter>
-                        </details>
-                      )}
-                    </div>
-
-                    {/* Wrap main body highlighter for styling */}
-                    <div className="response-body-container">
-                      <Highlighter language="json" style={vscDarkPlus} customStyle={{ margin: 0, padding: '1em', fontSize: '0.9em', borderRadius: '4px', border: '1px solid var(--border-color)' }} wrapLongLines={true}>
-                        {apiResponse.body}
-                      </Highlighter>
-                    </div>
+                     <div className="response-details">
+                       {/* Status Code */} 
+                       <p><strong>Status:</strong> <span className={`status-code status-${String(apiResponse.status)[0]}xx`}>{apiResponse.status}</span></p>
+                       {/* Display Trace ID only if the header exists in the response */}
+                       {apiResponse.headers && apiResponse.headers['x-transaction-id'] && (
+                         <div className="trace-id-display">
+                           <p>
+                             <strong>Trace ID:</strong> {apiResponse.headers['x-transaction-id']}
+                           </p>
+                         </div>
+                       )}
+                       {/* Render headers if they exist */}
+                       {apiResponse.headers && Object.keys(apiResponse.headers).filter(h => h !== 'x-transaction-id').length > 0 && (
+                         <details className="response-headers-details">
+                             <summary>Response Headers</summary>
+                              <Highlighter language="json" style={vscDarkPlus} customStyle={{ margin: 0, padding: '1em', fontSize: '0.9em', borderRadius: '4px', border: '1px solid var(--border-color)', maxHeight: '300px', overflowY: 'auto' }} wrapLongLines={true}>
+                                 {/* Headers are already an object, stringify them */}
+                                 {JSON.stringify(
+                                     Object.fromEntries(Object.entries(apiResponse.headers).filter(([key]) => key !== 'x-transaction-id')), // Filter out trace ID here too
+                                     null,
+                                     2
+                                 )}
+                              </Highlighter>
+                         </details>
+                       )}
+                     </div>
+ 
+                     {/* Wrap main body highlighter for styling */} 
+                     <div className="response-body-container">
+                       <Highlighter language="json" style={vscDarkPlus} customStyle={{ margin: 0, padding: '1em', fontSize: '0.9em', borderRadius: '4px', border: '1px solid var(--border-color)' }} wrapLongLines={true}>
+                         {/* apiResponse.body is already a string (potentially formatted) */}
+                         {apiResponse.body}
+                       </Highlighter>
+                     </div>
                   </div>
                 )}
               </div>
 
-              {/* Restore CodeSnippetDisplay */}
-              <CodeSnippetDisplay
-                endpoint={endpointDetails}
-                pathParams={pathParamValues}
-                queryParams={queryParamValues}
-                bodyParams={bodyParamValues}
-                expansions={selectedExpansions}
-                bearerToken={effectiveBearerToken}
-                dtabs={dtabs}
-                enableTracing={enableTracing}
-                tfeEnvironment={tfeEnvironment}
-              />
+              {/* --- Code Snippets Section --- */}
+              <div className="code-snippets-section">
+                 <h3>Code Snippets</h3>
+                  <CodeSnippetDisplay
+                      endpoint={endpointDetails} 
+                      pathParams={pathParamValues}
+                      queryParams={queryParamValues}
+                      bodyParams={bodyParamValues} 
+                      expansions={selectedExpansions}
+                      // Pass token/keys based on auth type
+                      bearerToken={authDetails.authType === 'bearer' ? authDetails.bearerToken : null}
+                      // Add oauth1Keys prop later if needed by codegen
+                      dtabs={dtabs.filter(d => d.from.trim() && d.to.trim())} // Pass only active dtabs
+                      enableTracing={enableTracing}
+                      tfeEnvironment={tfeEnvironment}
+                  />
+              </div> 
             </div>
           ) : (
             <div className="placeholder-content">

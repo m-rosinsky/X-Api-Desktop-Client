@@ -136,58 +136,41 @@ async fn make_api_request(args: ApiRequestArgs) -> Result<ApiResponse, ApiError>
                 headers_map.remove("x-transaction-id");
             }
 
-            // Attempt to parse the body into serde_json::Value first
-            let body_value_result = response.json::<serde_json::Value>().await;
-
-            match body_value_result {
-                Ok(body_value) => {
-                    // Attempt to pretty-print the parsed Value
-                    match serde_json::to_string_pretty(&body_value) {
-                        Ok(pretty_body_string) => {
-                            // Successfully parsed and pretty-printed
-                            if status >= 200 && status < 300 {
-                                Ok(ApiResponse { status, body: pretty_body_string, headers: headers_map })
-                            } else {
-                                Err(ApiError {
-                                    status,
-                                    message: format!("API request failed with status {}", status),
-                                    body: Some(pretty_body_string),
-                                    headers: Some(headers_map),
-                                })
-                            }
-                        }
-                        Err(e) => {
-                            // Failed to pretty-print (highly unlikely for valid Value, but handle anyway)
-                             let error_message = format!("Failed to serialize parsed body to pretty JSON string: {}", e);
-                             // Fallback: send the non-pretty string representation of the Value
-                             let fallback_body = serde_json::to_string(&body_value).unwrap_or_else(|_| "Error serializing fallback body".to_string());
-                             Err(ApiError {
-                                status, // Report original status
-                                message: error_message,
-                                body: Some(fallback_body),
-                                headers: Some(headers_map), 
-                            })
-                        }
+            // Attempt to read the body as raw text FIRST
+            match response.text().await {
+                Ok(body_text) => {
+                    // We have the body text, now check status
+                    if status >= 200 && status < 300 {
+                        // Success Case: Return ApiResponse with raw body string
+                        Ok(ApiResponse {
+                             status,
+                             body: body_text,
+                             headers: headers_map,
+                        })
+                    } else {
+                         // Error Case: Return ApiError with raw body string
+                         Err(ApiError {
+                            status,
+                            message: format!("API request failed with status {}", status), // Generic message
+                            body: Some(body_text),
+                            headers: Some(headers_map),
+                        })
                     }
                 }
                 Err(e) => {
-                     // Failed to parse body as JSON
-                     let error_message = format!("Failed to parse response body as JSON: {}", e);
-                     // Attempt to get raw body text as fallback for error reporting
-                     // This requires consuming the response again, which isn't ideal.
-                     // For simplicity, we'll just report the parse error without the body.
-                     // If raw body is crucial on parse failure, more complex handling needed.
+                     // Failed to read body text (network issue during read, etc.)
+                     // This is different from failing to *parse* JSON
                      Err(ApiError {
                         status, // Report original status
-                        message: error_message,
-                        body: None, // Indicate body parsing failed
+                        message: format!("Failed to read response body text: {}", e),
+                        body: None, // Indicate body reading failed
                         headers: Some(headers_map), 
                     })
                 }
             }
         }
         Err(e) => {
-            // Network error
+            // Network error during the initial send
             Err(ApiError {
                 status: 0,
                 message: format!("Request failed: {}", e),

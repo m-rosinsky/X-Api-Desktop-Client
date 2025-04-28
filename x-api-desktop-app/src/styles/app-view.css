@@ -100,4 +100,156 @@
 .action-button:hover {
   background-color: var(--button-secondary-hover-bg);
   border-color: var(--accent-color);
+}
+
+/* --- Styles for Settings/Keys Tabs --- */
+
+/* Inherit base input styles from project-view.css for consistency */
+/* We will refine them here */
+
+.setting-item input[type="text"],
+.setting-item input[type="password"],
+.setting-item textarea,
+.setting-item select {
+    width: 100%;
+    padding: 0.6em 0.8em;
+    border-radius: 4px;
+    border: 1px solid var(--border-color);
+    background-color: var(--input-background);
+    color: var(--text-color);
+    font-size: 0.9em;
+    box-sizing: border-box;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.setting-item select {
+    appearance: none; 
+    background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23cccccc%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E');
+    background-repeat: no-repeat;
+    background-position: right 0.7em top 50%, 0 0;
+    background-size: 0.65em auto, 100%;
+    cursor: pointer;
+}
+
+.setting-item textarea {
+    min-height: calc(2.4em + 1.2em + 2px); /* Match input height roughly (2*padding + line-height) */
+    line-height: 1.5; /* Ensure consistent line height */
+    resize: vertical;
+}
+
+/* Ensure consistent font */
+.setting-item input,
+.setting-item textarea,
+.setting-item select {
+    font-family: inherit;
+}
+
+/* Monospace specifically for keys/tokens */
+.keys-section .setting-item input,
+.keys-section .setting-item textarea {
+    font-family: monospace;
+}
+
+/* Container for password/token inputs + toggle */
+.password-input-container {
+    display: flex;
+    align-items: stretch; 
+}
+
+.password-input-container input[type="text"],
+.password-input-container input[type="password"],
+.password-input-container textarea {
+    flex-grow: 1; 
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+    border-right: none; 
+    /* Ensure background/color are explicitly set for consistency when text-security is applied */
+    background-color: var(--input-background);
+    color: var(--text-color);
+}
+
+/* Ensure textarea with text-security looks the same */
+.password-input-container textarea {
+    padding: 0.6em 0.8em; /* Match input padding */
+    line-height: 1.5; /* Match input line-height */
+}
+
+/* Visibility Toggle Button */
+.visibility-toggle {
+    padding: 0 0.8em;
+    border: 1px solid var(--border-color);
+    border-left: none; 
+    background-color: var(--button-secondary-bg);
+    color: var(--text-color-secondary);
+    cursor: pointer;
+    font-size: 0.8em;
+    border-top-right-radius: 4px;
+    border-bottom-right-radius: 4px;
+    transition: background-color 0.2s ease, color 0.2s ease;
+    flex-shrink: 0; /* Prevent button from shrinking */
+}
+
+.visibility-toggle:hover {
+    background-color: var(--button-secondary-hover-bg);
+    color: var(--text-color);
+}
+
+/* Key Grouping Styles */
+.key-group {
+    border: 1px solid var(--border-color);
+    padding: 1em 1.5em 1.5em 1.5em; /* Add more padding inside */
+    border-radius: 4px;
+    margin-top: 1.5em;
+    margin-bottom: 2em;
+}
+
+.key-group legend {
+    padding: 0 0.5em;
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+/* Container for Save/Delete buttons */
+.setting-item-actions {
+    margin-top: 2em; 
+    padding-top: 1.5em;
+    border-top: 1px solid var(--border-color); 
+    display: flex; /* Align buttons */
+    justify-content: flex-start; /* Or flex-end if preferred */
+}
+
+.setting-item-actions .action-button {
+    margin-top: 0; /* Remove top margin from buttons inside */
+}
+
+/* Softer Focus Styles */
+.setting-item input:focus,
+.setting-item textarea:focus,
+.setting-item select:focus,
+.visibility-toggle:focus {
+    outline: none;
+    border-color: var(--accent-color);
+    /* Use a softer box-shadow */
+    box-shadow: 0 0 0 3px var(--accent-color-faded-more); /* Use a more faded variable if available, or adjust alpha */
+}
+
+/* Add specific focus style for the container to highlight the whole input+button */
+.password-input-container:focus-within {
+    border-color: var(--accent-color); /* This won't work directly as border is on children */
+    box-shadow: 0 0 0 3px var(--accent-color-faded-more);
+    border-radius: 4px; /* Apply radius to the container for the shadow */
+}
+
+/* Apply focus styles to children when container has focus */
+.password-input-container:focus-within input,
+.password-input-container:focus-within textarea,
+.password-input-container:focus-within button {
+    border-color: var(--accent-color); /* Re-apply border color */
+}
+/* Adjust border specifically for the button on focus-within */
+.password-input-container:focus-within button {
+    border-left-color: var(--border-color); /* Keep inner border normal unless button itself is focused */
+}
+.password-input-container:focus-within button:focus {
+    border-left-color: var(--accent-color); /* Highlight button border only if it gets focus */
 } 

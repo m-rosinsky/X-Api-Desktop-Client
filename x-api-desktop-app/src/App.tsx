@@ -5,7 +5,7 @@ import {
 } from './types'; // Import types
 // Removed AppInfo, Project, DashboardProps, AppSelectorProps, Endpoint, EndpointSelectorProps
 
-import { mockProjects, navigation } from "./data/mockData"; // Import mock data
+import { navigation as originalNavigation } from "./data/mockData"; // Import and rename original navigation
 import SplashScreen from "./components/SplashScreen"; // Import SplashScreen
 
 // Import View Components
@@ -15,6 +15,7 @@ import UsersView from "./views/UsersView";
 import ProjectView from "./views/ProjectView"; // Import the new view
 import AppView from "./views/AppView"; // Import the new AppView
 import AccountActivityView from "./views/AccountActivityView"; // Import the new view
+import WebhooksView from "./views/WebhooksView"; // Import the new view
 
 // Define a dummy user for simulation
 const dummyUser: User = {
@@ -23,6 +24,51 @@ const dummyUser: User = {
   email: 'demo@example.com',
   initials: 'DU'
 };
+
+// --- localStorage Key ---
+const USER_PROJECTS_STORAGE_KEY = 'userProjects';
+
+// Modify navigation to include Webhooks
+const navigation = JSON.parse(JSON.stringify(originalNavigation)) as NavItem[];
+
+// Find the API header index
+const apiHeaderIndex = navigation.findIndex(item => item.label === 'API' && item.type === 'header');
+
+if (apiHeaderIndex !== -1) {
+  // Find the Account Activity item index *after* the API header
+  let aaIndex = -1;
+  for (let i = apiHeaderIndex + 1; i < navigation.length; i++) {
+    if (navigation[i].type === 'header') break; // Stop if we hit the next header
+    if (navigation[i].viewId === 'account-activity') {
+      aaIndex = i;
+      break;
+    }
+  }
+
+  if (aaIndex !== -1) {
+    // Insert after Account Activity
+    navigation.splice(aaIndex + 1, 0, {
+        label: 'Webhooks', 
+        type: 'link',
+        viewId: 'webhooks' 
+    });
+  } else {
+    // Fallback: Insert directly after API header if Account Activity wasn't found
+    navigation.splice(apiHeaderIndex + 1, 0, {
+        label: 'Webhooks',
+        type: 'link',
+        viewId: 'webhooks' 
+    });
+  }
+} else {
+  console.error("Could not find 'API' header in navigation data to insert Webhooks link.");
+  // Fallback: Add to the end of the whole list if API header wasn't found
+  navigation.push({
+      label: 'Webhooks',
+      type: 'link',
+      viewId: 'webhooks' 
+  });
+}
 
 // --- Main App Component ---
 function App() {
@@ -39,37 +85,158 @@ function App() {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null); // Ref for click outside
 
+  // --- State for User Projects ---
+  const [userProjects, setUserProjects] = useState<Project[]>([]);
+
+  // --- Load projects from localStorage on mount/login ---
+  useEffect(() => {
+    if (currentUser) { // Only load when logged in
+        try {
+            const savedProjectsRaw = localStorage.getItem(USER_PROJECTS_STORAGE_KEY);
+            if (savedProjectsRaw) {
+                const loadedProjects = JSON.parse(savedProjectsRaw) as Project[];
+                // Basic validation could be added here if needed
+                setUserProjects(loadedProjects || []);
+                console.log("Loaded projects from localStorage:", loadedProjects);
+            } else {
+                setUserProjects([]); // Start with empty if nothing saved
+            }
+        } catch (error) {
+            console.error("Failed to load projects from localStorage:", error);
+            setUserProjects([]); // Reset on error
+        }
+    } else {
+        setUserProjects([]); // Clear projects when logged out
+    }
+  }, [currentUser]); // Re-run when user logs in/out
+
+  // --- Save projects to localStorage whenever they change ---
+  useEffect(() => {
+    // Only save if user is logged in and projects array is not the initial empty one
+    if (currentUser && userProjects.length >= 0) {
+        try {
+            console.log("Saving projects to localStorage:", userProjects);
+            localStorage.setItem(USER_PROJECTS_STORAGE_KEY, JSON.stringify(userProjects));
+        } catch (error) {
+            console.error("Failed to save projects to localStorage:", error);
+            // Maybe show an error to the user?
+        }
+    }
+  }, [userProjects, currentUser]); // Re-run when projects or user changes
+
+  // --- Project/App Management Functions (to be passed down) ---
+  // Placeholder functions - implementation will depend on UI views
+  const addProject = (newProjectData: Omit<Project, 'id' | 'apps'>) => {
+      setUserProjects(prev => {
+          const newProject: Project = {
+              ...newProjectData,
+              id: Date.now(), // Simple unique ID
+              apps: [],
+              usage: 0, // Default values
+              cap: 0,
+              package: 'custom',
+          };
+          return [...prev, newProject];
+      });
+      // Navigate to the new project view?
+      // setActiveView(`project-${newProject.id}`);
+  };
+
+  const updateProject = (updatedProject: Project) => {
+      setUserProjects(prev => prev.map(p => p.id === updatedProject.id ? updatedProject : p));
+  };
+
+  const deleteProject = (projectId: number) => {
+      if (confirm("Are you sure you want to delete this project and all its apps?")) {
+        setUserProjects(prev => prev.filter(p => p.id !== projectId));
+        // Navigate away if viewing the deleted project?
+        if (activeView === `project-${projectId}`) {
+            setActiveView('dashboard');
+        }
+      }
+  };
+
+  const addAppToProject = (projectId: number, newAppData: Omit<AppInfo, 'id'>) => {
+     setUserProjects(prev => prev.map(p => {
+         if (p.id === projectId) {
+             const newApp: AppInfo = { ...newAppData, id: Date.now() + 1 }; // Simple unique ID
+             return { ...p, apps: [...p.apps, newApp] };
+         }
+         return p;
+     }));
+     // Navigate to the new app view?
+     // setActiveView(`app-${newApp.id}`);
+  };
+
+  const updateApp = (projectId: number, updatedApp: AppInfo) => {
+     setUserProjects(prev => prev.map(p => {
+         if (p.id === projectId) {
+             return { ...p, apps: p.apps.map(a => a.id === updatedApp.id ? updatedApp : a) };
+         }
+         return p;
+     }));
+  };
+
+  const deleteApp = (projectId: number, appId: number) => {
+     if (confirm("Are you sure you want to delete this app?")) {
+        setUserProjects(prev => prev.map(p => {
+            if (p.id === projectId) {
+                return { ...p, apps: p.apps.filter(a => a.id !== appId) };
+            }
+            return p;
+        }));
+        // Navigate away if viewing the deleted app?
+         if (activeView === `app-${appId}` || activeView.startsWith(`app-${appId}/`)) {
+            setActiveView(`project-${projectId}`); // Go back to project view
+        }
+     }
+  };
+
   // Create the populated navigation structure using useMemo
   const populatedNavigation = useMemo(() => {
-    // Deep clone the original navigation to avoid modifying the imported constant
+    console.log("Recalculating populatedNavigation, currentUser:", currentUser);
+    // Use the base navigation structure (already includes Webhooks)
     const navCopy = JSON.parse(JSON.stringify(navigation)) as NavItem[];
-
-    // Find the Projects category item by its ID
     const projectsCategory = navCopy.find(item => item.id === 'nav-projects');
 
     if (projectsCategory && projectsCategory.type === 'category') {
-      // *** Conditionally populate based on currentUser ***
+      console.log("Found projects category item:", projectsCategory);
       if (currentUser) {
-        // User is logged in, populate with mock projects (replace with actual user projects later)
-        projectsCategory.subItems = mockProjects.map(project => ({
-          label: project.name, 
-          type: 'category', 
-          viewId: `project-${project.id}`,
-          subItems: project.apps.map(app => ({ 
-            label: app.name,
-            type: 'link',
-            viewId: `app-${app.id}`
-          }))
-        }));
+        // Use userProjects state instead of mockProjects
+        console.log("Current user exists, mapping userProjects:", userProjects);
+        try {
+          // Ensure subItems is initialized
+          projectsCategory.subItems = [];
+          // Map user projects
+          projectsCategory.subItems = userProjects.map(project => {
+            console.log(`Mapping project: ${project.name} (ID: ${project.id})`);
+            return {
+              label: project.name,
+              type: 'category',
+              viewId: `project-${project.id}`,
+              // Ensure apps array exists before mapping
+              subItems: (project.apps || []).map(app => ({
+                label: app.name,
+                type: 'link',
+                viewId: `app-${app.id}`
+              }))
+            };
+          });
+          console.log("Finished mapping projects, projectsCategory.subItems:", projectsCategory.subItems);
+        } catch (error) {
+            console.error("Error during userProjects mapping:", error);
+        }
       } else {
-        // User is logged out, clear sub-items for Projects category
-        projectsCategory.subItems = []; 
+        console.log("Current user is null, clearing projects subItems.");
+        projectsCategory.subItems = [];
       }
+    } else {
+        console.log("Did not find projects category item with id 'nav-projects'.");
     }
 
-    return navCopy; // Return the modified copy
-  // *** Add currentUser to dependency array ***
-  }, [currentUser]); // Re-run when currentUser changes
+    console.log("Finished populatedNavigation calculation.");
+    return navCopy;
+  }, [currentUser, userProjects]); // Add userProjects dependency
 
   // Simulate loading completion
   useEffect(() => {
@@ -189,12 +356,18 @@ function App() {
 
   // Updated renderCurrentView to handle layout differences and pass props
   const renderCurrentView = () => {
+    // Pass management functions down eventually
+    const projectManagementProps = {
+        addProject, updateProject, deleteProject, addAppToProject, updateApp, deleteApp
+    };
+
     const apiViewProps: Omit<ApiViewProps, 'projects'> & { currentUser: User | null } = {
       activeAppId,
       setActiveAppId,
-      currentUser
-    }; 
-    
+      currentUser,
+      // Add management functions here? Or pass directly to specific views?
+    };
+
     const apiLayoutProps = {
       initialWidth: sidebarWidth,
       onResize: setSidebarWidth 
@@ -202,12 +375,9 @@ function App() {
 
     // Project/App View Logic
     if (activeView.startsWith('project-')) {
-      // Parse the activeView string
-      const parts = activeView.split('/');
-      const projectIdPart = parts[0]; // e.g., "project-1"
-      
-      const projectId = parseInt(projectIdPart.split('-')[1], 10);
-      const project = mockProjects.find(p => p.id === projectId);
+      const projectId = parseInt(activeView.split('-')[1].split('/')[0], 10);
+      // Find project from userProjects state
+      const project = userProjects.find(p => p.id === projectId);
       
       if (project) {
         return (
@@ -215,24 +385,23 @@ function App() {
             <ProjectView 
               project={project} 
               onNavigate={handleNavClick}
+              {...projectManagementProps} // Pass management functions
             />
           </main>
         );
       }
     }
     if (activeView.startsWith('app-')) {
-      // Parse the activeView string (e.g., "app-101" or "app-101/keys")
       const parts = activeView.split('/');
-      const appIdPart = parts[0]; // e.g., "app-101"
+      const appId = parseInt(parts[0].split('-')[1], 10);
       const tabPart = parts[1];   // e.g., "keys" (optional)
 
-      const appId = parseInt(appIdPart.split('-')[1], 10);
       let app: AppInfo | undefined;
       let project: Project | undefined;
       
       // Find the app and its project
-      for (const p of mockProjects) {
-        const foundApp = p.apps.find(a => a.id === appId);
+      for (const p of userProjects) {
+        const foundApp = p.apps?.find(a => a.id === appId);
         if (foundApp) {
           app = foundApp;
           project = p;
@@ -248,57 +417,73 @@ function App() {
               project={project} 
               initialTab={tabPart as ('overview' | 'keys') | undefined} 
               onNavigate={handleNavClick}
+              {...projectManagementProps} // Pass management functions
             />
           </main>
         );
       }
     }
 
-    // Standard View Logic
+    // Standard Views
+    let ViewComponent: React.FC<any> | null = null;
     switch (activeView) {
-      case "dashboard":
-        return (
-          <main className="main-content">
-             <Dashboard projects={mockProjects} currentUser={currentUser} onNavigate={handleNavClick} onLogin={handleLogin} />
-          </main>
-         );
-      case "tweets":
-         return (
-           <main className="main-content">
-             <TweetsView {...apiViewProps} {...apiLayoutProps} projects={mockProjects} />
-           </main>
-         );
-      case "users":
-         return (
-           <main className="main-content">
-             <UsersView {...apiViewProps} {...apiLayoutProps} projects={mockProjects} />
-           </main>
-         );
-      case "account-activity":
-        return (
-          <main className="main-content">
-            <AccountActivityView {...apiViewProps} {...apiLayoutProps} projects={mockProjects} />
-          </main>
-        );
-      case "subscription":
-        return (
-          <main className="main-content">
-             <div><h2>Subscription</h2><p>Subscription details go here.</p></div>
-          </main>
-         );
-      case "invoices":
-        return (
-          <main className="main-content">
-            <div><h2>Invoices</h2><p>Invoice list goes here.</p></div>
-          </main>
-        );
+      case 'dashboard':
+        ViewComponent = Dashboard;
+        break;
+      case 'tweets':
+        ViewComponent = TweetsView;
+        break;
+      case 'users':
+        ViewComponent = UsersView;
+        break;
+      case 'account-activity':
+        ViewComponent = AccountActivityView;
+        break;
+      case 'webhooks': // Add case for the new view
+        ViewComponent = WebhooksView;
+        break;
       default:
-        return (
-            <main className="main-content">
-                <div>View not found: {activeView}</div>
-            </main>
-        );
+        // Handle potential project/app views if not caught above
+        // or render a default/not found view
+        if (!activeView.startsWith('project-') && !activeView.startsWith('app-')) {
+           console.warn(`No view component found for activeView: ${activeView}`);
+           // Optionally render a NotFound component
+           // ViewComponent = NotFoundView;
+        }
     }
+
+    if (ViewComponent) {
+       if (['tweets', 'users', 'account-activity', 'webhooks'].includes(activeView)) {
+        // Render API views with the ApiViewLayout
+        return (
+          <main className="main-content">
+            <ViewComponent 
+              {...apiViewProps} 
+              {...apiLayoutProps} 
+              projects={userProjects} // Pass user projects state
+              // Pass management functions if needed by these views?
+            />
+          </main>
+        );
+      } else {
+        // Render Dashboard (or other non-API views) directly
+        return (
+          <main className="main-content">
+            <ViewComponent 
+                currentUser={currentUser} 
+                onNavigate={handleNavClick} 
+                onLogin={activeView === 'dashboard' ? handleLogin : undefined} 
+                projects={activeView === 'dashboard' ? userProjects : undefined} // Pass user projects state
+                {...projectManagementProps} // Pass management functions
+            />
+          </main>
+        );
+      }
+    }
+
+    // If it's a project/app view or no component matched, return null or a loading/error state
+    // (The project/app logic above already returns)
+    return null; 
   };
 
   if (isLoading) {
